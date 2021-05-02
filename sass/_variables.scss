@@ -1,8 +1,10 @@
+$main-section-background: white !default;
+$text: black !default;
+$link: hsl(0, 0%, 20%) !default;
+  
 $main-section-background: rgb(53, 45, 40) !default;
 $dark-accent-background: rgb(31, 26, 23) !default;
 $scheme-main: rgb(31, 26, 23) !default;
-$text: hsl(0, 0%, 100%) !default;
-$link: hsl(0, 0%, 70%) !default;
 
 $family-primary: serif !default;
 $body-font-size: 1.35em !default;
