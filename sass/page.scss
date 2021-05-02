@@ -1,0 +1,15 @@
+.page {
+    p:first-of-type {
+        font-size: $first-paragraph-size;
+        max-width: $first-paragraph-width;
+    }
+
+    ul {
+        margin: -1em auto;
+    }
+
+    ul li {
+        margin: .25em 0 .25em 1.5em;
+        list-style: disc;
+    }
+}

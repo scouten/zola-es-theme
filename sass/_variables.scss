@@ -4,8 +4,10 @@ $scheme-main: rgb(31, 26, 23) !default;
 $text: hsl(0, 0%, 100%) !default;
 $link: hsl(0, 0%, 70%) !default;
 
-$preferred-text-width: 40rem !default;
-
-$family-primary: adobe-caslon-pro, serif !default;
+$family-primary: serif !default;
 $body-font-size: 1.35em !default;
 $body-line-height: 1.9 !default;
+
+$preferred-text-width: 40rem !default;
+$first-paragraph-size: 120% !default;
+$first-paragraph-width: 33.33rem !default; // $preferred-text-width / $first-paragraph-size;
