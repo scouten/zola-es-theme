@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+  <meta name="msapplication-TileColor" content="#352d28">
+  <meta name="theme-color" content="#1f1a17">
+
+  {% block rss %}
+  <link rel="alternate" type="application/rss+xml" title="RSS" href="{{ get_url(path='rss.xml', trailing_slash=false) | safe }}">
+  {% endblock %}
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous"></script>
+  <script src="/common/header-scroll.js"></script>
+
+  <title>
+    {% if page.title %}
+      {{ page.title }} |
+    {% endif %}
+    146 Parks
+  </title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+  <header id="header">
+    <div class="brand">
+      <a href="/"><img src="/common/146-parks.png" width="246" height="80"></a>
+    </div>
+    {% block nav %} {% endblock %}
+  </header>
+  {% block miniheader %} {% endblock %}
+  <section class="section root">
+    <div class="container">
+      {% block content %} {% endblock %}
+    </div>
+  </section>
+
+  <footer>
+    {% block footer %}
+    <p>All text and photography copyright © 2021 – {{ now() | date(format="%Y") }}, <a href="https://ericscouten.com">Eric Scouten</a>, unless otherwise attributed.</p>
+  </footer>
+</body>
+
+</html>
