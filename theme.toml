@@ -1,0 +1,11 @@
+name = "Eric Scouten common"
+description = "Eric’s special sauce"
+license = "MIT"
+homepage = "https://github.com/scouten/zola-es-theme"
+
+min_version = "0.13.0"
+demo = "https://146parks.blog"
+
+[author]
+name = "Eric Scouten"
+homepage = "https://ericscouten.com"
