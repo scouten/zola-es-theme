@@ -24,7 +24,7 @@
     {% if page.title %}
       {{ page.title }} |
     {% endif %}
-    146 Parks
+    {{ config.title }}
   </title>
   <link rel="stylesheet" href="/style.css">
 </head>
@@ -37,6 +37,7 @@
     {% block nav %} {% endblock %}
   </header>
   {% block miniheader %} {% endblock %}
+
   <section class="section root">
     <div class="container">
       {% block content %} {% endblock %}
@@ -45,7 +46,8 @@
 
   <footer>
     {% block footer %}
-    <p>All text and photography copyright © 2021 – {{ now() | date(format="%Y") }}, <a href="https://ericscouten.com">Eric Scouten</a>, unless otherwise attributed.</p>
+      <p>All text and photography copyright © 2021 – {{ now() | date(format="%Y") }}, <a href="https://ericscouten.com">Eric Scouten</a>, unless otherwise attributed.</p>
+    {% endblock footer %}
   </footer>
 </body>
 
