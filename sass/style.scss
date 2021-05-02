@@ -46,7 +46,7 @@ strong {
     }
 }
 
-p, ul {
+h1, h2, h3, h4, h5, h6, p, ul {
     max-width: $preferred-text-width;
     margin: 1.6em auto;
 }
