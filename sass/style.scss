@@ -19,12 +19,12 @@ section.root {
 }
 
 a:hover {
-    color: hsl(0, 0, 100%);
+    color: $accent-text-color;
     text-decoration: underline;
 }
 
 strong {
-    color: white;
+    color: $accent-text-color;
 }
 
 .anti-section {
