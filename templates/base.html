@@ -24,18 +24,27 @@
 </head>
 
 <body>
-  <header id="header">
+  <header>
     {% block brand %}
       <span class="es-com">
         <a href="https://ericscouten.com"><img src="/common/es-logo.png" width="48" height="48" alt="" />&thinsp;<span class="eric">eric</span>
           <span class="scouten">scouten.</span></a>&thinsp;{% if config.extra.es_site %}{{ config.extra.es_site }}{% endif %}</span>
-      > breadcrumbs?
-      {% if page.title %} > {{ page.title }}{% endif %}
+      <!-- &gt; breadcrumbs?
+      {% if page.title %} > {{ page.title }}{% endif %} -->
     {% endblock brand %}
 
     {% block nav %} {% endblock %}
   </header>
-  {% block miniheader %} {% endblock %}
+
+  <miniheader>
+    {% block miniheader %}
+      <span class="es-com">
+        <a href="/"><img src="/common/es-logo.png" width="48" height="48" alt="" />{% if config.extra.es_site %}&thinsp;.{{ config.extra.es_site }}{% endif %}</span></a>
+        {% if page.title %}<span class="title">&thinsp;&gt;&thinsp;<a href="#top">{{ page.title }}</a></span>{% endif %}
+      </span>
+
+    {% endblock %}
+  </miniheader>
 
   <section class="section root">
     <div class="container">

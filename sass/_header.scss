@@ -1,10 +1,61 @@
 header {
     background-color: $dark-accent-background;
     color: #ccc;
-    padding: .7em 1em 0 1em;
+    padding: .7em 1em 2em 1em;
     overflow: hidden;
     width: 100%;
+    position: relative;
+    z-index: 999;
 
+    .brand {
+        margin-top: 1em;
+        text-align: center;
+    }
+
+    .nav {
+        margin: .6em auto;
+        text-align: center;
+
+        li {
+            display: inline;
+            margin: 0 .4em;
+        }
+    
+        a {
+            text-decoration: none;
+        }
+    }
+}
+
+miniheader {
+    background: linear-gradient( $dark-accent-background, 55%, $dark-accent-background, 77%, rgba(31, 26, 23, 0));
+    display: block;
+    color: #ccc;
+    padding: .7em 1em 1.5em 1em;
+    overflow: hidden;
+    width: 100%;
+    z-index: 800;
+    position: fixed;
+	top: 0;
+	left: 0;
+
+    .title {
+        color: #807f79;
+        font-weight: normal;
+
+        a {
+            color: #807f79;
+            text-decoration: none;
+        }
+
+        a:hover {
+            color: white;
+            text-decoration: none;
+        }
+    }
+}
+
+header, miniheader {
     .es-com {
         font-family: john-doe, serif;
         font-size: 160%;
@@ -23,25 +74,6 @@ header {
             color: white;
 
             .scouten { color: white; }
-        }
-    }
-
-    .brand {
-        margin-top: 1em;
-        text-align: center;
-    }
-
-    .nav {
-        margin: .6em auto;
-        text-align: center;
-
-        li {
-            display: inline;
-            margin: 0 .4em;
-        }
-    
-        a {
-            text-decoration: none;
         }
     }
 }
