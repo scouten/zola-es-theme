@@ -25,7 +25,14 @@
 
 <body>
   <header id="header">
-    {% block brand %}(clever branding goes here){% endblock brand %}
+    {% block brand %}
+      (logo)
+      eric scouten
+      {% if config.extra.es_site %}. {{ config.extra.es_site }}{% endif %}
+      > breadcrumbs?
+      {% if page.title %} > {{ page.title }}{% endif %}
+    {% endblock brand %}
+
     {% block nav %} {% endblock %}
   </header>
   {% block miniheader %} {% endblock %}
