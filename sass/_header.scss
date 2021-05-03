@@ -1,11 +1,14 @@
 header {
-    background-color: $dark-accent-background;
+    background: linear-gradient( $dark-accent-background, 75%, $dark-accent-background, 90%, rgba(31, 26, 23, 0));
+    display: block;
     color: #ccc;
-    padding: .7em 1em 2em 1em;
+    padding: .5em 1em .8em 1em;
     overflow: hidden;
     width: 100%;
-    position: relative;
-    z-index: 999;
+    z-index: 800;
+    position: fixed;
+	top: 0;
+	left: 0;
 
     .brand {
         margin-top: 1em;
@@ -27,33 +30,22 @@ header {
     }
 }
 
-miniheader {
-    background: linear-gradient( $dark-accent-background, 55%, $dark-accent-background, 77%, rgba(31, 26, 23, 0));
-    display: block;
-    color: #ccc;
-    padding: .7em 1em 1.5em 1em;
-    overflow: hidden;
-    width: 100%;
-    z-index: 800;
-    position: fixed;
-	top: 0;
-	left: 0;
+// miniheader {
+//     .title {
+//         color: #807f79;
+//         font-weight: normal;
 
-    .title {
-        color: #807f79;
-        font-weight: normal;
+//         a {
+//             color: #807f79;
+//             text-decoration: none;
+//         }
 
-        a {
-            color: #807f79;
-            text-decoration: none;
-        }
-
-        a:hover {
-            color: white;
-            text-decoration: none;
-        }
-    }
-}
+//         a:hover {
+//             color: white;
+//             text-decoration: none;
+//         }
+//     }
+// }
 
 header, miniheader {
     .es-com {

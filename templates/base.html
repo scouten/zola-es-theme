@@ -36,15 +36,14 @@
     {% block nav %} {% endblock %}
   </header>
 
-  <miniheader>
-    {% block miniheader %}
+  {% block miniheader %}{% endblock %}
+  <!-- <miniheader>
       <span class="es-com">
         <a href="/"><img src="/common/es-logo.png" width="48" height="48" alt="" />{% if config.extra.es_site %}&thinsp;.{{ config.extra.es_site }}{% endif %}</span></a>
         {% if page.title %}<span class="title">&thinsp;&gt;&thinsp;<a href="#top">{{ page.title }}</a></span>{% endif %}
       </span>
 
-    {% endblock %}
-  </miniheader>
+  </miniheader> -->
 
   <section class="section root">
     <div class="container">
