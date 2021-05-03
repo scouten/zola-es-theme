@@ -1,9 +1,30 @@
 header {
     background-color: $dark-accent-background;
     color: #ccc;
-    padding: 1em;
+    padding: .7em 1em 0 1em;
     overflow: hidden;
     width: 100%;
+
+    .es-com {
+        font-family: john-doe, serif;
+        font-size: 160%;
+        font-weight: 700;
+        color: #5c5f66;
+        .scouten { color: #807f79; }
+
+        a {
+            text-decoration: none;
+            color: #5c5f66;
+            img { opacity: 50%; }
+        }
+
+        a:hover {
+            img { opacity: 100%; }
+            color: white;
+
+            .scouten { color: white; }
+        }
+    }
 
     .brand {
         margin-top: 1em;

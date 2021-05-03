@@ -26,9 +26,9 @@
 <body>
   <header id="header">
     {% block brand %}
-      (logo)
-      eric scouten
-      {% if config.extra.es_site %}. {{ config.extra.es_site }}{% endif %}
+      <span class="es-com">
+        <a href="https://ericscouten.com"><img src="/common/es-logo.png" width="48" height="48" alt="" />&thinsp;<span class="eric">eric</span>
+          <span class="scouten">scouten.</span></a>&thinsp;{% if config.extra.es_site %}{{ config.extra.es_site }}{% endif %}</span>
       > breadcrumbs?
       {% if page.title %} > {{ page.title }}{% endif %}
     {% endblock brand %}
