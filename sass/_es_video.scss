@@ -3,6 +3,7 @@
     margin: 0 auto !important;
     max-width: 80vw;
     max-height: 90vh;
+    scroll-snap-align: start;
 
     .video-container {
         position: relative;

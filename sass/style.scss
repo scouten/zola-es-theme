@@ -10,6 +10,11 @@
 @import "./page";
 @import "./footer";
 
+html, body {
+    scroll-snap-type: y mandatory;
+    scroll-padding: 4rem 0 0 0;
+}
+
 section.root {
     background-color: $main-section-background;
 
