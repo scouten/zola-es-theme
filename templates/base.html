@@ -25,9 +25,7 @@
 
 <body>
   <header id="header">
-    <div class="brand">
-      <a href="/"><img src="/common/146-parks.png" width="246" height="80"></a>
-    </div>
+    {% block brand %}(clever branding goes here){% brand %}
     {% block nav %} {% endblock %}
   </header>
   {% block miniheader %} {% endblock %}
