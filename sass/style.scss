@@ -12,7 +12,7 @@
 
 section.root {
     background-color: $main-section-background;
-    padding-top: 4.5em;
+    padding-top: 6em;
 
     .container { max-width: none !important; }
 }
@@ -49,4 +49,21 @@ strong {
 h1, h2, h3, h4, h5, h6, p, ul {
     max-width: $preferred-text-width;
     margin: 1.6em auto;
+}
+
+h1, h1.title, h2 {
+    color: $header-text-color;
+    font-family: $header-font-family;
+    font-weight: 700;
+    letter-spacing: -1px;
+    font-size: 160%;
+}
+
+h3, h4, h5, h6 {
+    color: $header-text-color;
+    margin-top: 2em;
+    margin-bottom: 1em;
+    font-family: $header-font-family;
+    font-weight: 400;
+    font-size: 120%;
 }

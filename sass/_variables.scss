@@ -4,11 +4,14 @@ $dark-accent-background: #262933 !default;
 $text: black !default;
 $link: hsl(0, 0%, 20%) !default;
 $accent-text-color: $text !default;
+$header-text-color: lighten($dark-accent-background, 40%) !default;
 $scheme-main: white !default;
 
-$family-primary: serif !default;
 $body-font-size: 1.35em !default;
 $body-line-height: 1.9 !default;
 
-$preferred-text-width: 46rem !default;
+$preferred-text-width: 45rem !default;
 $first-paragraph-size: 120% !default;
+
+$family-primary: alegreya, serif !default;
+$header-font-family: skolar-sans-latin, sans-serif !default;
