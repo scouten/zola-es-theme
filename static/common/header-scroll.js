@@ -2,7 +2,7 @@ function headerScroll() {
     const distanceY = window.pageYOffset || document.documentElement.scrollTop;
     const miniHeader = document.getElementById('header');
     
-    if (distanceY > 180) {
+    if (distanceY > 200) {
         miniHeader.classList.add("show-title");
     } else {
         miniHeader.classList.remove("show-title");

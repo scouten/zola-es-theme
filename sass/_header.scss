@@ -1,8 +1,8 @@
 header {
-    background: linear-gradient( $dark-accent-background, 75%, $dark-accent-background, 90%, rgba(31, 26, 23, 0));
+    background: linear-gradient( $dark-accent-background, 70%, $dark-accent-background, 90%, rgba(31, 26, 23, 0));
     display: block;
     color: #ccc;
-    padding: .7em 1em .8em 1em;
+    height: 5em;
     overflow: hidden;
     width: 100%;
     z-index: 800;
@@ -10,8 +10,16 @@ header {
 	top: 0;
 	left: 0;
     
-    .full-name { display: inline; }
-    .short-name { display: none; }
+    .full-name, .short-name {
+        position: fixed;
+        overflow: hidden;
+        transition: opacity 0.5s;
+        top: .4em;
+        left: .6em;
+    }
+
+    .full-name { opacity: 100%; }
+    .short-name { opacity: 0; }
 
     .title {
         opacity: 0;
@@ -21,21 +29,17 @@ header {
         font-weight: normal;
         font-size: 70%;
 
-        a {
-            color: #807f79;
-        }
+        a { color: #807f79; }
     }
 }
 
 header.hide-name {
-    .full-name { display: none; }
-    .short-name { display: inline; }
+    .full-name { opacity: 0; }
+    .short-name { opacity: 100%; }
 }
 
 header.show-title {
-    .title {
-        opacity: 100%;
-    }
+    .title { opacity: 100%; }
 }
 
 .es-com {
@@ -60,21 +64,3 @@ header.show-title {
         .scouten { color: white; }
     }
 }
-
-// miniheader {
-//     .title {
-//         color: #807f79;
-//         font-weight: normal;
-
-//         a {
-//             color: #807f79;
-//             text-decoration: none;
-//         }
-
-//         a:hover {
-//             color: white;
-//             text-decoration: none;
-//         }
-//     }
-// }
-
