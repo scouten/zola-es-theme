@@ -12,3 +12,17 @@
         list-style: disc;
     }
 }
+
+#next_prev {
+    font-family: $header-font-family;
+    color: $header-text-color;
+
+    a {
+        color: $header-text-color;
+    }
+
+    a:hover {
+        color: $text;
+        text-decoration: underline;
+    }
+}
