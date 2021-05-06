@@ -85,6 +85,13 @@
     src="https://maps.googleapis.com/maps/api/js?key={{ get_env(name="GOOGLE_API_KEY", default="none") }}&callback=initMap&libraries=&v=weekly"
     async>
   </script>
+  {% if page.extra.route or page.extra.distance %}
+    <div class="map-caption">
+      {% if page.extra.route %}{{ page.extra.route }}{% endif %}
+      {% if page.extra.route and page.extra.distance %} – {% endif %}
+      {% if page.extra.distance %}{{ page.extra.distance }}{% endif %}
+    </div>
+  {% endif %}
   {% endif %}
 
   {% block next_prev %}

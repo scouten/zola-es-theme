@@ -39,6 +39,14 @@
     height: 60vh;
 }
 
+.map-caption {
+    margin-top: 0em;
+    text-align: center;
+    font-family: $header-font-family;
+    font-weight: 300;
+    font-size: 75%;
+}
+
 .gpx-marker img {
     max-width: 170px;
     max-height: 170px;
