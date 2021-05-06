@@ -14,6 +14,9 @@
               {{ page.extra.first_published_on }} on
             {% endif %}
             {{ page.date | date(format="%e %B %Y") }}
+            {% if page.extra.distance and page.extra.track %}
+              • <a href="#map">{{ page.extra.distance }} – see on map</a>
+            {% endif %}
           </li>
         {% endif %}
         {% if page.updated %}
@@ -78,6 +81,7 @@
       {% endif %}
     }
   </script>
+  <script
     src="https://maps.googleapis.com/maps/api/js?key={{ get_env(name="GOOGLE_API_KEY", default="none") }}&callback=initMap&libraries=&v=weekly"
     async>
   </script>
