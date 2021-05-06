@@ -46,7 +46,7 @@ strong {
     }
 }
 
-h1, h2, h3, h4, h5, h6, p, ul, #next_prev {
+h1, h2, h3, h4, h5, h6, p, ul, ol, #next_prev {
     max-width: $preferred-text-width;
     margin: 1.6em auto;
 }
