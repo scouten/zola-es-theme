@@ -55,10 +55,15 @@
       });
 
       map.setOptions('TERRAIN');
- 
+
       {% if page.extra.track %}
+      {% if config.base_url is starting_with("http://127.0.0.1:") %}
+      {% set track_url_host = "https://ericscouten." ~ config.extra.es_site %}
+      {% else %}
+      {% set track_url_host = config.base_url %}
+      {% endif %}
       var kmlLayer = new google.maps.KmlLayer({
-        url: '{{ current_url | safe }}{{ page.extra.track }}',
+        url: '{{track_url_host | safe }}{{ current_path | safe }}{{ page.extra.track }}',
         preserveViewport: true,
         map: map
       });
