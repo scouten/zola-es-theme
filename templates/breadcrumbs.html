@@ -1,0 +1,19 @@
+{% block breadcrumbs -%}
+  {% if page.components -%}
+    {% set_global bc_components = page.components -%}
+  {% elif section.components -%}
+    {% set_global bc_components = section.components -%}
+  {% else -%}
+    {% set_global bc_components = [] -%}
+  {% endif -%}
+  {% if bc_components | length > 1 -%}
+  <ul class="breadcrumbs">
+    {% set_global bc_slug = "" -%}
+    {% for parent in bc_components | slice(end=-1) -%}
+      {% set_global bc_slug = bc_slug ~ parent ~ "/" -%}
+      {% set bc_page = get_section(path = bc_slug ~ "_index.md") %}
+        <li><a href="{{ bc_page.permalink | safe }}">{{ bc_page.title }}</a>&nbsp; &gt;</li>
+        {% endfor -%}
+  </ul>
+  {% endif -%}
+{% endblock breadcrumbs -%}
