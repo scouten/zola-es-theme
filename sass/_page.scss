@@ -5,33 +5,38 @@
         font-size: $first-paragraph-size;
     }
 
-    ul {
-        margin: -1em auto;
-    }
-
     ul li {
         margin: .25em 0 .25em 1.5em;
         list-style: disc;
     }
 
-    ul.breadcrumbs {
-        list-style: none;
+    .breadcrumb {
         font-family: $header-font-family;
-        font-size: 80%;
-        
-        li {
-            margin: 0 .25em 0 0;
-            display: inline;
+        margin-bottom: 1em;
+
+        ul {
+            li {
+                margin: 0;
+
+                a { padding: 0 .4em; }
+            }
+
+            li:first-of-type {
+                padding-left: 0;
+
+                a { padding-left: 0; } 
+                .icon { margin: 0; }
+            }
         }
     }
 
     .title-assembly {
         margin-top: 0;
-        margin-bottom: 1.5em;
+        margin-bottom: 3em;
 
         h1.title {
-            margin-top: .25em;
-            margin-bottom: .75em;
+            margin-top: 0;
+            margin-bottom: .6em;
         }
 
         ul.page_meta {
