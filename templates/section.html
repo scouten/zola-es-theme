@@ -1,0 +1,51 @@
+{% extends "base.html" -%}
+
+{% block content -%}
+<div class="section">
+
+  <div class="title-assembly">
+    {% block breadcrumbs -%}
+    {% if section.components | length > 1 -%}
+    <ul class="breadcrumbs">
+      {% set_global bc_slug = "" -%}
+      {% for parent in section.components | slice(end=-1) -%}
+        {% set_global bc_slug = bc_slug ~ parent ~ "/" -%}
+        {% set bc_page = get_section(path = bc_slug ~ "_index.md") %}
+        <li><a href="{{ bc_page.permalink | safe }}">{{ bc_page.title }}</a>&nbsp; &gt;</li>
+      {% endfor -%}
+    </ul>
+    {% endif -%}
+    {% endblock breadcrumbs -%}
+    {% if section.title -%}
+      <h1 class="title">{{ section.title }}</h1>
+    {% endif -%}
+  </div>
+
+  {{ section.content | safe }}
+
+  <p><i>(TO DO: Add summary map option?)</i></p>
+
+  <p><i>(TO DO: Add links to subsections)</i></p>
+
+  <p><i>(TO DO: Add links to pages)</i></p>
+
+  {% block pages -%}
+  <ul class="pages">
+    {% for page in section.pages | reverse -%}
+      <li>
+        title = {{ page.title }} <br />
+        date = {{ page.date | date(format="%e %B %Y") }} <br />
+        link = {{ page.permalink }} <br />
+        summary = {{ page.summary | safe }}</br>
+      </li>
+      <pre>
+        {{ page | json_encode(pretty=true) | safe }}
+      </pre>
+    {% endfor -%}
+  </ul>
+  {% endblock pages -%}
+
+  <p><i>(TO DO: Add next/prev section links)</i></p>
+
+</div>
+{% endblock content -%}

@@ -14,10 +14,16 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous"></script>
   <script src="/common/header-scroll.js"></script>
 
+  {% if page.title -%}
+    {% set_global page_title = page.title -%}
+  {% elif section.title -%}
+    {% set_global page_title = section.title -%}
+  {% endif -%}
+
   <title>
-    {% if page.title %}
-      {{ page.title }} |
-    {% endif %}
+    {% if page_title -%}
+      {{ page_title }} |
+    {% endif -%}
     {{ config.title }}
   </title>
   <link rel="stylesheet" href="/style.css">
@@ -32,7 +38,7 @@
         <div class="full-name">
           <a href="https://ericscouten.com"><img src="/common/es-logo.png" width="48" height="48" alt="" />&thinsp;<span class="eric">eric</span> <span class="scouten">scouten.</span></a>&thinsp;{% if config.extra.es_site %}<a href="/">{{ config.extra.es_site }}</a>{% endif %}</div>
         <div class="short-name">
-          <a href="/"><img src="/common/es-logo.png" width="48" height="48" alt="" />{% if config.extra.es_site %}&thinsp;.{{ config.extra.es_site }}{% endif %}</a>{% if page.title %}<span class="title">&thinsp;> <a href="#top">{{ page.title }}</a></span>{% endif %}</div>
+          <a href="/"><img src="/common/es-logo.png" width="48" height="48" alt="" />{% if config.extra.es_site %}&thinsp;.{{ config.extra.es_site }}{% endif %}</a>{% if page_title %}<span class="title">&thinsp;> <a href="#top">{{ page_title }}</a></span>{% endif %}</div>
       </div>
     {% endblock brand %}
 
