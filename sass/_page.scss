@@ -1,4 +1,6 @@
 .page {
+    padding-top: 4em;
+
     p:first-of-type {
         font-size: $first-paragraph-size;
     }
@@ -12,11 +14,24 @@
         list-style: disc;
     }
 
+    ul.breadcrumbs {
+        list-style: none;
+        font-family: $header-font-family;
+        font-size: 80%;
+        
+        li {
+            margin: 0 .25em 0 0;
+            display: inline;
+        }
+    }
+
     .title-assembly {
+        margin-top: 0;
         margin-bottom: 1.5em;
 
         h1.title {
-            margin-bottom: 0;
+            margin-top: .25em;
+            margin-bottom: .75em;
         }
 
         ul.page_meta {
