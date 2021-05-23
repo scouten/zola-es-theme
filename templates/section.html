@@ -16,20 +16,34 @@
 
   <p><i>(TO DO: Add links to subsections)</i></p>
 
-  <p><i>(TO DO: Add links to pages)</i></p>
-
   {% block pages -%}
   <ul class="pages">
     {% for page in section.pages | reverse -%}
-      <li>
-        title = {{ page.title }} <br />
-        date = {{ page.date | date(format="%e %B %Y") }} <br />
-        link = {{ page.permalink }} <br />
-        summary = {{ page.summary | safe }}</br>
-      </li>
-      <pre>
-        {{ page | json_encode(pretty=true) | safe }}
-      </pre>
+      <div class="card">
+        <card-header class="card-header">
+          <card-header-title class="card-header-title">
+            <info class="card-header-meta">
+              <item class="title"><a href="{{ page.permalink | safe }}">{{ page.title }}</a></item>
+              <item class="date">{{ page.date | date(format="%e %B %Y") }}</item>
+            </info>
+          </card-header-title>
+        </card-header>
+        {% if page.extra.feature -%}
+        <div class="card-image">
+          <figure class="image is-16by9">
+            <a href="{{ page.permalink | safe }}">
+              <img src="{{ page.permalink | safe }}/cover-{{ page.extra.feature | safe}}.jpg" alt="{{ page.title }}" />
+            </a>
+          </figure>
+        </div>
+        {% endif -%}
+        <div class="card-content">
+          <div class="content">
+            {{ page.summary | safe }}
+            <p class="read-more"><a href="{{ page.permalink | safe }}">Read more &rarr;</a></p>
+          </div>
+        </div>
+      </div>
     {% endfor -%}
   </ul>
   {% endblock pages -%}
