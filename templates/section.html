@@ -18,7 +18,12 @@
 
   {% block pages -%}
   <ul class="pages">
-    {% for page in section.pages | reverse -%}
+    {% if section.extra.reverse -%}
+      {% set pages = section.pages | reverse -%}
+    {% else -%}
+      {% set pages = section.pages -%}
+    {% endif -%}
+    {% for page in pages -%}
       <div class="card">
         <card-header class="card-header">
           <card-header-title class="card-header-title">
