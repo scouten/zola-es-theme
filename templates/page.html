@@ -16,6 +16,7 @@
               {{ page.extra.first_published_on }} on
             {% endif %}
             {{ page.date | date(format="%e %B %Y") }}
+            {% if page.extra.by -%}by {{ page.extra.by }}{% endif -%}
             {% if page.extra.distance and page.extra.track %}
               • <a href="#map">{{ page.extra.distance }} (map)</a>
             {% endif %}
