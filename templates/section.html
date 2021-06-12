@@ -10,11 +10,30 @@
     {% endif -%}
   </div>
 
-  {{ section.content | safe }}
-
   {# TO DO: Add summary map option? #}
 
-  {# TO DO: Add links to subsections #}
+  {% block subsections -%}
+  {% if section.subsections | length > 0 -%}
+    <ul class="subsections">
+      {% set subs = [] -%}
+      {% for sub in section.subsections -%}
+        {% set sub = get_section(path = sub) -%}
+        {% set_global subs = subs | concat(with = sub) -%}
+      {% endfor -%}
+      {% set subs = subs | sort(attribute = "relative_path") -%}
+      {% for sub in subs -%}
+        <li class="subsection">
+          <a href="{{ sub.path }}">
+            <span class="sub-title">{{ sub.title }}</span>
+            <span class="tag is-rounded">{{ sub.pages | length }}</span>
+          </a>
+        </li>
+      {% endfor -%}
+    </ul>
+  {% endif -%}
+  {% endblock subsections -%}
+
+  {{ section.content | safe }}
 
   {% block pages -%}
   <ul class="pages">

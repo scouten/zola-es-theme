@@ -100,6 +100,23 @@
             text-align: right;
         }
     }
+
+    .subsections {
+        font-family: $header-font-family;
+        font-size: 75%;
+        list-style: none;
+    
+        li {
+            margin: 0 2em 0 0;
+            display: inline;
+            white-space: nowrap;
+
+            a:hover {
+                text-decoration: none;
+                color: black;
+            }
+        }
+    }
 }
 
 #map {
