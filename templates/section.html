@@ -44,6 +44,9 @@
     {% else -%}
       {% set pages = section.pages -%}
     {% endif -%}
+    {% if section.extra.limit -%}
+      {% set pages = pages | slice(end=section.extra.limit) -%}
+    {% endif -%}
     {% for page in pages -%}
       <div class="card">
         <card-header class="card-header">
