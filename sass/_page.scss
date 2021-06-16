@@ -55,9 +55,16 @@
 
     a { color: $header-text-color; }
 
-    .card {
-        margin: 4rem 0;
+    blockquote {
+        p {
+            border-left: 6px solid scale-color($header-text-color, $lightness: 50%);
+            padding-left: 1.5rem;
+        }
+
+        p:first-of-type { font-size: 1.35rem; }
     }
+
+    .card { margin: 4rem 0; }
 
     .card-header {
         font-family: $header-font-family;
