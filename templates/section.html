@@ -57,11 +57,11 @@
             </info>
           </card-header-title>
         </card-header>
-        {% if page.extra.feature -%}
+        {% if page.extra.cover -%}
         <div class="card-image">
           <figure class="image is-16by9">
             <a href="{{ page.permalink | safe }}">
-              <img src="{{ page.permalink | safe }}/cover-{{ page.extra.feature | safe}}.jpg" alt="{{ page.title }}" />
+              <img src="{{ page.permalink | safe }}/cover-{{ page.extra.cover | safe}}.jpg" alt="{{ page.title }}" />
             </a>
           </figure>
         </div>
