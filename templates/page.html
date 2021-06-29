@@ -12,8 +12,12 @@
       {% block page_meta %}
         {% if page.date %}
           <li>
-            {% if page.extra.first_published_on %}First published on
-              {{ page.extra.first_published_on }} on
+            {% if page.extra.first_published_on %}
+              First published on
+              {{ page.extra.first_published_on }}
+            {% endif %}
+            {% if page.extra.author %}
+              by {{ page.extra.author }} on
             {% endif %}
             {{ page.date | date(format="%e %B %Y") }}
             {% if page.extra.by -%}by {{ page.extra.by }}{% endif -%}
