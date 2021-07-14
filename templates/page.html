@@ -1,140 +1,136 @@
-{% extends "base.html" %}
+{% extends "base.html" -%}
 
-{% block content %}
+{% block content -%}
 <div class="page">
 
   <div class="title-assembly">
-    {% include "breadcrumbs.html" %}
-    {% if page.title %}
+    {% include "breadcrumbs.html" -%}
+    {% if page.title -%}
       <h1 class="title">{{ page.title }}</h1>
-    {% endif %}
+    {% endif -%}
     <ul class="page_meta">
-      {% block page_meta %}
-        {% if page.date %}
+      {% block page_meta -%}
+        {% if page.date -%}
           <li>
-            {% if page.extra.first_published_on %}
-              First published on
-              {{ page.extra.first_published_on }}
-            {% endif %}
-            {% if page.extra.author %}
-              by {{ page.extra.author }} on
-            {% endif %}
+            {% if page.extra.first_published_on -%}First published on {{ page.extra.first_published_on }}{% endif -%}
+            {% if page.extra.author %} by {{ page.extra.author }}{% endif -%}
+            {% if page.extra.first_published_on or page.extra.author %} on {% endif -%}
             {{ page.date | date(format="%e %B %Y") }}
-            {% if page.extra.by -%}by {{ page.extra.by }}{% endif -%}
+            {% if page.extra.by %}by {{ page.extra.by }}{% endif -%}
             {% if page.extra.distance and page.extra.track %}
               • <a href="#map">{{ page.extra.distance }} (map)</a>
-            {% endif %}
+            {% endif -%}
           </li>
-        {% endif %}
-        {% if page.updated %}
+        {% endif -%}
+        {% if page.updated -%}
           <li>Added to {{ config.title }} on {{ page.updated | date(format="%e %B %Y") }}</li>
-        {% endif %}
-      {% endblock page_meta %}
+        {% endif -%}
+      {% endblock page_meta -%}
     </ul>
   </div>
 
   {{ page.content | safe }}
 
-  {% if page.extra.markers or page.extra.track or page.extra.lat or page.extra.lon %}
+  {% if page.extra.markers or page.extra.track or page.extra.lat or page.extra.lon -%}
   <div id="map"></div>
 
-  {% if page.extra.markers %}
+  {% if page.extra.markers -%}
   <script src="/common/add-gps-markers.js"></script>
-  {% if config.extra.map_clustering %}
+  {% if config.extra.map_clustering -%}
   <script src="https://unpkg.com/@googlemaps/markerclustererplus/dist/index.min.js"></script>
-  {% endif %}
+  {% endif -%}
   <script src="{{ page.extra.markers }}"></script>
-  {% endif %}
+  {% endif -%}
   <script>
     let map;
 
     function initMap() {
       const map = new google.maps.Map(document.getElementById("map"), {
-        {% if not page.extra.bounds %}
-          {% if page.extra.zoom %}
+        {% if not page.extra.bounds -%}
+          {% if page.extra.zoom -%}
           zoom: {{ page.extra.zoom }},
-          {% else %}
+          {% else -%}
           zoom: 12,
-          {% endif %}
-        {% endif %}
-        {% if page.extra.lat and page.extra.lon %}
+          {% endif -%}
+        {% endif -%}
+        {% if page.extra.lat and page.extra.lon -%}
         center: { lat: {{ page.extra.lat }}, lng: {{ page.extra.lon }} },
-        {% endif %}
+        {% endif -%}
         mapTypeId: "terrain",
       });
 
       map.setOptions('TERRAIN');
 
-      {% if page.extra.bounds %}
+      {% if page.extra.bounds -%}
       const sw = new google.maps.LatLng({{ page.extra.bounds.sw[0] }}, {{ page.extra.bounds.sw[1] }});
       const ne = new google.maps.LatLng({{ page.extra.bounds.ne[0] }}, {{ page.extra.bounds.ne[1] }});
       const bounds = new google.maps.LatLngBounds(sw, ne);
       map.fitBounds(bounds);
-      {% endif %}
+      {% endif -%}
 
-      {% if page.extra.track %}
-      {% if config.base_url is starting_with("http://127.0.0.1:") %}
-      {% set track_url_host = "https://ericscouten." ~ config.extra.es_site %}
-      {% else %}
-      {% set track_url_host = config.base_url %}
-      {% endif %}
+      {% if page.extra.track -%}
+      {% if config.base_url is starting_with("http://127.0.0.1:") -%}
+      {% set track_url_host = "https://ericscouten." ~ config.extra.es_site -%}
+      {% else -%}
+      {% set track_url_host = config.base_url -%}
+      {% endif -%}
       var kmlLayer = new google.maps.KmlLayer({
         url: '{{track_url_host | safe }}{{ current_path | safe }}{{ page.extra.track }}',
         preserveViewport: true,
         map: map
       });
-      {% endif %}
-      {% if page.extra.markers %}
+      {% endif -%}
+      {% if page.extra.markers -%}
       markers = addGpxMarkers(map);
-      {% if config.extra.map_clustering %}
+      {% if config.extra.map_clustering -%}
       const markerCluster = new MarkerClusterer(map, markers,
         {
           imagePath: "{{ config.base_url | safe }}/common/m",
           maxZoom: 16,
         } );
-      {% endif %}
-      {% elif page.extra.lat and page.extra.lon %}
+      {% endif -%}
+      {% elif page.extra.lat and page.extra.lon -%}
       const marker = new google.maps.Marker({
         position: { lat: {{ page.extra.lat }}, lng: {{ page.extra.lon }} },
         map: map,
         preserveViewport: false,
       });
-      {% endif %}
+      {% endif -%}
     }
   </script>
   <script
     src="https://maps.googleapis.com/maps/api/js?key={{ get_env(name="GOOGLE_API_KEY", default="none") }}&callback=initMap&libraries=&v=weekly"
     async>
   </script>
-  {% if page.extra.route or page.extra.distance %}
+  {% if page.extra.route or page.extra.distance -%}
     <div class="map-caption">
-      {% if page.extra.route %}{{ page.extra.route }}{% endif %}
-      {% if page.extra.route and page.extra.distance %} – {% endif %}
-      {% if page.extra.distance %}{{ page.extra.distance }}{% endif %}
-      {% if page.extra.markers %}
+      {% if page.extra.route -%}{{ page.extra.route }}{% endif -%}
+      {% if page.extra.route and page.extra.distance -%} – {% endif -%}
+      {% if page.extra.distance -%}{{ page.extra.distance }}{% endif -%}
+      {% if page.extra.markers -%}
       <br/>
       (Mouse over or tap on the markers to see the photos there.)
-      {% endif %}
+      {% endif -%}
     </div>
-  {% endif %}
-  {% endif %}
+  {% endif -%}
+  {% endif -%}
 
-  {% block next_prev %}
+  {% block next_prev -%}
     <div id="next_prev">
-      {% if page.earlier %}
+      {% if page.earlier -%}
       <div id="prev">
         &lt; <a href="{{ page.earlier.permalink | safe }}">{{ page.earlier.title }}</a>
       </div>
-      {% endif %}
-      {% if page.earlier and page.later %}
+      {% endif -%}
+      {% if page.earlier and page.later -%}
       <div id="divider"></div>
-      {% endif %}
-      {% if page.later %}
+      {% endif -%}
+      {% if page.later -%}
       <div id="next">
         <a href="{{ page.later.permalink | safe }}">{{ page.later.title }}</a> &gt;
       </div>
-      {% endif %}
+      {% endif -%}
     </div>
-  {% endblock next_prev %}
+  {% endblock next_prev -%}
 </div>
-{% endblock content %}
+{% endblock content -%}
