@@ -31,6 +31,14 @@ function addGpxMarker(map, id, lat, lon) {
     const marker = new google.maps.Marker({
         position: { lat: lat, lng: lon },
         map,
+        icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 7,
+            fillOpacity: 1,
+            strokeWeight: 2,
+            fillColor: '#36b3b3',
+            strokeColor: '#ffffff',
+        },
         title: "{{id}}",
     });
 
