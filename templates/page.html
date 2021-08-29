@@ -69,13 +69,12 @@
       {% endif -%}
 
       {% if page.extra.track -%}
-      {% if config.base_url is starting_with("http://127.0.0.1:") -%}
-      {% set track_url_host = "https://ericscouten." ~ config.extra.es_site -%}
-      {% else -%}
-      {% set track_url_host = config.base_url -%}
-      {% endif -%}
       var kmlLayer = new google.maps.KmlLayer({
-        url: '{{track_url_host | safe }}{{ current_path | safe }}{{ page.extra.track }}',
+        {% if config.extra.kml_folder -%}
+        url: '{{config.base_url | safe }}/kml/{{ page.extra.track }}',
+        {% else -%}
+        url: '{{config.base_url | safe }}{{ current_path | safe }}{{ page.extra.track }}',
+        {% endif -%}
         preserveViewport: true,
         map: map
       });
