@@ -78,6 +78,10 @@
         preserveViewport: true,
         map: map
       });
+      google.maps.event.addListener(kmlLayer, 'status_changed', function(evt) {
+        console.log("KML layer status: " + kmlLayer.getStatus());
+      });
+
       {% endif -%}
       {% if page.extra.markers -%}
       markers = addGpxMarkers(map);
