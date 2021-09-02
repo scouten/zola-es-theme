@@ -6,7 +6,7 @@
         <span class="caption-title">{{ title }} </span>
         {% if caption %} &middot; {% endif %}
       {% endif %}
-      {{ caption }}
+      {% if caption %}{{ caption }}{% endif %}
     </div>
   {% endif %}
 </div>
