@@ -1,0 +1,47 @@
+{% extends "base.html" -%}
+
+{% block content -%}
+<div class="taxonomy-term">
+
+<pre>
+taxonomy =
+{{ taxonomy | json_encode() | safe }}
+
+term =
+{{ term | json_encode() | safe }}
+</pre>
+
+  <div class="title-assembly">
+    <p>(what to use for breadcrumbs?)</p>
+    {# include "breadcrumbs.html" #}
+    {% if title -%}
+      <h1 class="title">{{ title }}</h1>
+    {% endif -%}
+  </div>
+
+  {% block subsections -%}
+  {% if subsections -%}
+    <ul class="subsections">
+      {% set subs = [] -%}
+      {% for sub in subsections -%}
+        {% set sub = get_section(path = sub) -%}
+        {% set_global subs = subs | concat(with = sub) -%}
+      {% endfor -%}
+      {% set subs = subs | sort(attribute = "relative_path") -%}
+      {% for sub in subs -%}
+        <li class="subsection">
+          <a href="{{ sub.path }}">
+            <span class="sub-title">{{ sub.title }}</span>
+            <span class="tag is-rounded">{{ sub.pages | length }}</span>
+          </a>
+        </li>
+      {% endfor -%}
+    </ul>
+  {% endif -%}
+  {% endblock subsections -%}
+
+  {% block intro_text -%}
+  {% endblock intro_text -%}
+
+</div>
+{% endblock content -%}

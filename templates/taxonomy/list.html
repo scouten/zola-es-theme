@@ -1,0 +1,61 @@
+{% extends "base.html" -%}
+
+{% block content -%}
+<div class="taxonomy-list">
+
+  <pre>
+taxonomy =
+{{ taxonomy | json_encode() | safe }}
+</pre>
+  
+  <div class="title-assembly">
+    <p>(what to use for breadcrumbs?)</p>
+    {# include "breadcrumbs.html" #}
+    {% if title -%}
+      <h1 class="title">{{ title }}</h1>
+    {% endif -%}
+  </div>
+
+  {% block subsections -%}
+  {% if subsections -%}
+    <ul class="subsections">
+      {% set subs = [] -%}
+      {% for sub in subsections -%}
+        {% set sub = get_section(path = sub) -%}
+        {% set_global subs = subs | concat(with = sub) -%}
+      {% endfor -%}
+      {% set subs = subs | sort(attribute = "relative_path") -%}
+      {% for sub in subs -%}
+        <li class="subsection">
+          <a href="{{ sub.path }}">
+            <span class="sub-title">{{ sub.title }}</span>
+            <span class="tag is-rounded">{{ sub.pages | length }}</span>
+          </a>
+        </li>
+      {% endfor -%}
+    </ul>
+  {% endif -%}
+  {% endblock subsections -%}
+
+  {% block intro_text -%}
+  {% endblock intro_text -%}
+
+  {% block terms -%}
+  <ul class="terms">
+    {# set terms = taxonomy.terms -#}
+    {% for term in terms -%}
+      <div class="card">
+        <card-header class="card-header">
+          <card-header-title class="card-header-title">
+            <info class="card-header-meta">
+              <item class="title"><a href="{{ term.permalink | safe }}">{{ term.name }}</a></item>
+              <!-- maybe include count, too? -->
+            </info>
+          </card-header-title>
+        </card-header>
+      </div>
+    {% endfor -%}
+  </ul>
+  {% endblock terms -%}
+</div>
+{% endblock content -%}
