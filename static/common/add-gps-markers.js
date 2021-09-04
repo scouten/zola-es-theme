@@ -52,3 +52,41 @@ function addGpxMarker(map, id, lat, lon) {
 
     return marker;
 }
+
+function addParkMarker(map, seq, name, slug, lat, lon, cover) {
+    const contentString =
+        '<div class="park-marker">' +
+        '<span class="seq">' + seq + '</span>. ' +
+        '<span class="name">' + name + '</span></a>' +
+        '<a href="https://146parks.blog/parks/' + slug + '"><img src="https://146parks.blog/parks/' + slug + "/cover-" + cover + '.jpg" alt=""></a>' +
+        '</div>';
+
+    const infoWindow = new google.maps.InfoWindow({
+        content: contentString,
+        maxWidth: 200,
+    });
+
+    const marker = new google.maps.Marker({
+        position: { lat: lat, lng: lon },
+        map,
+        icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 7,
+            fillOpacity: 1,
+            strokeWeight: 2,
+            fillColor: '#352d28',
+            strokeColor: '#ffffff',
+        },
+        title: "{{id}}",
+    });
+
+    marker.addListener("click", () => {
+        openInfoWindow(map, infoWindow, marker);
+    });
+    
+    marker.addListener("mouseover", () => {
+        openInfoWindow(map, infoWindow, marker);
+    });
+
+    return marker;
+}

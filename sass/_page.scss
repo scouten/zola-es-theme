@@ -145,6 +145,15 @@
     max-height: 170px;
 }
 
+.park-marker {
+    color: black;
+
+    img { max-width: 170px; max-height: 170px; }
+    a { color: black; }
+    a:hover { text-decoration: none; }
+}
+
+
 #next_prev {
     font-family: $header-font-family;
     color: $header-text-color;
