@@ -58,7 +58,7 @@ function addParkMarker(map, seq, name, slug, lat, lon, cover) {
         '<div class="park-marker">' +
         '<span class="seq">' + seq + '</span>. ' +
         '<span class="name">' + name + '</span></a>' +
-        '<a href="https://146parks.blog/parks/' + slug + '"><img src="https://146parks.blog/parks/' + slug + "/cover-" + cover + '.jpg" alt=""></a>' +
+        '<a href="https://146parks.blog/' + slug + '"><img src="https://146parks.blog/' + slug + "/cover-" + cover + '.jpg" alt=""></a>' +
         '</div>';
 
     const infoWindow = new google.maps.InfoWindow({
