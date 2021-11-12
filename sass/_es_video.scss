@@ -1,4 +1,4 @@
-.es_video {
+.es_vimeo {
     padding: 1.5vw 0;
     margin: 0 auto !important;
     max-width: 80vw;
@@ -22,7 +22,12 @@
     }
 
     .caption {
-        margin-top: -.8em;
+        .caption-title {
+            font-style: normal;
+            font-weight: bold;
+        }
+
+        margin-top: -.3em;
         font-style: italic;
         font-size: 80%;
     }
