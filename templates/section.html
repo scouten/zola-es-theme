@@ -5,9 +5,7 @@
 
   <div class="title-assembly">
     {% include "breadcrumbs.html" %}
-    {% if section.title -%}
-      <h1 class="title">{{ section.title }}</h1>
-    {% endif -%}
+    {% include "title.html" %}
   </div>
 
   {# TO DO: Add summary map option? #}
