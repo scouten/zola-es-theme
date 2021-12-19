@@ -10,6 +10,8 @@
 
   {# TO DO: Add summary map option? #}
 
+  {{ section.content | safe }}
+
   {% block subsections -%}
   {% if section.subsections | length > 0 -%}
     <ul class="subsections">
@@ -30,8 +32,6 @@
     </ul>
   {% endif -%}
   {% endblock subsections -%}
-
-  {{ section.content | safe }}
 
   {% block pages -%}
   <ul class="pages">
