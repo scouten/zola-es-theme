@@ -133,6 +133,12 @@
     }
 }
 
+.es-dark-mode ul.page_meta {
+    opacity: 50%;
+
+    a { color: #aaa; }
+}
+
 #map {
     margin-top: 3em;
     height: 60vh;
