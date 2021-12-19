@@ -36,7 +36,7 @@
   {% block extraheaders %} {% endblock %}
 </head>
 
-<body>
+<body{% if config.extra.is_dark %} class="es-dark-mode"{% endif %}>
   <header id="header">
     {% block brand %}
       <div class="es-com">

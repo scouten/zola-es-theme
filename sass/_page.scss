@@ -138,12 +138,34 @@
     height: 60vh;
 }
 
+.map-dark-mode {
+    button[style] {
+        background-color: $main-section-background !important;
+
+        &[aria-checked="true"] {
+            color: #999999 !important;
+        }
+
+        &[aria-label="Keyboard shortcuts"] {
+            display: none !important;
+        }
+    }
+
+    .gm-svpc {
+        display: none !important;
+    }
+}
+
 .map-caption {
     margin-top: 0em;
     text-align: center;
     font-family: $header-font-family;
     font-weight: 300;
     font-size: 75%;
+}
+
+.es-dark-mode .map-caption {
+    color: #999;
 }
 
 .gpx-marker img {
