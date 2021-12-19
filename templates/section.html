@@ -50,6 +50,18 @@
         <card-header class="card-header">
           <card-header-title class="card-header-title">
             <info class="card-header-meta">
+              {% if page.components | length > 2 -%}
+              <nav class="breadcrumb has-succeeds-separator" aria-label="breadcrumbs">
+                <ul>
+                  {% set_global bc_slug = "" -%}
+                  {% for parent in page.components | slice(end=-1) -%}
+                    {% set_global bc_slug = bc_slug ~ parent ~ "/" -%}
+                    {% set bc_page = get_section(path = bc_slug ~ "_index.md") %}
+                      <li><a href="{{ bc_page.permalink | safe }}">{{ bc_page.title }}</a></li>
+                  {% endfor -%}
+                </ul>
+              </nav>
+              {% endif -%}
               <item class="title"><a href="{{ page.permalink | safe }}">{{ page.title }}</a></item>
               <item class="date">{{ page.date | date(format="%e %B %Y") }}</item>
             </info>

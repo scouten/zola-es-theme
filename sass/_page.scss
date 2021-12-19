@@ -77,6 +77,13 @@
         .card-header-title {
             display: block;
 
+            .breadcrumb {
+                line-height: 1em;
+
+                ul { margin: 0; }
+                a:hover { color: white; }
+            }
+
             item { display: block; }
 
             .title {
