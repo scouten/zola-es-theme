@@ -23,7 +23,7 @@
         <li class="subsection">
           <a href="{{ sub.path }}">
             <span class="sub-title">{{ sub.title }}</span>
-            <span class="tag is-rounded">{{ sub.pages | length }}</span>
+            <span class="tag is-rounded{% if config.extra.is_dark %} is-dark{% endif %}">{{ sub.pages | length }}</span>
           </a>
         </li>
       {% endfor -%}
