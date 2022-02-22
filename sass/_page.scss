@@ -1,4 +1,4 @@
-.page, .section {
+.page, .section, .taxonomy {
     padding-top: 4em;
 
     p:first-of-type {
@@ -138,6 +138,12 @@
             }
         }
     }
+}
+
+.tag {
+    font-family: $header-font-family;
+    font-weight: 300;
+    background-color: blue;
 }
 
 .es-dark-mode ul.page_meta {

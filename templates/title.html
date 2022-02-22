@@ -10,7 +10,11 @@
     {% set_global title = term.name -%}
     {% set_global show_home = false -%}
   {% elif taxonomy -%}
-    {% set_global title = taxonomy.name -%}
+    {% if config.extra.taxonomies[taxonomy.name].title -%}
+      {% set_global title = config.extra.taxonomies[taxonomy.name].title -%}
+    {% else -%}
+      {% set_global title = taxonomy.name -%}
+    {% endif -%}
     {% set_global show_home = true -%}
   {% else -%}
     {% set_global title = false -%}
