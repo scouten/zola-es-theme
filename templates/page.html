@@ -7,7 +7,7 @@
     {% include "breadcrumbs.html" -%}
     {% include "title.html" %}
 
-    {% set fpo = page | get(key="taxonomies", default=[]) | get(key="first_published_on", default=[]) -%}
+    {% set fpo = page | get(key="taxonomies", default=[]) | get(key="first_published_on", default=[]) | sort -%}
     
     <ul class="page_meta">
       {% block page_meta -%}
@@ -15,14 +15,10 @@
           <li>
             {% if fpo | length > 0 -%}
               First published on
-              {% set fpo_terms = get_taxonomy(kind="first_published_on") | get(key="items", default=[]) | sort(attribute="slug") %}
-
-              {% for site in fpo_terms -%}
-                {% if site.name in fpo -%}
-                  <a href="{{site.path | safe}}">{{ site.name | safe }}
-                    <span class="tag is-rounded{% if config.extra.is_dark %} is-dark{% endif %}">{{ site.pages | length }}</span>
-                  </a>
-                {% endif -%}
+              {% for site in fpo -%}
+                {% set es_tax = "first_published_on" -%}
+                {% set es_term = site -%}
+                {% include "tag.html" %}
               {% endfor -%}
             {% endif -%}
             {% if page.extra.author %} by {{ page.extra.author }}{% endif -%}

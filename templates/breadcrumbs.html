@@ -17,7 +17,7 @@
       {% for parent in components | slice(end=-1) -%}
         {% set_global bc_slug = bc_slug ~ parent ~ "/" -%}
         {% if term -%}
-          <li><a href="/{{ taxonomy.name | safe }}">{{ taxonomy.name }}</a></li>
+          <li><a href="/{{ taxonomy.name | slugify }}">{{ taxonomy.name }}</a></li>
         {% else -%}
           {% set bc_page = get_section(path = bc_slug ~ "_index.md") -%}
           <li><a href="{{ bc_page.permalink | safe }}">{{ bc_page.title }}</a></li>
