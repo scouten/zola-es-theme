@@ -1,0 +1,58 @@
+{% extends "base.html" -%}
+
+{% block content -%}
+<div class="section">
+
+  <div class="title-assembly">
+    {% include "breadcrumbs.html" %}
+    {% include "title.html" %}
+  </div>
+
+  <!-- TODO: add support for per-term content: {x term.content | safe x} -->
+
+  {% block pages -%}
+  <ul class="pages">
+    {% for page in term.pages | sort(attribute = "updated") | reverse -%}
+      <div class="card">
+        <card-header class="card-header">
+          <card-header-title class="card-header-title">
+            <info class="card-header-meta">
+              {% if page.components | length > 2 -%}
+              <nav class="breadcrumb has-succeeds-separator" aria-label="breadcrumbs">
+                <ul>
+                  {% set_global bc_slug = "" -%}
+                  {% for parent in page.components | slice(end=-1) -%}
+                    {% set_global bc_slug = bc_slug ~ parent ~ "/" -%}
+                    {% set bc_page = get_section(path = bc_slug ~ "_index.md") %}
+                      <li><a href="{{ bc_page.permalink | safe }}">{{ bc_page.title }}</a></li>
+                  {% endfor -%}
+                </ul>
+              </nav>
+              {% endif -%}
+              <item class="title"><a href="{{ page.permalink | safe }}">{{ page.title }}</a></item>
+              <item class="date">{{ page.date | date(format="%e %B %Y") }}</item>
+            </info>
+          </card-header-title>
+        </card-header>
+        {% if page.extra.cover -%}
+        <div class="card-image">
+          <figure class="image is-16by9">
+            <a href="{{ page.permalink | safe }}">
+              <img src="{{ page.permalink | safe }}/cover-{{ page.extra.cover | safe}}.jpg" alt="{{ page.title }}" />
+            </a>
+          </figure>
+        </div>
+        {% endif -%}
+        <div class="card-content">
+          <div class="content">
+            {{ page.summary | safe }}
+            <div class="read-more"><a href="{{ page.permalink | safe }}">Read more &rarr;</a></div>
+          </div>
+        </div>
+      </div>
+    {% endfor -%}
+  </ul>
+  {% endblock pages -%}
+
+</div>
+{% endblock content -%}

@@ -1,19 +1,31 @@
 {% block title -%}
+
   {% if page -%}
-    {% set_global pos = page -%}
-  {% elif section -%}
-    {% set_global pos = section -%}
+    {% set_global title = page.title -%}
+    {% set_global show_home = false -%}
+  {% elif section and section.path != "/" -%}
+    {% set_global title = section.title -%}
+    {% set_global show_home = section.components | length() > 2 -%}
+  {% elif term -%}
+    {% set_global title = term.name -%}
+    {% set_global show_home = false -%}
+  {% elif taxonomy -%}
+    {% set_global title = taxonomy.name -%}
+    {% set_global show_home = true -%}
+  {% else -%}
+    {% set_global title = false -%}
+    {% set_global show_home = false -%}
   {% endif -%}
 
-  {% if pos.title -%}
+  {% if title -%}
   <h1 class="title">
 
-    {% if pos.components | length == 1 -%}
+    {% if show_home -%}
     <span class="top-section-home">
     <span class="icon is-small"><a href="/"><i class="fas fa-home" aria-hidden="true"></i></a></span>
     &nbsp;&nbsp;&#8827;</span>
     {% endif -%}
 
-    {{ pos.title }}</h1>
+    {{ title }}</h1>
   {% endif -%}
 {% endblock title -%}

@@ -1,0 +1,30 @@
+{% extends "base.html" -%}
+
+{% block content -%}
+<div class="taxonomy">
+
+  <div class="title-assembly">
+    {% include "breadcrumbs.html" %}
+    {% include "title.html" %}
+  </div>
+
+  <!-- TODO: add support for per-taxonomy content: {x taxonomy.content | safe x} -->
+
+  {% block terms -%}
+  {% if terms | length > 0 -%}
+    <ul class="terms">
+      {% set sorted_terms = terms | sort(attribute = "slug") -%}
+        
+      {% for term in sorted_terms -%}
+        <li class="term">
+          <a href="{{ term.path }}">
+            <span class="term-name">{{ term.name }}</span>
+            <span class="tag is-rounded{% if config.extra.is_dark %} is-dark{% endif %}">{{ term.pages | length }}</span>
+          </a>
+        </li>
+      {% endfor -%}
+    </ul>
+  {% endif -%}
+  {% endblock terms -%}
+</div>
+{% endblock content -%}

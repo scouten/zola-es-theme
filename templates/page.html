@@ -6,13 +6,27 @@
   <div class="title-assembly">
     {% include "breadcrumbs.html" -%}
     {% include "title.html" %}
+
+    {% set fpo = page | get(key="taxonomies", default=[]) | get(key="first_published_on", default=[]) -%}
+    
     <ul class="page_meta">
       {% block page_meta -%}
         {% if page.date -%}
           <li>
-            {% if page.extra.first_published_on -%}First published on {{ page.extra.first_published_on }}{% endif -%}
+            {% if fpo | length > 0 -%}
+              First published on
+              {% set fpo_terms = get_taxonomy(kind="first_published_on") | get(key="items", default=[]) | sort(attribute="slug") %}
+
+              {% for site in fpo_terms -%}
+                {% if site.name in fpo -%}
+                  <a href="{{site.path | safe}}">{{ site.name | safe }}
+                    <span class="tag is-rounded{% if config.extra.is_dark %} is-dark{% endif %}">{{ site.pages | length }}</span>
+                  </a>
+                {% endif -%}
+              {% endfor -%}
+            {% endif -%}
             {% if page.extra.author %} by {{ page.extra.author }}{% endif -%}
-            {% if page.extra.first_published_on or page.extra.author %} on {% endif -%}
+            {% if fpo | length > 0 -%} on {% endif -%}
             {{ page.date | date(format="%e %B %Y") }}
             {% if page.extra.by %}by {{ page.extra.by }}{% endif -%}
             {% if page.extra.distance and page.extra.track %}
