@@ -21,8 +21,8 @@
                 {% include "tag.html" %}
               {% endfor -%}
             {% endif -%}
-            {% if page.extra.author %} by {{ page.extra.author }}{% endif -%}
-            {% if fpo | length > 0 -%} on {% endif -%}
+            {% if page.extra.author %} by {{ page.extra.author }} {% endif -%}
+            {% if fpo | length > 0 or page.extra.author -%} on {% endif -%}
             {{ page.date | date(format="%e %B %Y") }}
             {% if page.extra.by %}by {{ page.extra.by }}{% endif -%}
             {% if page.extra.distance and page.extra.track %}
