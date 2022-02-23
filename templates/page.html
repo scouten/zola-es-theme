@@ -7,6 +7,12 @@
     {% include "breadcrumbs.html" -%}
     {% include "title.html" %}
 
+    {% if config.extra.taxonomies.author.require -%}
+      {% if page | get(key="taxonomies", default=[]) | get(key="author", default=[]) | length != 1 -%}
+        {{ throw(message="Must be exactly one author entry in taxonomies") }}
+      {% endif -%}
+    {% endif -%}
+      
     {% set fpo = page | get(key="taxonomies", default=[]) | get(key="first_published_on", default=[]) | sort -%}
 
     {% set author = page | get(key="taxonomies", default=[]) | get(key="author", default=[]) | sort | first -%}
