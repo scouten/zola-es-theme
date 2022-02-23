@@ -8,7 +8,9 @@
     {% include "title.html" %}
 
     {% set fpo = page | get(key="taxonomies", default=[]) | get(key="first_published_on", default=[]) | sort -%}
-    
+
+    {% set author = page | get(key="taxonomies", default=[]) | get(key="author", default=[]) | sort | first -%}
+
     <ul class="page_meta">
       {% block page_meta -%}
         {% if page.date -%}
@@ -18,13 +20,18 @@
               {% for site in fpo -%}
                 {% set es_tax = "first_published_on" -%}
                 {% set es_term = site -%}
-                {% include "tag.html" %}
+                {% include "tag.html" -%}
               {% endfor -%}
             {% endif -%}
-            {% if page.extra.author %} by {{ page.extra.author }} {% endif -%}
-            {% if fpo | length > 0 or page.extra.author -%} on {% endif -%}
+            {% if author -%} by
+              {% set es_tax = "author" -%}
+              {% set es_term = author -%}
+              {% include "tag.html" -%}
+            {% elif page.extra.author -%}
+              by {{ page.extra.author }}
+            {% endif -%}
+            {% if fpo | length > 0 or author or page.extra.author -%} on {% endif -%}
             {{ page.date | date(format="%e %B %Y") }}
-            {% if page.extra.by %}by {{ page.extra.by }}{% endif -%}
             {% if page.extra.distance and page.extra.track %}
               • <a href="#map">{{ page.extra.distance }} (map)</a>
             {% endif -%}
