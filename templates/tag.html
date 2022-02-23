@@ -1,7 +1,6 @@
 {% set this_term = get_taxonomy(kind=es_tax) | get(key="items", default=[]) | filter(attribute="name", value=es_term) | first %}
 
 {% if this_term -%}
-<a href="{{this_term.path | safe}}">{{ this_term.name | safe }}
-    <span class="tag is-rounded{% if config.extra.is_dark %} is-dark{% endif %}">{{ this_term.pages | length }}</span>
-</a>
+<a href="{{this_term.path | safe}}">{{ this_term.name | safe }}</a>
+<span class="tag is-rounded{% if config.extra.is_dark %} is-dark{% endif %}">{{ this_term.pages | length }}</span>
 {% endif -%}
