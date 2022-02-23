@@ -8,7 +8,9 @@
     {% include "title.html" %}
   </div>
 
-  <!-- TODO: add support for per-taxonomy content: {x taxonomy.content | safe x} -->
+  {% if config.extra.taxonomies[taxonomy.name].content -%}
+  {{ config.extra.taxonomies[taxonomy.name].content | safe }}
+  {% endif -%}
 
   {% block terms -%}
   {% if terms | length > 0 -%}
