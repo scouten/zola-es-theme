@@ -58,6 +58,10 @@ h1, h2, h3, h4, h5, h6, .title {
     margin: 2em auto 1.4em;
 }
 
+h1.title {
+    color: $title-accent-color;
+}
+
 h1, h1.title, h2 {
     font-weight: 700;
     letter-spacing: -1px;
