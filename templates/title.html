@@ -31,5 +31,16 @@
     {% endif -%}
 
     {{ title }}</h1>
+
+    {% if page and page.date -%}
+      <p class="page-date">
+        <span class="date">
+          {{ page.date | date(format="%e %B %Y") }}
+        </span>
+        {% if page.extra.distance and page.extra.track %}
+          • <a href="#map">{{ page.extra.distance }} (map)</a>
+        {% endif -%}
+      </p>
+    {% endif -%}
   {% endif -%}
 {% endblock title -%}

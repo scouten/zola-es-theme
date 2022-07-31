@@ -5,6 +5,14 @@
         font-size: $first-paragraph-size;
     }
 
+    .page-date {
+        font-family: $header-font-family;
+        font-size: 81% !important;
+        font-weight: bold;
+        margin-top: -1.2em;
+        margin-bottom: 2em;
+    }
+
     ul li {
         margin: .25em 0 .25em 1.5em;
         list-style: disc;
@@ -39,8 +47,9 @@
         margin-bottom: 3em;
 
         h1.title {
+            line-height: 100%;
             margin-top: 0;
-            margin-bottom: .6em;
+            margin-bottom: .5em;
 
             .top-section-home {
                 font-size: 35%;
