@@ -14,7 +14,7 @@
     {% endif -%}
 
     {% set fpo = page | get(key="taxonomies", default=[]) | get(key="first_published_on", default=[]) | sort -%}
-    {% set fpo2 = page.extra.first_published_on -%}
+    {% set fpo2 = page | get(key="extra", default=[])| get(key="first_published_on", default=false) -%}
 
     {% set author = page | get(key="taxonomies", default=[]) | get(key="author", default=[]) | sort | first -%}
 
@@ -231,7 +231,7 @@
   {% endif -%}
   {% endif -%}
 
-  {% include "endmark.html" %}
+  {% include "endmark.html" -%}
 
   {% block next_prev -%}
     <div id="next_prev">
