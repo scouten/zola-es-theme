@@ -1,4 +1,4 @@
-{% set this_term = get_term(kind=es_tax, term=es_term, include_pages=false) %}
+{% set this_term = get_taxonomy_term(kind=es_tax, term=es_term, include_pages=false) %}
 
 {% if this_term -%}
 <a href="{{this_term.path | safe}}">{{ this_term.name | safe }}</a>
