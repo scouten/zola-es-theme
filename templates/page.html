@@ -12,36 +12,35 @@
         {{ throw(message="Must be exactly one author entry in taxonomies") }}
       {% endif -%}
     {% endif -%}
-      
+
     {% set fpo = page | get(key="taxonomies", default=[]) | get(key="first_published_on", default=[]) | sort -%}
+    {% set fpo2 = page | get(key="extra", default=[])| get(key="first_published_on", default=false) -%}
 
     {% set author = page | get(key="taxonomies", default=[]) | get(key="author", default=[]) | sort | first -%}
 
     <ul class="page_meta">
       {% block page_meta -%}
-        {% if page.date -%}
-          <li>
-            {% if fpo | length > 0 -%}
-              First published on
-              {% for site in fpo -%}
-                {% set es_tax = "first_published_on" -%}
-                {% set es_term = site -%}
-                {% include "tag.html" -%}
-              {% endfor -%}
-            {% endif -%}
-            {% if author -%} by
-              {% set es_tax = "author" -%}
-              {% set es_term = author -%}
+        {% if fpo or fpo2 or author or page.extra.author -%}
+        <li>
+          {% if fpo | length > 0 -%}
+            First published on
+            {% for site in fpo -%}
+              {% set es_tax = "first_published_on" -%}
+              {% set es_term = site -%}
               {% include "tag.html" -%}
-            {% elif page.extra.author -%}
-              by {{ page.extra.author }}
-            {% endif -%}
-            {% if fpo | length > 0 or author or page.extra.author -%} on {% endif -%}
-            {{ page.date | date(format="%e %B %Y") }}
-            {% if page.extra.distance and page.extra.track %}
-              • <a href="#map">{{ page.extra.distance }} (map)</a>
-            {% endif -%}
-          </li>
+            {% endfor -%}
+          {% endif -%}
+          {% if fpo2 -%}
+            First published on {{ fpo2 }}
+          {% endif -%}
+          {% if author -%} by
+            {% set es_tax = "author" -%}
+            {% set es_term = author -%}
+            {% include "tag.html" -%}
+          {% elif page.extra.author -%}
+            by {{ page.extra.author }}
+          {% endif -%}
+        </li>
         {% endif -%}
         {% if page.updated -%}
           <li>Added to {{ config.title }} on {{ page.updated | date(format="%e %B %Y") }}</li>
@@ -232,19 +231,21 @@
   {% endif -%}
   {% endif -%}
 
+  {% include "endmark.html" -%}
+
   {% block next_prev -%}
     <div id="next_prev">
-      {% if page.earlier -%}
+      {% if page.lower -%}
       <div id="prev">
-        &lt; <a href="{{ page.earlier.permalink | safe }}">{{ page.earlier.title }}</a>
+        &lt; <a href="{{ page.lower.permalink | safe }}">{{ page.lower.title }}</a>
       </div>
       {% endif -%}
-      {% if page.earlier and page.later -%}
+      {% if page.lower and page.higher -%}
       <div id="divider"></div>
       {% endif -%}
-      {% if page.later -%}
+      {% if page.higher -%}
       <div id="next">
-        <a href="{{ page.later.permalink | safe }}">{{ page.later.title }}</a> &gt;
+        <a href="{{ page.higher.permalink | safe }}">{{ page.higher.title }}</a> &gt;
       </div>
       {% endif -%}
     </div>
