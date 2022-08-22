@@ -161,10 +161,11 @@
             max-width: 24rem;
 
             .es-endmark-img {
-                background: #fff;
+                background: $main-section-background;
                 text-align: center;
                 margin: 0 auto;
                 width: 104px;
+                line-height: 1;
 
                 img {
                     height: 54px;

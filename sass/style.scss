@@ -63,6 +63,10 @@ h1.title {
     color: $title-accent-color;
 }
 
+.es-dark-mode h1.title {
+    color: #ddd;
+}
+
 h1, h1.title, h2 {
     font-weight: 700;
     letter-spacing: -1px;
