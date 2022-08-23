@@ -45,6 +45,8 @@
         {% if page.updated -%}
           <li>Added to {{ config.title }} on {{ page.updated | date(format="%e %B %Y") }}</li>
         {% endif -%}
+        {% block page_meta_extra -%}
+        {% endblock page_meta_extra -%}
       {% endblock page_meta -%}
     </ul>
   </div>

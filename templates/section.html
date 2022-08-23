@@ -46,6 +46,7 @@
       {% set pages = pages | slice(end=section.extra.limit) -%}
     {% endif -%}
     {% for page in pages -%}
+      {% if not page.extra.hide_from_section -%}
       <div class="card">
         <card-header class="card-header">
           <card-header-title class="card-header-title">
@@ -83,6 +84,7 @@
           </div>
         </div>
       </div>
+      {% endif -%}
     {% endfor -%}
   </ul>
   {% endblock pages -%}

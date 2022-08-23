@@ -11,8 +11,9 @@
   <!-- TODO: add support for per-term content: {x term.content | safe x} -->
 
   {% block pages -%}
+  {% set sort_by = config.extra.taxonomies[taxonomy.name] | get(key = "sort", default = "updated") -%}
   <ul class="pages">
-    {% for page in term.pages | sort(attribute = "updated") | reverse -%}
+    {% for page in term.pages | sort(attribute = sort_by) | reverse -%}
       <div class="card">
         <card-header class="card-header">
           <card-header-title class="card-header-title">
