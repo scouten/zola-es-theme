@@ -236,6 +236,7 @@
   {% include "endmark.html" -%}
 
   {% block next_prev -%}
+    {% if not page.extra.hide_from_section -%}
     <div id="next_prev">
       {% if page.lower -%}
       <div id="prev">
@@ -251,6 +252,7 @@
       </div>
       {% endif -%}
     </div>
+    {% endif -%}
   {% endblock next_prev -%}
 </div>
 {% endblock content -%}

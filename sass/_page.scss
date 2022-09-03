@@ -147,7 +147,8 @@
 
             a:hover {
                 text-decoration: none;
-                color: black;
+
+                .sub-title { text-decoration: underline; }
             }
         }
     }
@@ -176,16 +177,27 @@
     }
 }
 
+.es-dark-mode {
+    .breadcrumb, .page_meta {
+        a:hover {
+            color: white;
+            opacity: 100%;
+            text-decoration: none;
+        }
+    }
+}
+
 .tag {
     font-family: $header-font-family;
     font-weight: 300;
     background-color: blue;
+
+    a:hover { text-decoration: none; }
 }
 
 .es-dark-mode ul.page_meta {
-    opacity: 50%;
-
     a { color: #aaa; }
+    a:hover { text-decoration: underline };
 }
 
 #map {
@@ -240,12 +252,12 @@
     font-family: $header-font-family;
     color: $header-text-color;
 
-    a {
-        color: $header-text-color;
-    }
+    a { color: $header-text-color; }
+}
 
+.es-dark-mode #next_prev {
     a:hover {
-        color: $text;
-        text-decoration: underline;
+        color: white;
+        text-decoration: none;
     }
 }
