@@ -1,4 +1,5 @@
 {% extends "base.html" -%}
+{% import "es_macros.html" as es_macros -%}
 
 {% block content -%}
 <div class="page">
@@ -25,18 +26,14 @@
           {% if fpo | length > 0 -%}
             First published on
             {% for site in fpo -%}
-              {% set es_tax = "first_published_on" -%}
-              {% set es_term = site -%}
-              {% include "tag.html" -%}
+              {{ es_macros::tag(tax = "first_published_on", term = site) }}
             {% endfor -%}
           {% endif -%}
           {% if fpo2 -%}
             First published on {{ fpo2 }}
           {% endif -%}
           {% if author -%} by
-            {% set es_tax = "author" -%}
-            {% set es_term = author -%}
-            {% include "tag.html" -%}
+            {{ es_macros::tag(tax = "author", term = author) }}
           {% elif page.extra.author -%}
             by {{ page.extra.author }}
           {% endif -%}
