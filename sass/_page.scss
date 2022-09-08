@@ -263,10 +263,13 @@
     }
 }
 
-#discourse-comments {
+#es-discourse {
     margin: 3em auto;
     max-width: $preferred-text-width;
     background-color: #eee;
     border-radius: 1em;
-    padding: .6em 1em;
+    padding: 1em 1em;
+
+    h2 { margin-top: 0.2em; }
+    p:first-of-type { font-size: 100%; }
 }

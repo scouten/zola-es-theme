@@ -1,16 +1,19 @@
 {% if page.extra.comments -%}
-<div class="es-discourse">
+<div id="es-discourse">
+  <h2>Discussion</h2>
+  <p><strong>Work in progress (September 2022):</strong> I welcome discussion about this post on my community site. Comments posted there will appear here.</p>
   {% if config.base_url is containing("127.0.0.1") or config.base_url is containing("netlify") -%}
   <div id ="discourse-comments">
-    Comments disabled since this is not the primary deployment.
+    <em>Comments disabled since this is not the primary deployment.</em>
   </div>
   {% else -%}
   <div id="discourse-comments"></div>
 
   <script type="text/javascript">
     DiscourseEmbed = { discourseUrl: 'https://community.ericscouten.com/',
-                       discourseEmbedUrl: '{{ page.permalink | safe }}',
-                       title: "Hello?", };
+                       // discourseEmbedUrl: 'https://ericscouten.dev/{{ page.path | safe }}',
+                       discourseEmbedUrl: '{{ page.permalink | safe }}'
+                     };
   
     (function() {
       var d = document.createElement('script'); d.type = 'text/javascript'; d.async = true;
