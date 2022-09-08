@@ -253,6 +253,7 @@
     color: $header-text-color;
 
     a { color: $header-text-color; }
+    #next { text-align: right; }
 }
 
 .es-dark-mode #next_prev {
