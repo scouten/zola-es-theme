@@ -13,7 +13,7 @@
 
   <script type="text/javascript">
     DiscourseEmbed = { discourseUrl: 'https://community.ericscouten.com/',
-                       discourseEmbedUrl: '{{ page.permalink }}' };
+                       discourseEmbedUrl: '{{ page.permalink | safe }}' };
   
     (function() {
       var d = document.createElement('script'); d.type = 'text/javascript'; d.async = true;
