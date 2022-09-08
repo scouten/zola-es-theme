@@ -48,7 +48,9 @@
     </ul>
   </div>
 
+  <div id="es-content">
   {{ page.content | safe }}
+  </div>
 
   {% if page.extra.markers or page.extra.track or page.extra.lat or page.extra.lon -%}
   <div id="map"{% if config.extra.is_dark %} class="map-dark-mode"{% endif %}></div>
@@ -251,5 +253,7 @@
     </div>
     {% endif -%}
   {% endblock next_prev -%}
+
+  {% include "comments.html" -%}
 </div>
 {% endblock content -%}

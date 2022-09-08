@@ -262,3 +262,11 @@
         text-decoration: none;
     }
 }
+
+#discourse-comments {
+    margin: 3em auto;
+    max-width: $preferred-text-width;
+    background-color: #eee;
+    border-radius: 1em;
+    padding: .6em 1em;
+}

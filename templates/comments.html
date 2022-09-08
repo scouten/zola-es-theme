@@ -1,0 +1,26 @@
+{% if page.extra.comments -%}
+<div class="es-discourse">
+  {% if config.base_url is containing("127.0.0.1") or config.base_url is containing("netlify") -%}
+  <div id ="discourse-comments">
+    Comments disabled since this is not the primary deployment.
+  </div>
+  {% else -%}
+  <div id="discourse-comments">
+  permalink = {{ page.permalink }} <br />
+  path = {{ page.path }} <br />
+  config.base_url = {{ config.base_url }}
+  </div>
+
+  <script type="text/javascript">
+    DiscourseEmbed = { discourseUrl: 'https://community.ericscouten.com/',
+                       discourseEmbedUrl: '{{ page.permalink }}' };
+  
+    (function() {
+      var d = document.createElement('script'); d.type = 'text/javascript'; d.async = true;
+      d.src = DiscourseEmbed.discourseUrl + 'javascripts/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(d);
+    })();
+  </script>
+  {% endif -%}
+</div>
+{% endif -%}
