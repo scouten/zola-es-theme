@@ -272,4 +272,18 @@
 
     h2 { margin-top: 0.2em; }
     p:first-of-type { font-size: 100%; }
+
+    .discourse-invite { margin-top: -1em; }
+
+    .discourse-invite, #discourse-comments-disabled {
+        font-family: $header-font-family;
+        font-size: 80%;
+        margin-bottom: 2em;
+    }
+
+    #discourse-comments-disabled {
+        font-style: italic;
+        margin-top: -0.5em;
+        margin-bottom: 0;
+    }
 }

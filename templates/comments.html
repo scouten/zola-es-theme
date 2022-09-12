@@ -1,13 +1,13 @@
 {% if page.extra.comments -%}
 <div id="es-discourse">
   <h2>Discussion</h2>
-  <p><strong>Work in progress (September 2022):</strong> I welcome discussion about this post on my community site. Comments posted there will appear here.</p>
+  <div class="discourse-invite"><strong>New (September 2022):</strong> I welcome your comments or questions about this post on my New <a href="https://community.ericscouten.com">community site</a>. Comments posted there will appear here.</div>
   {% if config.base_url is containing("127.0.0.1") or config.base_url is containing("netlify") -%}
-  <div id ="discourse-comments">
-    <em>Comments disabled since this is not the primary deployment.</em>
+  <div id ="discourse-comments-disabled">
+    Comments disabled since this is not the primary deployment.
   </div>
   {% else -%}
-  <div id="discourse-comments"></div>
+  <div id="discourse-comments-disabled"></div>
 
   <script type="text/javascript">
     DiscourseEmbed = { discourseUrl: 'https://community.ericscouten.com/',
