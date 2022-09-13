@@ -89,6 +89,9 @@
 
     .card-header-title {
       display: block;
+      color: black;
+
+      a { color: black; }
 
       .breadcrumb {
         line-height: 1em;
@@ -106,7 +109,6 @@
       }
 
       .date {
-        color: $header-text-color;
         opacity: 80%;
         font-weight: 400;
         font-size: 70%;
