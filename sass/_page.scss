@@ -1,289 +1,275 @@
 .page, .section, .taxonomy {
-    padding-top: 4em;
+  padding-top: 4em;
+
+  p:first-of-type {
+    font-size: $first-paragraph-size;
+  }
+
+  .page-date {
+    font-family: $header-font-family;
+    font-size: 81% !important;
+    font-weight: bold;
+    margin-top: -1.2em;
+    margin-bottom: 2em;
+  }
+
+  ul li {
+    margin: .25em 0 .25em 1.5em;
+    list-style: disc;
 
     p:first-of-type {
-        font-size: $first-paragraph-size;
+      font-size: 100%;
+    }
+  }
+
+  .breadcrumb {
+    font-family: $header-font-family;
+    margin-bottom: 1em;
+
+    ul {
+      li {
+        margin: 0;
+
+        a { padding: 0 .4em; }
+      }
+
+      li:first-of-type {
+        padding-left: 0;
+
+        a { padding-left: 0; } 
+       .icon { margin: 0; }
+      }
+    }
+  }
+
+  .title-assembly {
+    margin-top: 0;
+    margin-bottom: 3em;
+
+    h1.title {
+      line-height: 100%;
+      margin-top: 0;
+      margin-bottom: .5em;
+
+      .top-section-home {
+        font-size: 35%;
+      }
     }
 
-    .page-date {
-        font-family: $header-font-family;
-        font-size: 81% !important;
-        font-weight: bold;
-        margin-top: -1.2em;
-        margin-bottom: 2em;
-    }
+    ul.page_meta {
+      margin: 3em auto;
+      max-width: $preferred-text-width;
+      font-family: $header-font-family;
+      font-size: 80%;
 
-    ul li {
-        margin: .25em 0 .25em 1.5em;
-        list-style: disc;
-
-        p:first-of-type {
-            font-size: 100%;
-        }
-    }
-
-    .breadcrumb {
-        font-family: $header-font-family;
-        margin-bottom: 1em;
-
-        ul {
-            li {
-                margin: 0;
-
-                a { padding: 0 .4em; }
-            }
-
-            li:first-of-type {
-                padding-left: 0;
-
-                a { padding-left: 0; } 
-                .icon { margin: 0; }
-            }
-        }
-    }
-
-    .title-assembly {
-        margin-top: 0;
-        margin-bottom: 3em;
-
-        h1.title {
-            line-height: 100%;
-            margin-top: 0;
-            margin-bottom: .5em;
-
-            .top-section-home {
-                font-size: 35%;
-            }
-        }
-
-        ul.page_meta {
-            margin: 3em auto;
-            max-width: $preferred-text-width;
-            font-family: $header-font-family;
-            font-size: 80%;
-
-            li {
-                list-style: none;
-                margin: .25em 0;
-                line-height: 1.1em;
-            }
-        }
-    }
-
-    a { color: $header-text-color; }
-
-    blockquote {
-        p {
-            border-left: 6px solid scale-color($header-text-color, $lightness: 50%);
-            padding-left: 1.5rem;
-        }
-
-        p:first-of-type { font-size: 1.35rem; }
-    }
-
-    .card { margin: 4rem 0; }
-
-    .card-header {
-        font-family: $header-font-family;
-        padding-bottom: .5em;
-
-        .card-header-title {
-            display: block;
-
-            .breadcrumb {
-                line-height: 1em;
-
-                ul { margin: 0; }
-                a:hover { color: white; }
-            }
-
-            item { display: block; }
-
-            .title {
-                font-size: 120%;
-                font-weight: 700;
-                margin: .25rem 0;
-            }
-
-            .date {
-                color: $header-text-color;
-                opacity: 80%;
-                font-weight: 400;
-                font-size: 70%;
-                line-height: 1.0;
-            }
-        }
-    }
-
-    .card-content {
-        font-size: 1.25rem;
-
-        .content {
-            margin: -2rem 0;
-        }
-
-        p:first-of-type {
-            font-size: 1.25rem !important;
-        }
-
-        .read-more {
-            margin-top: 1rem;
-            margin-bottom: 1rem;
-            font-family: $header-font-family;
-            font-size: 80%;
-            text-align: right;
-        }
-    }
-
-    .subsections {
-        font-family: $header-font-family;
-        font-size: 75%;
+      li {
         list-style: none;
+        margin: .25em 0;
+        line-height: 1.1em;
+      }
+    }
+  }
+
+  a { color: $header-text-color; }
+
+  blockquote {
+    p {
+      border-left: 6px solid scale-color($header-text-color, $lightness: 50%);
+      padding-left: 1.5rem;
+    }
+
+    p:first-of-type { font-size: 1.35rem; }
+  }
+
+  .card { margin: 4rem 0; }
+
+  .card-header {
+    font-family: $header-font-family;
+    padding-bottom: .5em;
+
+    .card-header-title {
+      display: block;
+
+      .breadcrumb {
+        line-height: 1em;
+
+        ul { margin: 0; }
+        a:hover { color: white; }
+      }
+
+      item { display: block; }
+
+      .title {
+        font-size: 120%;
+        font-weight: 700;
+        margin: .25rem 0;
+      }
+
+      .date {
+        color: $header-text-color;
+        opacity: 80%;
+        font-weight: 400;
+        font-size: 70%;
+        line-height: 1.0;
+      }
+    }
+  }
+
+  .card-content {
+    font-size: 1.25rem;
+
+    .content { margin: -2rem 0; }
+    p:first-of-type { font-size: 1.25rem !important; }
+
+    .read-more {
+      margin-top: 1rem;
+      margin-bottom: 1rem;
+      font-family: $header-font-family;
+      font-size: 80%;
+      text-align: right;
+    }
+  }
+
+  .subsections {
+    font-family: $header-font-family;
+    font-size: 75%;
+    list-style: none;
     
-        li {
-            margin: 0 2em 0 0;
-            display: inline;
-            white-space: nowrap;
+    li {
+      margin: 0 2em 0 0;
+      display: inline;
+      white-space: nowrap;
 
-            a:hover {
-                text-decoration: none;
+      a:hover {
+        text-decoration: none;
 
-                .sub-title { text-decoration: underline; }
-            }
-        }
+        .sub-title { text-decoration: underline; }
+      }
     }
+  }
 
-    .es-endmark {
-        .es-endmark-inner {
-            background-image: url('/common/endmark-background.png');
-            background-repeat: repeat-x;
-            background-position: center center;
-            margin: 4rem auto;
-            max-width: 24rem;
+  .es-endmark {
+    .es-endmark-inner {
+      background-image: url('/common/endmark-background.png');
+      background-repeat: repeat-x;
+      background-position: center center;
+      margin: 4rem auto;
+      max-width: 24rem;
 
-            .es-endmark-img {
-                background: $main-section-background;
-                text-align: center;
-                margin: 0 auto;
-                width: 104px;
-                line-height: 1;
+      .es-endmark-img {
+        background: $main-section-background;
+        text-align: center;
+        margin: 0 auto;
+        width: 104px;
+        line-height: 1;
 
-                img {
-                    height: 54px;
-                    width: 54px;
-                }
-            }
+        img {
+          height: 54px;
+          width: 54px;
         }
+      }
     }
+  }
 }
 
 .es-dark-mode {
-    .breadcrumb, .page_meta {
-        a:hover {
-            color: white;
-            opacity: 100%;
-            text-decoration: none;
-        }
+  .breadcrumb, .page_meta {
+    a:hover {
+      color: white;
+      opacity: 100%;
+      text-decoration: none;
     }
+  }
 }
 
 .tag {
-    font-family: $header-font-family;
-    font-weight: 300;
-    background-color: blue;
+  font-family: $header-font-family;
+  font-weight: 300;
+  background-color: blue;
 
-    a:hover { text-decoration: none; }
+  a:hover { text-decoration: none; }
 }
 
 .es-dark-mode ul.page_meta {
-    a { color: #aaa; }
-    a:hover { text-decoration: underline };
+  a { color: #aaa; }
+  a:hover { text-decoration: underline };
 }
 
 #map {
-    margin-top: 3em;
-    height: 60vh;
+  margin-top: 3em;
+  height: 60vh;
 }
 
 .map-dark-mode {
-    button[style] {
-        background-color: $main-section-background !important;
+  button[style] {
+    background-color: $main-section-background !important;
 
-        &[aria-checked="true"] {
-            color: #999999 !important;
-        }
+    &[aria-checked="true"] { color: #999999 !important; }
+    &[aria-label="Keyboard shortcuts"] { display: none !important;  }
+  }
 
-        &[aria-label="Keyboard shortcuts"] {
-            display: none !important;
-        }
-    }
-
-    .gm-svpc {
-        display: none !important;
-    }
+  .gm-svpc { display: none !important; }
 }
 
 .map-caption {
-    margin-top: 0em;
-    text-align: center;
-    font-family: $header-font-family;
-    font-weight: 300;
-    font-size: 75%;
+  margin-top: 0em;
+  text-align: center;
+  font-family: $header-font-family;
+  font-weight: 300;
+  font-size: 75%;
 }
 
-.es-dark-mode .map-caption {
-    color: #999;
-}
+.es-dark-mode .map-caption { color: #999; }
 
 .gpx-marker img {
-    max-width: 170px;
-    max-height: 170px;
+  max-width: 170px;
+  max-height: 170px;
 }
 
 .park-marker {
-    color: black;
+  color: black;
 
-    img { max-width: 170px; max-height: 170px; }
-    a { color: black; }
-    a:hover { text-decoration: none; }
+  img { max-width: 170px; max-height: 170px; }
+  a { color: black; }
+  a:hover { text-decoration: none; }
 }
 
 #next_prev {
-    font-family: $header-font-family;
-    color: $header-text-color;
+  font-family: $header-font-family;
+  color: $header-text-color;
 
-    a { color: $header-text-color; }
-    #next { text-align: right; }
+  a { color: $header-text-color; }
+  #next { text-align: right; }
 }
 
 .es-dark-mode #next_prev {
-    a:hover {
-        color: white;
-        text-decoration: none;
-    }
+  a:hover {
+    color: white;
+    text-decoration: none;
+  }
 }
 
 #es-discourse {
-    margin: 3em auto;
-    max-width: $preferred-text-width;
-    background-color: #eee;
-    border-radius: 1em;
-    padding: 1em 1em;
+  margin: 3em auto;
+  max-width: $preferred-text-width;
+  background-color: #eee;
+  border-radius: 1em;
+  padding: 1em 1em;
 
-    h2 { margin-top: 0.2em; }
-    p:first-of-type { font-size: 100%; }
+  h2 { margin-top: 0.2em; }
+  p:first-of-type { font-size: 100%; }
 
-    .discourse-invite { margin-top: -1em; }
+  .discourse-invite { margin-top: -1em; }
 
-    .discourse-invite, #discourse-comments-disabled {
-        font-family: $header-font-family;
-        font-size: 80%;
-        margin-bottom: 2em;
-    }
+  .discourse-invite, #discourse-comments-disabled {
+    font-family: $header-font-family;
+    font-size: 80%;
+    margin-bottom: 2em;
+  }
 
-    #discourse-comments-disabled {
-        font-style: italic;
-        margin-top: -0.5em;
-        margin-bottom: 0;
-    }
+  #discourse-comments-disabled {
+    font-style: italic;
+    margin-top: -0.5em;
+    margin-bottom: 0;
+  }
 }
