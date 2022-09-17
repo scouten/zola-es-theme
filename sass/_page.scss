@@ -175,6 +175,15 @@
 }
 
 .es-dark-mode {
+  .card-header {
+    .card-header-title {
+      color: #ccc;
+
+      a { color: #ccc; }
+      a:hover { color: white; }
+    }
+  }
+
   .breadcrumb, .page_meta {
     a:hover {
       color: white;
