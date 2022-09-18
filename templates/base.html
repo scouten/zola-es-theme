@@ -12,7 +12,16 @@
   <link rel="alternate" type="application/rss+xml" title="RSS" href="{{ get_url(path='rss.xml', trailing_slash=false) | safe }}">
   {% endblock -%}
   {% if page.extra.cover -%}
-    <meta property="og:image" content="{{ page.permalink | safe }}cover-{{ page.extra.cover | safe}}.jpg" />
+  <meta property="og:image" content="{{ page.permalink | safe }}cover-{{ page.extra.cover | safe}}.jpg" />
+  {% endif -%}
+  {% if page.summary -%}
+    {% set_global summary = page.summary | striptags | trim -%}
+  {% elif page.content -%}
+    {% set_global summary = page.content | striptags | trim -%}
+  {% endif -%}
+  {% if summary -%}
+  <meta property="og:description" content="{{ summary }}">
+  <meta name="twitter:description" content="{{ summary }}">
   {% endif -%}
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous"></script>
@@ -24,17 +33,11 @@
     {% set_global page_title = section.title -%}
   {% endif -%}
 
-  <title>
-    {% if page_title -%}
-      {{ page_title }}
-    {% else -%}
-      {{ config.title }}
-    {% endif -%}
-  </title>
+  <title>{% if page_title -%}{{ page_title }}{% else -%}{{ config.title }}{% endif -%}</title>
   <link rel="stylesheet" href="/style.css">
   <script src="https://kit.fontawesome.com/{{ get_env(name="FONT_AWESOME_API_KEY", default="none") }}.js" crossorigin="anonymous"></script>
 
-  {% block extraheaders %} {% endblock %}
+  {% block extraheaders -%} {% endblock -%}
 </head>
 
 <body{% if config.extra.is_dark %} class="es-dark-mode"{% endif %}>
@@ -52,6 +55,10 @@
   </header>
 
   {% block miniheader %}{% endblock %}
+
+  <pre>
+page = {{ page | json_encode(pretty=true) | safe }}
+  </pre>
 
   <section class="section root">
     <div class="container">
