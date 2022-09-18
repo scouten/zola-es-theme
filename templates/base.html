@@ -56,10 +56,6 @@
 
   {% block miniheader %}{% endblock %}
 
-  <pre>
-page = {{ page | json_encode(pretty=true) | safe }}
-  </pre>
-
   <section class="section root">
     <div class="container">
       {% block content %} {% endblock %}
