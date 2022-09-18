@@ -11,29 +11,49 @@
   {% block rss -%}
   <link rel="alternate" type="application/rss+xml" title="RSS" href="{{ get_url(path='rss.xml', trailing_slash=false) | safe }}">
   {% endblock -%}
-  {% if page.extra.cover -%}
-  <meta property="og:image" content="{{ page.permalink | safe }}cover-{{ page.extra.cover | safe}}.jpg" />
-  {% endif -%}
-  {% if page.summary -%}
-    {% set_global summary = page.summary | striptags | trim -%}
-  {% elif page.content -%}
-    {% set_global summary = page.content | striptags | trim -%}
-  {% endif -%}
-  {% if summary -%}
-  <meta property="og:description" content="{{ summary }}">
-  <meta name="twitter:description" content="{{ summary }}">
-  {% endif -%}
+  
+  {%- if page -%}
+    {%- set_global pos = page -%}
+  {%- elif section -%}
+    {%- set_global pos = section -%}
+  {%- endif -%}
+  {%- if pos.title -%}
+    {%- set_global pos_title = pos.title -%}
+  {%- else -%}
+    {%- set_global pos_title = config.title -%}
+  {%- endif -%}
+  {%- if pos.summary -%}
+    {%- set_global pos_description = pos.summary | striptags | trim -%}
+  {%- elif pos.content -%}
+    {%- set_global pos_description = pos.content | striptags | trim -%}
+  {%- endif -%}
+  {%- if pos.extra.cover -%}
+    {%- set_global pos_image = pos.permalink ~ "cover-" ~ pos.extra.cover ~ ".jpg" -%}
+  {%- endif -%}
+
+  <title>{{ pos_title }}</title>
+  <meta name="twitter:title" content="{{ pos_title }}">
+  <meta property="og:title" content="{{ pos_title }}">
+  {%- if pos -%}
+  <meta property="og:url" content="{{ pos.permalink | safe }}">
+  <meta property="twitter:url" content="{{ pos.permalink | safe }}">
+  {%- endif -%}
+  {%- if pos_description -%}
+  <meta name="description" content="{{ pos_description }}">
+  <meta property="og:description" content="{{ pos_description }}">
+  <meta name="twitter:description" content="{{ pos_description }}">
+  {%- endif -%}
+  {%- if pos_image -%}
+  <meta property="og:image" content="{{ pos_image | safe }}" />
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="{{ pos_image | safe }}">
+  {%- endif -%}
+  <meta property="og:type" content="website">
+  <meta property="twitter:domain" content="{{ config.base_url | safe }}">
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous"></script>
   <script src="/common/header-scroll.js"></script>
 
-  {% if page.title -%}
-    {% set_global page_title = page.title -%}
-  {% elif section.title -%}
-    {% set_global page_title = section.title -%}
-  {% endif -%}
-
-  <title>{% if page_title -%}{{ page_title }}{% else -%}{{ config.title }}{% endif -%}</title>
   <link rel="stylesheet" href="/style.css">
   <script src="https://kit.fontawesome.com/{{ get_env(name="FONT_AWESOME_API_KEY", default="none") }}.js" crossorigin="anonymous"></script>
 
