@@ -1,35 +1,35 @@
-{% block breadcrumbs -%}
-  {% if page -%}
-    {% set_global components = page.components -%}
-  {% elif section -%}
-    {% set_global components = section.components -%}
-  {% elif term -%}
-    {% set_global components = [taxonomy.name, "x"] -%}
-  {% else -%}
-    {% set_global components = [] -%}
-  {% endif -%}
+{%- block breadcrumbs -%}
+  {%- if page -%}
+    {%- set_global components = page.components -%}
+  {%- elif section -%}
+    {%- set_global components = section.components -%}
+  {%- elif term -%}
+    {%- set_global components = [taxonomy.name, "x"] -%}
+  {%- else -%}
+    {%- set_global components = [] -%}
+  {%- endif -%}
 
-  {% if components | length > 1 -%}
+  {%- if components | length > 1 -%}
   <nav class="breadcrumb has-succeeds-separator" aria-label="breadcrumbs">
     <ul>
-      {% set_global bc_slug = "" -%}
+      {%- set_global bc_slug = "" -%}
       <li><a href="/"><span class="icon is-small"><i class="fas fa-home" aria-hidden="true"></i></span></a>&#8203;</li>
-      {% for parent in components | slice(end=-1) -%}
-        {% set_global bc_slug = bc_slug ~ parent ~ "/" -%}
-        {% if term -%}
-          {% if config.extra.taxonomies[taxonomy.name].title -%}
+      {%- for parent in components | slice(end=-1) -%}
+        {%- set_global bc_slug = bc_slug ~ parent ~ "/" -%}
+        {%- if term -%}
+          {%- if config.extra.taxonomies[taxonomy.name].title -%}
             <li>
               <a href="/{{ taxonomy.name | slugify }}">{{ config.extra.taxonomies[taxonomy.name].title }}</a>
             </li>
-          {% else -%}
+          {%- else -%}
             <li><a href="/{{ taxonomy.name | slugify }}">{{ taxonomy.name }}</a></li>
-          {% endif -%}
-        {% else -%}
-          {% set bc_page = get_section(path = bc_slug ~ "_index.md") -%}
+          {%- endif -%}
+        {%- else -%}
+          {%- set bc_page = get_section(path = bc_slug ~ "_index.md") -%}
           <li><a href="{{ bc_page.permalink | safe }}">{{ bc_page.title }}</a></li>
-        {% endif -%}
-      {% endfor -%}
+        {%- endif -%}
+      {%- endfor -%}
     </ul>
   </nav>
-  {% endif -%}
-{% endblock breadcrumbs -%}
+  {%- endif -%}
+{%- endblock breadcrumbs -%}

@@ -1,32 +1,32 @@
-{% extends "base.html" -%}
+{%- extends "base.html" -%}
 
-{% block content -%}
+{%- block content -%}
 <div class="taxonomy">
 
   <div class="title-assembly">
-    {% include "breadcrumbs.html" %}
-    {% include "title.html" %}
+    {%- include "breadcrumbs.html" %}
+    {%- include "title.html" %}
   </div>
 
-  {% if config.extra.taxonomies[taxonomy.name].content -%}
+  {%- if config.extra.taxonomies[taxonomy.name].content -%}
   {{ config.extra.taxonomies[taxonomy.name].content | safe }}
-  {% endif -%}
+  {%- endif -%}
 
-  {% block terms -%}
-  {% if terms | length > 0 -%}
+  {%- block terms -%}
+  {%- if terms | length > 0 -%}
     <ul class="terms">
-      {% set sorted_terms = terms | sort(attribute = "slug") -%}
+      {%- set sorted_terms = terms | sort(attribute = "slug") -%}
         
-      {% for term in sorted_terms -%}
+      {%- for term in sorted_terms -%}
         <li class="term">
           <a href="{{ term.path }}">
             <span class="term-name">{{ term.name }}</span>
-            <span class="tag is-rounded{% if config.extra.is_dark %} is-dark{% endif %}">{{ term.pages | length }}</span>
+            <span class="tag is-rounded{%- if config.extra.is_dark %} is-dark{%- endif %}">{{ term.pages | length }}</span>
           </a>
         </li>
-      {% endfor -%}
+      {%- endfor -%}
     </ul>
-  {% endif -%}
-  {% endblock terms -%}
+  {%- endif -%}
+  {%- endblock terms -%}
 </div>
-{% endblock content -%}
+{%- endblock content -%}

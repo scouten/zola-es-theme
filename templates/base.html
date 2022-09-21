@@ -2,15 +2,14 @@
 <html lang="en"
       xmlns="http://www.w3.org/1999/xhtml"
       xmlns:fb="http://ogp.me/ns/fb#">
-
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=0">
 
-  {% block favicon -%} {% endblock -%}
-  {% block rss -%}
+  {%- block favicon -%}{%- endblock -%}
+  {%- block rss -%}
   <link rel="alternate" type="application/rss+xml" title="RSS" href="{{ get_url(path='rss.xml', trailing_slash=false) | safe }}">
-  {% endblock -%}
+  {%- endblock -%}
   
   {%- if page -%}
     {%- set_global pos = page -%}
@@ -56,37 +55,34 @@
 
   <link rel="stylesheet" href="/style.css">
   <script src="https://kit.fontawesome.com/{{ get_env(name="FONT_AWESOME_API_KEY", default="none") }}.js" crossorigin="anonymous"></script>
-
-  {% block extraheaders -%} {% endblock -%}
+  {%- block extraheaders -%}{%- endblock -%}
 </head>
 
-<body{% if config.extra.is_dark %} class="es-dark-mode"{% endif %}>
+<body{%- if config.extra.is_dark %} class="es-dark-mode"{%- endif %}>
   <header id="header">
-    {% block brand %}
-      <div class="es-com">
-        <div class="full-name">
-          <a href="https://ericscouten.com"><img src="/common/es-logo.png" width="48" height="48" alt="" />&thinsp;<span class="eric">eric</span> <span class="scouten">scouten.</span></a>&thinsp;{% if config.extra.es_site %}<a href="/">{{ config.extra.es_site }}</a>{% endif %}</div>
-        <div class="short-name">
-          <a href="/"><img src="/common/es-logo.png" width="48" height="48" alt="" />{% if config.extra.es_site %}&thinsp;.{{ config.extra.es_site }}{% endif %}</a>{% if page_title %}<span class="title">&thinsp;> <a href="#top">{{ page_title }}</a></span>{% endif %}</div>
-      </div>
-    {% endblock brand %}
-
-    {% block nav %} {% endblock %}
+    {%- block brand %}
+    <div class="es-com">
+      <div class="full-name">
+        <a href="https://ericscouten.com"><img src="/common/es-logo.png" width="48" height="48" alt="" />&thinsp;<span class="eric">eric</span> <span class="scouten">scouten.</span></a>&thinsp;{%- if config.extra.es_site %}<a href="/">{{ config.extra.es_site }}</a>{%- endif %}</div>
+      <div class="short-name">
+        <a href="/"><img src="/common/es-logo.png" width="48" height="48" alt="" />{% if- config.extra.es_site %}&thinsp;.{{ config.extra.es_site }}{%- endif %}</a>{%- if page_title %}<span class="title">&thinsp;> <a href="#top">{{ page_title }}</a></span>{%- endif %}</div>
+    </div>
+    {%- endblock brand %}
+    {%- block nav %}{%- endblock %}
   </header>
 
-  {% block miniheader %}{% endblock %}
+  {%- block miniheader %}{%- endblock %}
 
   <section class="section root">
     <div class="container">
-      {% block content %} {% endblock %}
+      {%- block content %}{%- endblock %}
     </div>
   </section>
 
   <footer>
-    {% block footer %}
-      <p>All text and photography copyright © 1996 – {{ now() | date(format="%Y") }}, <a href="https://ericscouten.com">Eric Scouten</a>, unless otherwise attributed.</p>
-    {% endblock footer %}
+    {%- block footer %}
+    <p>All text and photography copyright © 1996 – {{ now() | date(format="%Y") }}, <a href="https://ericscouten.com">Eric Scouten</a>, unless otherwise attributed.</p>
+    {%- endblock footer %}
   </footer>
 </body>
-
 </html>

@@ -1,12 +1,12 @@
-{% if page.extra.comments -%}
+{%- if page.extra.comments -%}
 <div id="es-discourse">
   <h2>Discussion</h2>
   <div class="discourse-invite"><strong>New (September 2022):</strong> I welcome your comments or questions about this post on my new <a href="https://community.ericscouten.com">community site</a>. Comments posted there will appear here.</div>
-  {% if config.base_url is containing("127.0.0.1") or config.base_url is containing("netlify") -%}
+  {%- if config.base_url is containing("127.0.0.1") or config.base_url is containing("netlify") -%}
   <div id ="discourse-comments-disabled">
     Comments disabled since this is not the primary deployment.
   </div>
-  {% else -%}
+  {%- else -%}
   <div id="discourse-comments"></div>
 
   <script type="text/javascript">
@@ -20,6 +20,6 @@
       (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(d);
     })();
   </script>
-  {% endif -%}
+  {%- endif -%}
 </div>
-{% endif -%}
+{%- endif -%}

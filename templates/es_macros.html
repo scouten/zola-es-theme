@@ -1,10 +1,10 @@
-{% macro tag(tax, term) -%}
-{% set this_term = get_taxonomy_term(kind=tax, term=term, include_pages=false) -%}
+{%- macro tag(tax, term) -%}
+{%- set this_term = get_taxonomy_term(kind=tax, term=term, include_pages=false) -%}
 
-{% if this_term -%}
+{%- if this_term -%}
 <span class="es-tag">
 <a href="{{this_term.path | safe}}">{{ this_term.name | safe }}</a>
-<span class="tag is-rounded{% if config.extra.is_dark %} is-dark{% endif %}">{{ this_term.page_count }}</span>
+<span class="tag is-rounded{%- if config.extra.is_dark %} is-dark{%- endif %}">{{ this_term.page_count }}</span>
 </span>
-{% endif -%}
-{% endmacro -%}
+{%- endif -%}
+{%- endmacro -%}

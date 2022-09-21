@@ -1,74 +1,74 @@
-{% extends "base.html" -%}
+{%- extends "base.html" -%}
 
-{% block content -%}
+{%- block content -%}
 <div class="section">
 
   <div class="title-assembly">
-    {% include "breadcrumbs.html" %}
-    {% include "title.html" %}
+    {%- include "breadcrumbs.html" %}
+    {%- include "title.html" %}
   </div>
 
   {# TO DO: Add summary map option? #}
 
   {{ section.content | safe }}
 
-  {% block subsections -%}
-  {% if section.subsections | length > 0 -%}
+  {%- block subsections -%}
+  {%- if section.subsections | length > 0 -%}
     <ul class="subsections">
-      {% set subs = [] -%}
-      {% for sub in section.subsections -%}
-        {% set sub = get_section(path = sub) -%}
-        {% set_global subs = subs | concat(with = sub) -%}
-      {% endfor -%}
-      {% set subs = subs | sort(attribute = "relative_path") -%}
-      {% for sub in subs -%}
+      {%- set subs = [] -%}
+      {%- for sub in section.subsections -%}
+        {%- set sub = get_section(path = sub) -%}
+        {%- set_global subs = subs | concat(with = sub) -%}
+      {%- endfor -%}
+      {%- set subs = subs | sort(attribute = "relative_path") -%}
+      {%- for sub in subs -%}
         <li class="subsection">
           <a href="{{ sub.path }}">
             <span class="sub-title">{{ sub.title }}</span>
-            <span class="tag is-rounded{% if config.extra.is_dark %} is-dark{% endif %}">{{ sub.pages | length }}</span>
+            <span class="tag is-rounded{%- if config.extra.is_dark %} is-dark{%- endif %}">{{ sub.pages | length }}</span>
           </a>
         </li>
-      {% endfor -%}
+      {%- endfor -%}
     </ul>
-  {% endif -%}
-  {% endblock subsections -%}
+  {%- endif -%}
+  {%- endblock subsections -%}
 
-  {% block pages -%}
+  {%- block pages -%}
   <ul class="pages">
-    {% if section.extra.recent -%}
-      {% set pages = section.pages | sort(attribute = "updated") | reverse -%}
-    {% elif section.extra.reverse -%}
-      {% set pages = section.pages | reverse -%}
-    {% else -%}
-      {% set pages = section.pages -%}
-    {% endif -%}
-    {% if section.extra.limit -%}
-      {% set pages = pages | slice(end=section.extra.limit) -%}
-    {% endif -%}
-    {% for page in pages -%}
-      {% if not page.extra.hide_from_section -%}
+    {%- if section.extra.recent -%}
+      {%- set pages = section.pages | sort(attribute = "updated") | reverse -%}
+    {%- elif section.extra.reverse -%}
+      {%- set pages = section.pages | reverse -%}
+    {%- else -%}
+      {%- set pages = section.pages -%}
+    {%- endif -%}
+    {%- if section.extra.limit -%}
+      {%- set pages = pages | slice(end=section.extra.limit) -%}
+    {%- endif -%}
+    {%- for page in pages -%}
+      {%- if not page.extra.hide_from_section -%}
       <div class="card">
         <card-header class="card-header">
           <card-header-title class="card-header-title">
             <info class="card-header-meta">
-              {% if page.components | length > 2 -%}
+              {%- if page.components | length > 2 -%}
               <nav class="breadcrumb has-succeeds-separator" aria-label="breadcrumbs">
                 <ul>
-                  {% set_global bc_slug = "" -%}
-                  {% for parent in page.components | slice(end=-1) -%}
-                    {% set_global bc_slug = bc_slug ~ parent ~ "/" -%}
-                    {% set bc_page = get_section(path = bc_slug ~ "_index.md") %}
+                  {%- set_global bc_slug = "" -%}
+                  {%- for parent in page.components | slice(end=-1) -%}
+                    {%- set_global bc_slug = bc_slug ~ parent ~ "/" -%}
+                    {%- set bc_page = get_section(path = bc_slug ~ "_index.md") %}
                       <li><a href="{{ bc_page.permalink | safe }}">{{ bc_page.title }}</a></li>
-                  {% endfor -%}
+                  {%- endfor -%}
                 </ul>
               </nav>
-              {% endif -%}
+              {%- endif -%}
               <item class="title"><a href="{{ page.permalink | safe }}">{{ page.title }}</a></item>
               <item class="date">{{ page.date | date(format="%e %B %Y") }}</item>
             </info>
           </card-header-title>
         </card-header>
-        {% if page.extra.cover -%}
+        {%- if page.extra.cover -%}
         <div class="card-image">
           <figure class="image is-16by9">
             <a href="{{ page.permalink | safe }}">
@@ -76,7 +76,7 @@
             </a>
           </figure>
         </div>
-        {% endif -%}
+        {%- endif -%}
         <div class="card-content">
           <div class="content">
             {{ page.summary | safe }}
@@ -84,12 +84,12 @@
           </div>
         </div>
       </div>
-      {% endif -%}
-    {% endfor -%}
+      {%- endif -%}
+    {%- endfor -%}
   </ul>
-  {% endblock pages -%}
+  {%- endblock pages -%}
 
   {# TO DO: Add next/prev section links #}
 
 </div>
-{% endblock content -%}
+{%- endblock content -%}

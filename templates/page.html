@@ -1,50 +1,50 @@
-{% extends "base.html" -%}
-{% import "es_macros.html" as es_macros -%}
+{%- extends "base.html" -%}
+{%- import "es_macros.html" as es_macros -%}
 
-{% block content -%}
+{%- block content -%}
 <div class="page">
 
   <div class="title-assembly">
-    {% include "breadcrumbs.html" -%}
-    {% include "title.html" %}
+    {%- include "breadcrumbs.html" -%}
+    {%- include "title.html" %}
 
-    {% if config.extra.taxonomies.author.require -%}
-      {% if page | get(key="taxonomies", default=[]) | get(key="author", default=[]) | length != 1 -%}
+    {%- if config.extra.taxonomies.author.require -%}
+      {%- if page | get(key="taxonomies", default=[]) | get(key="author", default=[]) | length != 1 -%}
         {{ throw(message="Must be exactly one author entry in taxonomies") }}
-      {% endif -%}
-    {% endif -%}
+      {%- endif -%}
+    {%- endif -%}
 
-    {% set fpo = page | get(key="taxonomies", default=[]) | get(key="first_published_on", default=[]) | sort -%}
-    {% set fpo2 = page | get(key="extra", default=[])| get(key="first_published_on", default=false) -%}
+    {%- set fpo = page | get(key="taxonomies", default=[]) | get(key="first_published_on", default=[]) | sort -%}
+    {%- set fpo2 = page | get(key="extra", default=[])| get(key="first_published_on", default=false) -%}
 
-    {% set author = page | get(key="taxonomies", default=[]) | get(key="author", default=[]) | sort | first -%}
+    {%- set author = page | get(key="taxonomies", default=[]) | get(key="author", default=[]) | sort | first -%}
 
     <ul class="page_meta">
-      {% block page_meta -%}
-        {% if fpo or fpo2 or author or page.extra.author -%}
+      {%- block page_meta -%}
+        {%- if fpo or fpo2 or author or page.extra.author -%}
         <li>
-          {% if fpo | length > 0 -%}
+          {%- if fpo | length > 0 -%}
             First published on
-            {% for site in fpo -%}
+            {%- for site in fpo -%}
               {{ es_macros::tag(tax = "first_published_on", term = site) }}
-            {% endfor -%}
-          {% endif -%}
-          {% if fpo2 -%}
+            {%- endfor -%}
+          {%- endif -%}
+          {%- if fpo2 -%}
             First published on {{ fpo2 }}
-          {% endif -%}
-          {% if author -%} by
+          {%- endif -%}
+          {%- if author -%} by
             {{ es_macros::tag(tax = "author", term = author) }}
-          {% elif page.extra.author -%}
+          {%- elif page.extra.author -%}
             by {{ page.extra.author }}
-          {% endif -%}
+          {%- endif -%}
         </li>
-        {% endif -%}
-        {% if page.updated -%}
+        {%- endif -%}
+        {%- if page.updated -%}
           <li>Added to {{ config.title }} on {{ page.updated | date(format="%e %B %Y") }}</li>
-        {% endif -%}
-        {% block page_meta_extra -%}
-        {% endblock page_meta_extra -%}
-      {% endblock page_meta -%}
+        {%- endif -%}
+        {%- block page_meta_extra -%}
+        {%- endblock page_meta_extra -%}
+      {%- endblock page_meta -%}
     </ul>
   </div>
 
@@ -52,33 +52,33 @@
   {{ page.content | safe }}
   </div>
 
-  {% if page.extra.markers or page.extra.track or page.extra.lat or page.extra.lon -%}
-  <div id="map"{% if config.extra.is_dark %} class="map-dark-mode"{% endif %}></div>
+  {%- if page.extra.markers or page.extra.track or page.extra.lat or page.extra.lon -%}
+  <div id="map"{%- if config.extra.is_dark %} class="map-dark-mode"{%- endif %}></div>
 
-  {% if page.extra.markers -%}
+  {%- if page.extra.markers -%}
   <script src="/common/add-gps-markers.js"></script>
-  {% if config.extra.map_clustering -%}
+  {%- if config.extra.map_clustering -%}
   <script src="https://unpkg.com/@googlemaps/markerclustererplus/dist/index.min.js"></script>
-  {% endif -%}
+  {%- endif -%}
   <script src="{{ page.extra.markers }}"></script>
-  {% endif -%}
+  {%- endif -%}
   <script>
     let map;
 
     function initMap() {
       const map = new google.maps.Map(document.getElementById("map"), {
-        {% if not page.extra.bounds -%}
-          {% if page.extra.zoom -%}
+        {%- if not page.extra.bounds -%}
+          {%- if page.extra.zoom -%}
           zoom: {{ page.extra.zoom }},
-          {% else -%}
+          {%- else -%}
           zoom: 12,
-          {% endif -%}
-        {% endif -%}
-        {% if page.extra.lat and page.extra.lon -%}
+          {%- endif -%}
+        {%- endif -%}
+        {%- if page.extra.lat and page.extra.lon -%}
         center: { lat: {{ page.extra.lat }}, lng: {{ page.extra.lon }} },
-        {% endif -%}
+        {%- endif -%}
         mapTypeId: "terrain",
-        {% if config.extra.is_dark -%}
+        {%- if config.extra.is_dark -%}
         styles: [
           { elementType: "geometry", stylers: [{ color: "#363640" }] },
           { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
@@ -169,26 +169,26 @@
             stylers: [{ color: "#17263c" }],
           },
         ],
-        {% endif -%}
+        {%- endif -%}
 
       });
 
       map.setOptions('TERRAIN');
 
-      {% if page.extra.bounds -%}
+      {%- if page.extra.bounds -%}
       const sw = new google.maps.LatLng({{ page.extra.bounds.sw[0] }}, {{ page.extra.bounds.sw[1] }});
       const ne = new google.maps.LatLng({{ page.extra.bounds.ne[0] }}, {{ page.extra.bounds.ne[1] }});
       const bounds = new google.maps.LatLngBounds(sw, ne);
       map.fitBounds(bounds);
-      {% endif -%}
+      {%- endif -%}
 
-      {% if page.extra.track -%}
+      {%- if page.extra.track -%}
       var kmlLayer = new google.maps.KmlLayer({
-        {% if config.extra.kml_folder -%}
+        {%- if config.extra.kml_folder -%}
         url: '{{config.base_url | safe }}/kml/{{ page.extra.track }}',
-        {% else -%}
+        {%- else -%}
         url: '{{config.base_url | safe }}{{ current_path | safe }}{{ page.extra.track }}',
-        {% endif -%}
+        {%- endif -%}
         preserveViewport: true,
         map: map
       });
@@ -196,64 +196,64 @@
         console.log("KML layer status: " + kmlLayer.getStatus());
       });
 
-      {% endif -%}
-      {% if page.extra.markers -%}
+      {%- endif -%}
+      {%- if page.extra.markers -%}
       markers = addGpxMarkers(map);
-      {% if config.extra.map_clustering -%}
+      {%- if config.extra.map_clustering -%}
       const markerCluster = new MarkerClusterer(map, markers,
         {
           imagePath: "{{ config.base_url | safe }}/common/m",
           maxZoom: 16,
         } );
-      {% endif -%}
-      {% elif page.extra.lat and page.extra.lon -%}
+      {%- endif -%}
+      {%- elif page.extra.lat and page.extra.lon -%}
       const marker = new google.maps.Marker({
         position: { lat: {{ page.extra.lat }}, lng: {{ page.extra.lon }} },
         map: map,
         preserveViewport: false,
       });
-      {% endif -%}
+      {%- endif -%}
     }
   </script>
   <script
     src="https://maps.googleapis.com/maps/api/js?key={{ get_env(name="GOOGLE_API_KEY", default="none") }}&callback=initMap&libraries=&v=weekly"
     async>
   </script>
-  {% if page.extra.route or page.extra.distance -%}
+  {%- if page.extra.route or page.extra.distance -%}
     <div class="map-caption">
-      {% if page.extra.route -%}{{ page.extra.route }}{% endif -%}
-      {% if page.extra.route and page.extra.distance -%}&nbsp;· {% endif -%}
-      {% if page.extra.distance -%}{{ page.extra.distance }}{% endif -%}
-      {% if page.extra.markers -%}
+      {%- if page.extra.route -%}{{ page.extra.route }}{%- endif -%}
+      {%- if page.extra.route and page.extra.distance -%}&nbsp;· {%- endif -%}
+      {%- if page.extra.distance -%}{{ page.extra.distance }}{%- endif -%}
+      {%- if page.extra.markers -%}
       <br/>
       (Mouse over or tap on the markers to see the photos there.)
-      {% endif -%}
+      {%- endif -%}
     </div>
-  {% endif -%}
-  {% endif -%}
+  {%- endif -%}
+  {%- endif -%}
 
-  {% include "endmark.html" -%}
+  {%- include "endmark.html" -%}
 
-  {% block next_prev -%}
-    {% if not page.extra.hide_from_section -%}
+  {%- block next_prev -%}
+    {%- if not page.extra.hide_from_section -%}
     <div id="next_prev">
-      {% if page.lower -%}
+      {%- if page.lower -%}
       <div id="prev">
         &larr; <a href="{{ page.lower.permalink | safe }}">{{ page.lower.title }}</a>
       </div>
-      {% endif -%}
-      {% if page.lower and page.higher -%}
+      {%- endif -%}
+      {%- if page.lower and page.higher -%}
       <div id="divider"></div>
-      {% endif -%}
-      {% if page.higher -%}
+      {%- endif -%}
+      {%- if page.higher -%}
       <div id="next">
         <a href="{{ page.higher.permalink | safe }}">{{ page.higher.title }}</a> &rarr;
       </div>
-      {% endif -%}
+      {%- endif -%}
     </div>
-    {% endif -%}
-  {% endblock next_prev -%}
+    {%- endif -%}
+  {%- endblock next_prev -%}
 
-  {% include "comments.html" -%}
+  {%- include "comments.html" -%}
 </div>
-{% endblock content -%}
+{%- endblock content -%}

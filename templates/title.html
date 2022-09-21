@@ -1,46 +1,46 @@
-{% block title -%}
+{%- block title -%}
 
-  {% if page -%}
-    {% set_global title = page.title -%}
-    {% set_global show_home = false -%}
-  {% elif section and section.path != "/" -%}
-    {% set_global title = section.title -%}
-    {% set_global show_home = section.components | length() > 2 -%}
-  {% elif term -%}
-    {% set_global title = term.name -%}
-    {% set_global show_home = false -%}
-  {% elif taxonomy -%}
-    {% if config.extra.taxonomies[taxonomy.name].title -%}
-      {% set_global title = config.extra.taxonomies[taxonomy.name].title -%}
-    {% else -%}
-      {% set_global title = taxonomy.name -%}
-    {% endif -%}
-    {% set_global show_home = true -%}
-  {% else -%}
-    {% set_global title = false -%}
-    {% set_global show_home = false -%}
-  {% endif -%}
+  {%- if page -%}
+    {%- set_global title = page.title -%}
+    {%- set_global show_home = false -%}
+  {%- elif section and section.path != "/" -%}
+    {%- set_global title = section.title -%}
+    {%- set_global show_home = section.components | length() > 2 -%}
+  {%- elif term -%}
+    {%- set_global title = term.name -%}
+    {%- set_global show_home = false -%}
+  {%- elif taxonomy -%}
+    {%- if config.extra.taxonomies[taxonomy.name].title -%}
+      {%- set_global title = config.extra.taxonomies[taxonomy.name].title -%}
+    {%- else -%}
+      {%- set_global title = taxonomy.name -%}
+    {%- endif -%}
+    {%- set_global show_home = true -%}
+  {%- else -%}
+    {%- set_global title = false -%}
+    {%- set_global show_home = false -%}
+  {%- endif -%}
 
-  {% if title -%}
+  {%- if title -%}
   <h1 class="title">
 
-    {% if show_home -%}
+    {%- if show_home -%}
     <span class="top-section-home">
     <span class="icon is-small"><a href="/"><i class="fas fa-home" aria-hidden="true"></i></a></span>
     &nbsp;&nbsp;&#8827;</span>
-    {% endif -%}
+    {%- endif -%}
 
     {{ title }}</h1>
 
-    {% if page and page.date and not page.extra.hide_date -%}
+    {%- if page and page.date and not page.extra.hide_date -%}
       <p class="page-date">
         <span class="date">
           {{ page.date | date(format="%e %B %Y") }}
         </span>
-        {% if page.extra.distance and page.extra.track %}
+        {%- if page.extra.distance and page.extra.track %}
           • <a href="#map">{{ page.extra.distance }} (map)</a>
-        {% endif -%}
+        {%- endif -%}
       </p>
-    {% endif -%}
-  {% endif -%}
-{% endblock title -%}
+    {%- endif -%}
+  {%- endif -%}
+{%- endblock title -%}
