@@ -22,4 +22,32 @@
   </script>
   {%- endif -%}
 </div>
+
+<div id="es-discourse-embed">
+  <div class="es-discourse-embed-body">
+    <div class="site">
+      {{ config.base_url | trim_start_matches(pat="https://") | trim_start_matches(pat="http://") | safe }}
+    </div>
+    {%- if page.extra.cover -%}
+    <div class="card-image">
+      <figure class="image is-16by9">
+        <a href="{{ page.permalink | safe }}">
+          <img src="{{ page.permalink | safe }}cover-{{ page.extra.cover | safe}}.jpg" alt="{{ page.title }}" />
+        </a>
+      </figure>
+    </div>
+    {%- endif -%}
+    <h1>{{ pos_title }}</h1>
+    {%- if pos and pos.date and not pos.extra.hide_date -%}
+    <p class="page-date">
+      <span class="date">
+        {{ pos.date | date(format="%e %B %Y") }}
+      </span>
+    </p>
+    {%- endif -%}
+    <div class="content">
+      {{ pos.summary | safe }}
+    </div>
+  </div>
+</div>
 {%- endif -%}
