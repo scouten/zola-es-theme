@@ -1,6 +1,6 @@
 <div class="es_vimeo anti-section" id="{{id}}">
   <div class="embed-container"><iframe src="https://player.vimeo.com/video/{{vmid}}" frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe></div>
-  {% if caption or title %}
+  {% if caption or title -%}
     <div class="caption">
       {% if title -%}
         <span class="caption-title">{{ title }} </span>
@@ -8,9 +8,9 @@
       {% endif -%}
       {% if caption -%}{{ caption }}{% endif -%}
       {% if creator -%}
-        {% if title or caption %} &middot; {% endif -%}
+        {% if title or caption -%} &middot; {% endif -%}
         by {{ creator }}
       {% endif -%}
     </div>
-  {% endif %}
+  {% endif -%}
 </div>

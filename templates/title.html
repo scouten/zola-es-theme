@@ -37,7 +37,7 @@
         <span class="date">
           {{ page.date | date(format="%e %B %Y") }}
         </span>
-        {%- if page.extra.distance and page.extra.track %}
+        {%- if page.extra.distance and page.extra.track -%}
           • <a href="#map">{{ page.extra.distance }} (map)</a>
         {%- endif -%}
       </p>

@@ -6,7 +6,7 @@
 
   <div class="title-assembly">
     {%- include "breadcrumbs.html" -%}
-    {%- include "title.html" %}
+    {%- include "title.html" -%}
 
     {%- if config.extra.taxonomies.author.require -%}
       {%- if page | get(key="taxonomies", default=[]) | get(key="author", default=[]) | length != 1 -%}

@@ -8,7 +8,7 @@
       {% endif -%}
       {% if caption -%}{{ caption }}{% endif -%}
       {% if creator -%}
-        {% if title or caption %} &middot; {% endif -%}
+        {% if title or caption -%} &middot; {% endif -%}
         by {{ creator }}
       {% endif -%}
     </div>

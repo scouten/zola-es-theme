@@ -4,8 +4,8 @@
 <div class="section">
 
   <div class="title-assembly">
-    {%- include "breadcrumbs.html" %}
-    {%- include "title.html" %}
+    {%- include "breadcrumbs.html" -%}
+    {%- include "title.html" -%}
   </div>
 
   <!-- TODO: add support for per-term content: {x term.content | safe x} -->
@@ -24,7 +24,7 @@
                   {%- set_global bc_slug = "" -%}
                   {%- for parent in page.components | slice(end=-1) -%}
                     {%- set_global bc_slug = bc_slug ~ parent ~ "/" -%}
-                    {%- set bc_page = get_section(path = bc_slug ~ "_index.md") %}
+                    {%- set bc_page = get_section(path = bc_slug ~ "_index.md") -%}
                       <li><a href="{{ bc_page.permalink | safe }}">{{ bc_page.title }}</a></li>
                   {%- endfor -%}
                 </ul>
