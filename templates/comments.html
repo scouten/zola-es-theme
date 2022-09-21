@@ -29,11 +29,7 @@
       {{ config.base_url | trim_start_matches(pat="https://") | trim_start_matches(pat="http://") | safe }}
     </div>
     {%- if page.extra.cover -%}
-    <div class="card-image">
-      <a href="{{ page.permalink | safe }}">
-        <img src="{{ page.permalink | safe }}cover-{{ page.extra.cover | safe}}.jpg" alt="{{ page.title }}" />
-      </a>
-    </div>
+    <img src="{{ page.permalink | safe }}cover-{{ page.extra.cover | safe}}.jpg" alt="{{ page.title }}" />
     {%- endif -%}
     <h1>{{ pos_title }}</h1>
     {%- if pos and pos.date and not pos.extra.hide_date -%}
