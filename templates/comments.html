@@ -29,9 +29,9 @@
       {{ config.base_url | trim_start_matches(pat="https://") | trim_start_matches(pat="http://") | safe }}
     </div>
     {%- if page.extra.cover -%}
-    <a href="{{ page.permalink | safe }}"><img src="{{ page.permalink | safe }}cover-{{ page.extra.cover | safe}}.jpg" alt="{{ page.title }}" /></a>
+    <a href="{{ page.permalink | safe }}"><img src="{{ page.permalink | safe }}cover-{{ page.extra.cover | safe}}.jpg" alt="{{ pos_title }}" /></a>
     {%- endif -%}
-    <h1><a href="{{ page.permalink | safe }}">&#8203;{{ pos_title }}</a>&#8203;</h1>
+    <p class="page-title">{{ pos_title }}</p>
     {%- if pos and pos.date and not pos.extra.hide_date -%}
     <p class="page-date">
       <span class="date">
