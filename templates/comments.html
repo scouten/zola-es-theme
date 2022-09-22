@@ -31,7 +31,7 @@
     {%- if page.extra.cover -%}
     <a href="{{ page.permalink | safe }}"><img src="{{ page.permalink | safe }}cover-{{ page.extra.cover | safe}}.jpg" alt="{{ pos_title }}" /></a>
     {%- endif -%}
-    <p class="page-title">{{ pos_title }}</p>
+    <a class="page-title" href="{{ page.permalink | safe }}">{{ pos_title }}</a>
     {%- if pos and pos.date and not pos.extra.hide_date -%}
     <p class="page-date">
       <span class="date">
@@ -42,7 +42,7 @@
     <div class="content">
       {{ pos.summary | safe }}
     </div>
-    <a href="{{ page.permalink | safe }}">Read the full post</a>
+    <a class="read-more" href="{{ page.permalink | safe }}">Read the full post … →</a>
   </div>
 </div>
 {%- endif -%}
