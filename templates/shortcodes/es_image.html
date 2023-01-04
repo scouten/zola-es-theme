@@ -4,11 +4,11 @@
     <div class="caption">
       {% if title -%}
         <span class="caption-title">{{ title }} </span>
-        {% if caption or creator -%}&nbsp;&middot; {% endif -%}
+        {% if caption or creator %} &middot; {% endif -%}
       {% endif -%}
       {% if caption -%}{{ caption }}{% endif -%}
       {% if creator -%}
-        {% if title or caption -%}&nbsp;&middot; {% endif -%}
+        {% if title or caption %} &middot; {% endif -%}
         by {{ creator }}
       {% endif -%}
     </div>
