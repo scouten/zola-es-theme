@@ -81,6 +81,21 @@
     </div>
   </section>
 
+  {%- if config.extra.mastodon_site_account -%}
+  <cta>
+    {%- block cta -%}
+    <inner>
+      <h3>If you’ve enjoyed this …</h3>
+      <p>You can see more of my travel stories without having to check back randomly to see if I’ve posted something new.</p>
+      <ul>
+        <li><b>Using Mastodon?</b> {% if config.extra.mastodon_site_account and config.extra.mastodon_site_url -%} Each post from this site is automatically posted to <a href="{{ config.extra.mastodon_site_url }}" rel="me">{{ config.extra.mastodon_site_account }}</a>.{%- endif %} You can find me, the real human, at <a href="https://techhub.social/@scouten">@scouten@techhub.social</a>.</li>
+      </ul>
+      <p>Thank you for following along!</p>
+    </inner>
+    {%- endblock cta -%}
+  </cta>
+  {%- endif -%}
+
   <footer>
     {%- block footer -%}
     <p>All text and photography copyright © 1996 – {{ now() | date(format="%Y") }}, <a href="https://ericscouten.com">Eric Scouten</a>, unless otherwise attributed.</p>

@@ -1,0 +1,40 @@
+cta {
+    font-family: $footer-font-family;
+    font-size: 90%;
+    line-height: 1.3em;
+    display: block;
+    background-color: $dark-accent-background;
+    padding: 1.2em 0;
+
+    inner {
+        display: block;
+        margin: 0 auto;
+        max-width: $preferred-text-width;
+    }
+
+    h3 {
+        color: $text;
+        margin-top: 0;
+        font-weight: bold;
+    }
+
+    p {
+        display: block;
+        max-width: 35rem;
+        margin-left: 0;
+    }
+
+    ul li {
+        margin: .25em 0 .25em 1.5em;
+        max-width: 32rem;
+        list-style: disc;
+
+        p:first-of-type {
+            font-size: 100%;
+        }
+    }
+
+    p:last-of-type {
+        margin-bottom: 0;
+    }
+}
