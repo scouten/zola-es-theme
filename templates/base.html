@@ -89,6 +89,7 @@
       <p>You can see more of my travel stories without having to check back randomly to see if I’ve posted something new.</p>
       <ul>
         <li><b>Using Mastodon?</b> {% if config.extra.mastodon_site_account and config.extra.mastodon_site_url -%} Each post from this site is automatically posted to <a href="{{ config.extra.mastodon_site_url }}" rel="me">{{ config.extra.mastodon_site_account }}</a>.{%- endif %} You can find me, the real human, at <a href="https://techhub.social/@scouten">@scouten@techhub.social</a>.</li>
+        <li><b>Using a feed reader?</b> Here’s an <a href="{{ get_url(path='rss.xml', trailing_slash=false) | safe }}">RSS feed for you</a>.</li>
       </ul>
       <p>Thank you for following along!</p>
     </inner>

@@ -4,6 +4,7 @@ cta {
     line-height: 1.3em;
     display: block;
     background-color: $dark-accent-background;
+    color: darken($text, 20%);
     padding: 1.2em 0;
 
     inner {
@@ -21,16 +22,16 @@ cta {
     p {
         display: block;
         max-width: 35rem;
-        margin-left: 0;
+        margin: .5em auto .5em 0;
     }
 
-    ul li {
-        margin: .25em 0 .25em 1.5em;
-        max-width: 32rem;
-        list-style: disc;
+    ul {
+        margin: .9em auto .9em 0;
 
-        p:first-of-type {
-            font-size: 100%;
+        li {
+            margin: .5em 0 .5em 1.5em;
+            max-width: 32rem;
+            list-style: disc;
         }
     }
 
