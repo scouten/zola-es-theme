@@ -191,12 +191,21 @@
       text-decoration: none;
     }
   }
+
+  blockquote {
+    margin: 0 2em 0 4em;
+
+    p {
+      border-left: solid 5px lighten($main-section-background, 20%);
+      color: #ccc;
+      padding: 0 4em 0 .75em;
+    }
+  }
 }
 
 .tag {
   font-family: $header-font-family;
   font-weight: 300;
-  background-color: blue;
 
   a:hover { text-decoration: none; }
 }
