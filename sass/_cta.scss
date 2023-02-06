@@ -1,7 +1,7 @@
 cta {
     font-family: $footer-font-family;
-    font-size: 90%;
-    line-height: 1.3em;
+    font-size: 70%;
+    line-height: 1.5em;
     display: block;
     background-color: $dark-accent-background;
     color: darken($text, 20%);
@@ -21,7 +21,7 @@ cta {
 
     p {
         display: block;
-        max-width: 35rem;
+        max-width: 32rem;
         margin: .5em auto .5em 0;
     }
 
@@ -37,5 +37,27 @@ cta {
 
     p:last-of-type {
         margin-bottom: 0;
+    }
+
+    form {
+        display: inline;
+
+        input.email {
+            background-color: lighten($main-section-background, 10%);
+            border: 1px solid lighten($main-section-background, 40%);
+            border-radius: .4em;
+            padding: 1px .5em 1px .5em;
+            font-family: $footer-font-family;
+            color: white !important;
+            width: 15em;
+        }
+        input.subscribe {
+            background-color: black;
+            border: 1px solid lighten($main-section-background, 40%);
+            border-radius: .4em;
+            padding: 1px .5em 2px .5em;
+            font-family: $footer-font-family;
+            color: white !important;
+        }
     }
 }

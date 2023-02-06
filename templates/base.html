@@ -92,7 +92,18 @@
       <ul>
         <li><b>Using Mastodon?</b> {% if config.extra.mastodon_site_account and config.extra.mastodon_site_url -%} Each post from this site is automatically posted to <a href="{{ config.extra.mastodon_site_url }}" rel="me">{{ config.extra.mastodon_site_account }}</a>.{%- endif %} You can find me, the real human, at <a href="https://techhub.social/@scouten">@scouten@techhub.social</a>.</li>
         <li><b>Using a feed reader?</b> Here’s an <a href="{{ get_url(path='rss.xml', trailing_slash=false) | safe }}">RSS feed for you</a>.</li>
-      </ul>
+        <li>Or, if you prefer, you can drop your e-mail address here to subscribe to my at-most-weekly newsletter with my latest travel and other stories, powered by te good folks at <a href="https://buttondown.email" target="_blank">Buttondown</a>. <form
+            action="https://buttondown.email/api/emails/embed-subscribe/scouten"
+            method="post"
+            target="popupwindow"
+            onsubmit="window.open('https://buttondown.email/scouten', 'popupwindow')"
+            class="embeddable-buttondown-form">
+            <input type="email" name="email" id="bd-email" placeholder="you-rock@example.com" class="email"/>
+            <input type="hidden" name="tag" value="{{ config.extra.es_site }}" />
+            <input type="submit" value="Subscribe" class="subscribe"/>
+          </form>
+        </li>    
+      </ul> 
       <p>Thank you for following along!</p>
     </inner>
     {%- endblock cta -%}
