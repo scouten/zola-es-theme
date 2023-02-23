@@ -6,11 +6,19 @@
   }
 
   .page-date {
+    color: #999;
     font-family: $header-font-family;
     font-size: 81% !important;
-    font-weight: bold;
+    font-weight: normal;
     margin-top: -1.2em;
     margin-bottom: 2em;
+
+    .date {
+      color: $accent-text-color;
+      font-weight: bold;
+    }
+
+    .es-tag a { color: #999; }
   }
 
   ul li {

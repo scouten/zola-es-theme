@@ -1,3 +1,5 @@
+{%- import "es_macros.html" as es_macros -%}
+
 {%- block title -%}
 
   {%- if page -%}
@@ -34,12 +36,24 @@
 
     {%- if page and page.date and not page.extra.hide_date -%}
       <p class="page-date">
+        {%- if config.extra.page_date_prefix -%}
+          {{ config.extra.page_date_prefix }}
+        {% endif %}
         <span class="date">
           {{ page.date | date(format="%e %B %Y") }}
         </span>
         {%- if page.extra.distance and page.extra.track -%}
           • <a href="#map">{{ page.extra.distance }} (map)</a>
         {%- endif -%}
+        {%- if config.extra.taxonomies.via.title -%}
+          {% set vias = page | get(key="taxonomies", default=[]) | get(key="via", default=[]) | sort -%}
+          {% if vias | length > 0 -%}
+            via
+              {% for via in vias -%}
+                {{ es_macros::tag(tax = "via", term = via) }}
+              {% endfor -%}
+          {% endif -%}
+        {% endif %}
       </p>
     {%- endif -%}
   {%- endif -%}
