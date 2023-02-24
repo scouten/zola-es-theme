@@ -86,7 +86,8 @@
     <inner>
       <h3>If you’ve enjoyed this …</h3>
       {%- block cta_inner -%}
-      <p>You can see more of my travel stories without having to check back randomly to see if I’ve posted something new.</p>
+      {%- set_global article_type = config.extra | get(key="article_type", default="travel stories") -%}
+      <p>You can see more of my {{article_type}} without having to check back randomly to see if I’ve posted something new.</p>
       {%- endblock cta_inner -%}
       <ul>
         {%- if config.extra.mastodon_site_account -%}
