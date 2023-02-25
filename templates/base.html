@@ -29,6 +29,9 @@
   {%- if pos.extra.cover -%}
     {%- set_global pos_image = pos.permalink ~ "cover-" ~ pos.extra.cover ~ ".jpg" -%}
   {%- endif -%}
+  {%- if pos.extra.cover_abs -%}
+    {%- set_global pos_image = config.base_url ~ pos.extra.cover_abs -%}
+  {%- endif -%}
 
   <title>{{ pos_title }}</title>
   <meta name="twitter:title" content="{{ pos_title }}">
