@@ -117,7 +117,7 @@ function makeTeaser(body, terms) {
       teaser.push("</b>");
     }
   }
-  teaser.push("…");
+  teaser.push(" …");
   return teaser.join("");
 }
 

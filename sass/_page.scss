@@ -278,3 +278,41 @@
     text-decoration: none;
   }
 }
+
+.search-results {
+  background-color: #18181c;
+  color: #fff;
+  display: none; // will be overridden if there are results
+  padding: 3em 0;
+
+  h2 {
+    color: #6f6f82;
+    margin-top: 2.5em;
+  }
+
+  .search-results__items {
+    max-width: $preferred-text-width;
+    margin: 1em auto;
+
+    li {
+      list-style: none;
+      margin: 0 0 1.75em 0;
+      padding-top: 1.5em;
+      border-top: 1px dotted #56575c;
+
+      a {
+        font-family: $header-font-family;
+        font-weight: bold;
+        font-size: 120%;
+        color: #6f6f82;
+      }
+
+      div {
+        margin: .5em 0;
+        color: #807f79;
+
+        b { color: #ccc; }
+      }
+    }
+  }
+}

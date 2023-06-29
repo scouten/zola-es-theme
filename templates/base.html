@@ -73,16 +73,29 @@
     </div>
     {%- endblock brand -%}
 
+    {%- if config.build_search_index -%}
+    <div class="search-assembly">
+      <div class="control has-icons-left">
+        <input id="search" class="input is-rounded" type="text" placeholder="search the site">
+        <span class="icon is-small is-left">
+          <i class="fas fa-search"></i>
+        </span>
+      </div>
+    </div>
+    {%- endif -%}
+
     {%- block nav -%}{%- endblock -%}
   </header>
+
+  <div class="search-results">
+    <h2>Search Results</h2>
+    <div class="search-results__items"></div>
+  </div>
 
   {%- block miniheader -%}{%- endblock -%}
 
   <section class="section root">
     <div class="container">
-      {%- block search -%}<p>Hello xxx search</p>{%- endblock -%}
-      {%- include "search.html" -%}
-
       {%- block content -%}{%- endblock -%}
     </div>
   </section>
