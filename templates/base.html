@@ -80,6 +80,9 @@
 
   <section class="section root">
     <div class="container">
+      {%- block search -%}<p>Hello xxx search</p>{%- endblock -%}
+      {%- include "search.html" -%}
+
       {%- block content -%}{%- endblock -%}
     </div>
   </section>
@@ -117,5 +120,8 @@
     <p>All text and photography copyright © 1996 – {{ now() | date(format="%Y") }}, <a href="https://ericscouten.com">Eric Scouten</a>, unless otherwise attributed.</p>
     {%- endblock footer -%}
   </footer>
+
+  <script type="text/javascript" src="{{ get_url(path="elasticlunr.min.js") }}"></script>
+  <script type="text/javascript" src="{{ get_url(path="search.js") }}"></script>
 </body>
 </html>
