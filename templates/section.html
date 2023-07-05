@@ -12,6 +12,9 @@
 
   {{ section.content | safe }}
 
+  {%- block tags -%}
+  {%- endblock -%}
+
   {%- block subsections -%}
   {%- if section.subsections | length > 0 -%}
     <ul class="subsections">
