@@ -42,13 +42,15 @@ header {
         .control .icon { color: #807f79; }
 
         .input {
-            color: #fff;
+            color: #333;
             font-family: $header-font-family;
         }
 
         .input::placeholder { color: #56575c; }
     }
 }
+
+.es-dark-mode header .search-assembly .input { color: #fff; }
 
 header.hide-name {
     .full-name { opacity: 0; }
