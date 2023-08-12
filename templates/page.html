@@ -32,9 +32,9 @@
           {%- if fpo2 -%}
             First published on {{ fpo2 }}
           {%- endif -%}
-          {%- if author -%} by
+          {%- if author %} by
             {{ es_macros::tag(tax = "author", term = author) }}
-          {%- elif page.extra.author -%}
+          {%- elif page.extra.author %}
             by {{ page.extra.author }}
           {%- endif -%}
         </li>
