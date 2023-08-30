@@ -62,6 +62,9 @@
   {%- if config.extra.fathom_site_id -%}
   <script src="https://cdn.usefathom.com/script.js" data-site="{{ config.extra.fathom_site_id }}" defer></script>
   {%- endif -%}
+  {%- if config.extra.plausible_site_id -%}
+  <script defer data-domain="{{ config.extra.plausible_site_id }}" src="https://plausible.io/js/script.js"></script>
+  {%- endif -%}
 
   {%- block extraheaders -%}{%- endblock -%}
 </head>
