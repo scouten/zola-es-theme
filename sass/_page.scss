@@ -89,7 +89,10 @@
     p:first-of-type { font-size: 1.35rem; }
   }
 
-  .card { margin: 4rem 0; }
+  .card {
+    margin: 4rem 0;
+    max-width: $preferred-card-width;
+  }
 
   .card-header {
     font-family: $header-font-family;
