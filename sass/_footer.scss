@@ -1,17 +1,20 @@
 footer {
     font-family: $footer-font-family;
-    font-size: 90%;
-    line-height: 0.9em;
+    font-size: 80%;
+    line-height: 1.2em;
     background-color: $footer-accent-background;
 
     color: hsl(0, 0, 40%);
-    padding: 1.2em 0;
+    padding: 1em 0;
 
     p {
-        font-size: 70%;
-        margin: .5em auto;
+        margin: 0 auto;
         text-align: center;
     }
 
     a { color: hsl(0, 0, 70%); }
+}
+
+@media screen and ((max-height: 1024px) or (max-width: 600px)) {
+    footer { font-size: 65%; }
 }
