@@ -89,7 +89,7 @@ about {
   about .content .links-narrow { display: block; }
 }
 
-@media screen and ((max-height: 1024px) or (max-width: 600px)) {
+@media screen and ((max-height: 600px) or (max-width: 600px)) {
   .optional {
     display: none;
   }
