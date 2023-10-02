@@ -9,11 +9,12 @@ cta {
     display: block;
     background-color: #bcc1cc;
     color: darken($text, 20%);
-    padding: 1.2em 0;
+    padding: 1em;
 
     inner {
         display: block;
         margin: 0 auto;
+        padding: 0;
         max-width: $preferred-text-width;
     }
 
@@ -67,4 +68,8 @@ cta {
             color: white !important;
         }
     }
+}
+
+@media screen and ((max-height: 1024px) or (max-width: 600px)) {
+    cta { font-size: 65%; }
 }
