@@ -88,6 +88,6 @@ header.show-page-title {
     }
 }
 
-@media screen and ((max-height: 1024px) or (max-width: 600px)) {
+@media screen and (max-width: 600px) {
     .es-com { font-size: 100%; }
 }
