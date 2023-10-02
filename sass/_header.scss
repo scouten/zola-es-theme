@@ -3,7 +3,7 @@ header {
     opacity: 0;
     display: block;
     color: #ccc;
-    height: 5em;
+    height: 4.5em;
     overflow: hidden;
     width: 100%;
     z-index: 800;
@@ -86,4 +86,8 @@ header.show-page-title {
         img { opacity: 100%; }
         .scouten { color: white; }
     }
+}
+
+@media screen and ((max-height: 1024px) or (max-width: 600px)) {
+    .es-com { font-size: 100%; }
 }
