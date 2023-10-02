@@ -111,22 +111,58 @@
     {%- set_global article_type = config.extra | get(key="article_type", default="travel stories") -%}
     <inner>
       <h3>If you’ve enjoyed this …</h3>
-      <p><b>Subscribe!</b> Drop your e-mail address here to subscribe to my occasional (never more than weekly) newsletter with my latest travel and other stories: <form
-        action="https://buttondown.email/api/emails/embed-subscribe/scouten"
-        method="post"
-        target="popupwindow"
-        onsubmit="window.open('https://buttondown.email/scouten', 'popupwindow')"
-        class="embeddable-buttondown-form">
-        <input type="email" name="email" id="bd-email" placeholder="you-rock@example.com" class="email"/>
-        <input type="hidden" name="tag" value="{{ config.extra.es_site }}" />
-        <input type="submit" value="Subscribe" class="subscribe"/>
-      </form>
-    </p>
-    <p><b>Or follow!</b> If you prefer, follow me on one or more of the socials:</p>
-    <ul>
-      
-        <li><b>Using Mastodon?</b> {% if config.extra.mastodon_site_account and config.extra.mastodon_site_url -%} Each post from this site is automatically posted to <a href="{{ config.extra.mastodon_site_url }}" rel="me">{{ config.extra.mastodon_site_account }}</a>.{%- endif %} You can find me, the real human, at <a href="https://ericscouten.social/@scouten">@scouten@ericscouten.social</a>. {% if not (config.extra.mastodon_site_account) or not (config.extra.mastodon_site_url) -%} (I’ll share posts from this site as they happen.){%- endif %}</li>
-
+      <p><b>Subscribe</b> to my occasional (never more than weekly) newsletter with my latest travel and other stories:
+        <form
+          action="https://buttondown.email/api/emails/embed-subscribe/scouten"
+          method="post"
+          target="popupwindow"
+          onsubmit="window.open('https://buttondown.email/scouten', 'popupwindow')"
+          class="embeddable-buttondown-form">
+          <input type="email" name="email" id="bd-email" placeholder="you-rock@example.com" class="email"/>
+          <input type="hidden" name="tag" value="{{ config.extra.es_site }}" />
+          <input type="submit" value="Subscribe" class="subscribe"/>
+        </form>
+      </p>
+      <p><b>Or follow</b> me on one or more of the socials:</p>
+      <ul>
+        <li>
+          <a href="https://ericscouten.social/@scouten">
+            <span class="icon is-small"><i class="fab fa-mastodon"></i></span>
+            <b>Mastodon</b> <span class="optional">@scouten@ericscouten.social</span>
+          </a>
+        </li>
+        {%- if config.extra.mastodon_site_account and config.extra.mastodon_site_url -%}
+        <li>
+          <a href="{{ config.extra.mastodon_site_url }}">
+            <span class="icon is-small"><i class="fab fa-mastodon"></i></span>
+            Mastodon {{ config.extra.mastodon_site_account }} <span class="optional">(for this site)</span>
+          </a>
+        </li>
+        {%- endif -%}
+        <li>
+          <a href="https://www.linkedin.com/in/ericscouten/">
+            <span class="icon is-small"><i class="fab fa-linkedin"></i></span>
+          </a>
+          <b>LinkedIn</b>
+        </li>
+        <li>
+          <a href="https://www.facebook.com/eric.scouten.photo/">
+            <span class="icon is-small"><i class="fab fa-facebook-square"></i></span>
+          </a>
+          <b>Facebook</b>
+        </li>
+        <li>
+          <a href="https://github.com/scouten">
+            <span class="icon is-small"><i class="fab fa-github"></i></span>
+          </a>
+          <b>GitHub</b> <span class="optional">@scouten</span> (personal)
+        </li>
+        <li>
+          <a href="https://github.com/scouten">
+            <span class="icon is-small"><i class="fab fa-github"></i></span>
+          </a>
+          <b>GitHub</b> <span class="optional">@scouten-adobe</span> (<span class="optional">open-source work for </span>Adobe)
+        </li>
       </ul> 
     </inner>
     {%- endblock cta -%}
