@@ -12,9 +12,15 @@
 @import "./cta";
 @import "./footer";
 
+section {
+    // Ugh, now I feel like I'm fighting the framework.
+    padding: 1rem !important;
+
+    .section { padding: 0 !important; }
+}
+
 section.root {
     background-color: $main-section-background;
-    padding-top: 1rem;
 
     .container { max-width: none !important; }
 }
@@ -29,23 +35,8 @@ strong {
 }
 
 .anti-section {
-    margin-left: -1.5rem;
-    margin-right: -1.5rem;
-}
-
-@media screen and (min-width: 1024px) {
-    .anti-section {
-        margin-left: -3rem;
-        margin-right: -3rem;
-    }
-    .anti-section.is-medium {
-        margin-left: -4.5em;
-        margin-right: -4.5em;
-    }
-    .anti-section.is-large {
-        margin-left: -6em;
-        margin-right: -6em;
-    }
+    margin-left: -1rem;
+    margin-right: -1rem;
 }
 
 h1, h2, h3, h4, h5, h6, p, ul, ol, #next_prev {

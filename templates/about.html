@@ -18,35 +18,15 @@
             More <a href="https://ericscouten.com/about/">about me</a>.
           </a>
           </p>
-          <div class="links">
-            <p class="link es-home">
-              <a href="https://ericscouten.com" rel="me">
-                <span class="icon is-small"><i class="fas fa-home"></i></span>ericscouten.com
-              </a>
-            </p>
-            <p class="link">
-              <a href="#subscribe">
-                <span class="icon is-small"><i class="fas fa-envelope"></i></span><span class="cta-link">Subscribe / Follow</span>
-              </a>
-              <span class="socials">
-                <a href="https://ericscouten.social/@scouten">
-                  <span class="icon is-small"><i class="fab fa-mastodon"></i></span>
-                </a>
-                <a href="https://www.linkedin.com/in/ericscouten/">
-                  <span class="icon is-small"><i class="fab fa-linkedin"></i></span>
-                </a>
-                <a href="https://www.facebook.com/eric.scouten.photo/">
-                  <span class="icon is-small"><i class="fab fa-facebook-square"></i></span>
-                </a>
-                <a href="https://github.com/scouten">
-                  <span class="icon is-small"><i class="fab fa-github"></i></span>
-                </a>
-              </span>
-            </p>
+          <div class="links-wide">
+          {%- include "about_links.html" -%}
           </div>
         </div>
       </div>
     </div>
-  </div>
+    <div class="links-narrow">
+      {%- include "about_links.html" -%}
+      </div>
+    </div>
 </about>
 {%- endblock about -%}
