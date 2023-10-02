@@ -7,13 +7,14 @@
 @import "./es_vimeo";
 
 @import "./header";
+@import "./about";
 @import "./page";
 @import "./cta";
 @import "./footer";
 
 section.root {
     background-color: $main-section-background;
-    padding-top: 5rem;
+    padding-top: 1rem;
 
     .container { max-width: none !important; }
 }

@@ -1,5 +1,6 @@
 header {
     background: linear-gradient( $dark-accent-background, 70%, $dark-accent-background, 90%, rgba(31, 26, 23, 0));
+    opacity: 0;
     display: block;
     color: #ccc;
     height: 5em;
@@ -9,6 +10,7 @@ header {
     position: fixed;
 	top: 0;
 	left: 0;
+    transition: opacity 0.5s;
     
     .full-name, .short-name {
         position: fixed;
@@ -52,12 +54,14 @@ header {
 
 .es-dark-mode header .search-assembly .input { color: #fff; }
 
-header.hide-name {
-    .full-name { opacity: 0; }
-    .short-name { opacity: 100%; }
+header.show-header {
+    opacity: 100%;
+    .full-name { opacity: 100%; }
 }
 
-header.show-title {
+header.show-page-title {
+    .full-name { opacity: 0%; }
+    .short-name { opacity: 100%; }
     .title { opacity: 100%; }
 }
 

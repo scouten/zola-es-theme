@@ -91,6 +91,8 @@
     {%- block nav -%}{%- endblock -%}
   </header>
 
+  {%- include "about.html" -%}
+
   <div class="search-results">
     <h2>Search Results</h2>
     <div class="search-results__items"></div>
@@ -104,7 +106,7 @@
     </div>
   </section>
 
-  <cta>
+  <cta id="subscribe">
     {%- block cta -%}
     <inner>
       <h3>If you’ve enjoyed this …</h3>
@@ -134,7 +136,7 @@
 
   <footer>
     {%- block footer -%}
-    <p>All text and photography copyright © 1996 – {{ now() | date(format="%Y") }}, <a href="https://ericscouten.com">Eric Scouten</a>, unless otherwise attributed.</p>
+    <p>All design, text, and photography copyright © 1996 – {{ now() | date(format="%Y") }}, <a href="https://ericscouten.com">Eric Scouten</a>, unless otherwise attributed.</p>
     {%- endblock footer -%}
   </footer>
 

@@ -2,16 +2,16 @@ function headerScroll() {
     const distanceY = window.pageYOffset || document.documentElement.scrollTop;
     const miniHeader = document.getElementById('header');
     
-    if (distanceY > 200) {
-        miniHeader.classList.add("show-title");
+    if (distanceY > 60) {
+        miniHeader.classList.add("show-header");
     } else {
-        miniHeader.classList.remove("show-title");
+        miniHeader.classList.remove("show-header");
     }
 
-    if (distanceY > 20) {
-        miniHeader.classList.add("hide-name");
+    if (distanceY > 600) {
+        miniHeader.classList.add("show-page-title");
     } else {
-        miniHeader.classList.remove("hide-name");
+        miniHeader.classList.remove("show-page-title");
     }
 }
   
