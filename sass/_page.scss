@@ -190,12 +190,18 @@
 }
 
 .es-dark-mode {
-  .card-header {
-    .card-header-title {
-      color: #ccc;
+  .card {
+    background-color: $scheme-main;
 
-      a { color: #ccc; }
-      a:hover { color: white; }
+    .card-header {
+      border-bottom-color: lighten($color: $scheme-main, $amount: 15%);
+
+      .card-header-title {
+        color: #ccc;
+
+        a { color: #ccc; }
+        a:hover { color: white; }
+      }
     }
   }
 
