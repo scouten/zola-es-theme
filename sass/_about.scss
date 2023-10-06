@@ -81,6 +81,21 @@ about {
     .es-home {
       font-weight: bold;
     }
+
+    .search-assembly {
+      margin: 1em 0 0 0;
+      max-width: 12em;
+
+      #search { border-color: #56575c; }
+      .control .icon { color: #807f79; }
+
+      .input {
+        color: #ccc;
+        font-family: $header-font-family;
+      }
+
+      .input::placeholder { color: #56575c; }
+    }
   }
 
   strong { color: #ccc; }

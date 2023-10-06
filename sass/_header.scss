@@ -33,23 +33,6 @@ header {
 
         a { color: #807f79; }
     }
-
-    .search-assembly {
-        position: fixed;
-        right: 1em;
-        top: 1.4em;
-        max-width: 15em;
-
-        #search { border-color: #56575c; }
-        .control .icon { color: #807f79; }
-
-        .input {
-            color: #333;
-            font-family: $header-font-family;
-        }
-
-        .input::placeholder { color: #56575c; }
-    }
 }
 
 .es-dark-mode header .search-assembly .input { color: #fff; }
