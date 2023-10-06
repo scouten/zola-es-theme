@@ -18,6 +18,14 @@
   {%- endif -%}
   {%- if pos.title -%}
     {%- set_global pos_title = pos.title -%}
+  {%- elif term -%}
+    {%- set_global pos_title = term.name -%}
+  {%- elif taxonomy -%}
+    {%- if config.extra.taxonomies[taxonomy.name].title -%}
+      {%- set_global pos_title = config.extra.taxonomies[taxonomy.name].title -%}
+    {%- else -%}
+      {%- set_global pos_title = taxonomy.name -%}
+    {%- endif -%}
   {%- else -%}
     {%- set_global pos_title = config.title -%}
   {%- endif -%}
@@ -73,7 +81,7 @@
       <div class="full-name">
         <a href="https://ericscouten.com"><img src="/common/es-logo.png" width="48" height="48" alt="" />&thinsp;<span class="eric">eric</span>&thinsp;<span class="scouten">scouten.</span></a>&thinsp;{%- if config.extra.es_site -%}<a href="/">{{ config.extra.es_site }}</a>{%- endif -%}</div>
       <div class="short-name">
-        <a href="/"><img src="/common/es-logo.png" width="48" height="48" alt="" />{%- if config.extra.es_site -%}&thinsp;.{{ config.extra.es_site }}{%- endif -%}</a>{%- if page_title -%}<span class="title">&thinsp;> <a href="#top">{{ page_title }}</a></span>{%- endif -%}</div>
+        <a href="/"><img src="/common/es-logo.png" width="48" height="48" alt="" />{%- if config.extra.es_site -%}&thinsp;.{{ config.extra.es_site }}{%- endif -%}</a>{%- if pos_title -%}<span class="title">&thinsp;> <a href="#top">{{ pos_title }}</a></span>{%- endif -%}</div>
     </div>
     {%- endblock brand -%}
 
@@ -137,7 +145,7 @@
         <li>
           <a href="{{ config.extra.mastodon_site_url }}">
             <span class="icon is-small"><i class="fab fa-mastodon"></i></span>
-            Mastodon {{ config.extra.mastodon_site_account }} <span class="optional">(for this site)</span>
+            <b>Mastodon</b> {{ config.extra.mastodon_site_account }} <span class="optional">(for this site)</span>
           </a>
         </li>
         {%- endif -%}

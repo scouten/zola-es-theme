@@ -13,10 +13,7 @@
 @import "./footer";
 
 section {
-    // Ugh, now I feel like I'm fighting the framework.
     padding: 1rem !important;
-
-    .section { padding: 0 !important; }
 }
 
 section.root {

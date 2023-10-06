@@ -9,7 +9,7 @@
     {%- set_global components = [] -%}
   {%- endif -%}
 
-  {%- if components | length > 1 -%}
+  {%- if components | length >= 1 -%}
   <nav class="breadcrumb has-succeeds-separator" aria-label="breadcrumbs">
     <ul>
       {%- set_global bc_slug = "" -%}

@@ -3,10 +3,12 @@
 {%- block content -%}
 
 <div class="section">
+  {%- if section.components | length >= 1 -%}
   <div class="title-assembly">
     {%- include "breadcrumbs.html" -%}
     {%- include "title.html" -%}
   </div>
+  {%- endif -%}
 
   {# TO DO: Add summary map option? #}
 

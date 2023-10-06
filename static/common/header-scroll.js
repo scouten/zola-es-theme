@@ -8,7 +8,7 @@ function headerScroll() {
         miniHeader.classList.remove("show-header");
     }
 
-    if (distanceY > 600) {
+    if (distanceY > 350) {
         miniHeader.classList.add("show-page-title");
     } else {
         miniHeader.classList.remove("show-page-title");
