@@ -132,6 +132,10 @@
     }
   }
 
+  .card-image {
+    margin-top: -1px; // overwrite 1px border
+  }
+
   .card-content {
     font-size: 1.25rem;
 
