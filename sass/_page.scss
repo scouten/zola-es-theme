@@ -90,11 +90,17 @@
     p:first-of-type { font-size: 1.35rem; }
   }
 
-  .card { margin: 4rem 0; }
+  .card {
+    background-color: #ddd;
+    margin: 4rem 0;
+  }
 
   .card-header {
     font-family: $header-font-family;
+    margin: .5em .5em 0 .5em;
     padding-bottom: .5em;
+    border-bottom: 1px solid #aaa;
+    box-shadow: none;
 
     .card-header-title {
       display: block;

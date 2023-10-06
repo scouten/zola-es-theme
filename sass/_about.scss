@@ -82,6 +82,11 @@ about {
       font-weight: bold;
     }
   }
+
+  strong { color: #ccc; }
+
+  a { color: hsl(0, 0%, 60%); }
+  a:hover { color: white; }
 }
 
 @media screen and (max-width: 475px) {
