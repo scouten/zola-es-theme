@@ -106,8 +106,10 @@ about {
 
     #search { border-color: #56575c; }
     .control .icon { color: #807f79; }
+    .control .input:focus ~ .icon { color: white; }
 
     .input {
+      background-color: #18181c;
       color: #ccc;
       font-family: $header-font-family;
     }
