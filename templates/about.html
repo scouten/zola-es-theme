@@ -1,5 +1,15 @@
 {%- block about -%}
 <about>
+  {%- if config.build_search_index -%}
+  <div class="search-assembly">
+    <div class="control has-icons-left">
+      <input id="search" class="input is-rounded" type="text" placeholder="search">
+      <span class="icon is-small is-left">
+        <i class="fas fa-search"></i>
+      </span>
+    </div>
+  </div>
+  {%- endif -%}
   <div class="content">
     <div class="media">
       <figure class="media-left">
@@ -26,7 +36,7 @@
     </div>
     <div class="links-narrow">
       {%- include "about_links.html" -%}
-      </div>
     </div>
+  </div>
 </about>
 {%- endblock about -%}
