@@ -89,8 +89,9 @@ about {
   a:hover { color: white; }
 
   .search-assembly {
-    position: absolute;
-    top: 1em;
+    position: fixed;
+    z-index: 3000;
+    top: .8em;
     right: 1em;
   
     input {
