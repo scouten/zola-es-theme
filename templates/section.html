@@ -43,9 +43,9 @@
     {%- if section.extra.recent -%}
       {%- set pages = section.pages | sort(attribute = "updated") | reverse -%}
     {%- elif section.extra.reverse -%}
-      {%- set pages = section.pages | reverse -%}
-    {%- else -%}
       {%- set pages = section.pages -%}
+    {%- else -%}
+      {%- set pages = section.pages | reverse -%}
     {%- endif -%}
     {%- if section.extra.limit -%}
       {%- set pages = pages | slice(end=section.extra.limit) -%}
