@@ -49,7 +49,31 @@
   </div>
 
   <div id="es-content">
-  {{ page.content | safe }}
+    {%- if page.toc and page.extra.toc -%}
+    {%- block toc -%}
+      <div id="toc">
+        <h1>Table of Contents</h1>
+        <ul>
+        {%- for h1 in page.toc -%}
+          <li>
+            <a href="{{ h1.permalink | safe }}">{{ h1.title }}</a>
+            {%- if h1.children -%}
+              <ul class="toc-h2">
+              {%- for h2 in h1.children -%}
+                <li>
+                  <a href="{{ h2.permalink | safe }}">{{ h2.title }}</a>
+                </li>
+              {%- endfor -%}
+              </ul>
+            {%- endif -%}
+          </li>
+        {%- endfor -%}
+        </ul>
+      </div>
+    {%- endblock toc -%}
+    {%- endif -%}
+  
+    {{ page.content | safe }}
   </div>
 
   {%- if page.extra.markers or page.extra.track or page.extra.lat or page.extra.lon -%}

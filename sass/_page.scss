@@ -2,9 +2,27 @@
   padding-top: 2em;
   margin-top: 0;
 
-  p:first-of-type {
-    font-size: $first-paragraph-size;
-  }
+  #es-content {
+    display: flex;
+    flex-direction: column;
+
+    p:first-of-type {
+      font-size: $first-paragraph-size;
+      order: -2;
+      -webkit-order: -2;
+    }
+
+    #toc {
+      font-family: $header-font-family;
+      order: -1;
+      -webkit-order: -1;
+      line-height: 1.4em;
+
+      ul {
+        margin: 0 auto;
+      }
+    }
+ }
 
   .page-date {
     color: #999;
@@ -56,6 +74,7 @@
     margin-bottom: 3em;
 
     h1.title {
+      font-size: 200%;
       line-height: 100%;
       margin-top: 0;
       margin-bottom: .5em;
