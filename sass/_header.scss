@@ -1,14 +1,16 @@
 header {
     background: linear-gradient( $dark-accent-background, 70%, $dark-accent-background, 90%, rgba(31, 26, 23, 0));
+    opacity: 0;
     display: block;
     color: #ccc;
-    height: 5em;
+    height: 4.5em;
     overflow: hidden;
     width: 100%;
     z-index: 800;
     position: fixed;
 	top: 0;
 	left: 0;
+    transition: opacity 0.5s;
     
     .full-name, .short-name {
         position: fixed;
@@ -31,33 +33,18 @@ header {
 
         a { color: #807f79; }
     }
-
-    .search-assembly {
-        position: fixed;
-        right: 1em;
-        top: 1.4em;
-        max-width: 15em;
-
-        #search { border-color: #56575c; }
-        .control .icon { color: #807f79; }
-
-        .input {
-            color: #333;
-            font-family: $header-font-family;
-        }
-
-        .input::placeholder { color: #56575c; }
-    }
 }
 
 .es-dark-mode header .search-assembly .input { color: #fff; }
 
-header.hide-name {
-    .full-name { opacity: 0; }
-    .short-name { opacity: 100%; }
+header.show-header {
+    opacity: 100%;
+    .full-name { opacity: 100%; }
 }
 
-header.show-title {
+header.show-page-title {
+    .full-name { opacity: 0%; }
+    .short-name { opacity: 100%; }
     .title { opacity: 100%; }
 }
 
@@ -82,4 +69,8 @@ header.show-title {
         img { opacity: 100%; }
         .scouten { color: white; }
     }
+}
+
+@media screen and (max-width: 600px) {
+    .es-com { font-size: 100%; }
 }

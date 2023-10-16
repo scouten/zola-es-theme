@@ -18,6 +18,14 @@
   {%- endif -%}
   {%- if pos.title -%}
     {%- set_global pos_title = pos.title -%}
+  {%- elif term -%}
+    {%- set_global pos_title = term.name -%}
+  {%- elif taxonomy -%}
+    {%- if config.extra.taxonomies[taxonomy.name].title -%}
+      {%- set_global pos_title = config.extra.taxonomies[taxonomy.name].title -%}
+    {%- else -%}
+      {%- set_global pos_title = taxonomy.name -%}
+    {%- endif -%}
   {%- else -%}
     {%- set_global pos_title = config.title -%}
   {%- endif -%}
@@ -71,25 +79,16 @@
     {%- block brand -%}
     <div class="es-com">
       <div class="full-name">
-        <a href="https://ericscouten.com"><img src="/common/es-logo.png" width="48" height="48" alt="" />&thinsp;<span class="eric">eric</span> <span class="scouten">scouten.</span></a>&thinsp;{%- if config.extra.es_site -%}<a href="/">{{ config.extra.es_site }}</a>{%- endif -%}</div>
+        <a href="https://ericscouten.com"><img src="/common/es-logo.png" width="48" height="48" alt="" />&thinsp;<span class="eric">eric</span>&thinsp;<span class="scouten">scouten.</span></a>&thinsp;{%- if config.extra.es_site -%}<a href="/">{{ config.extra.es_site }}</a>{%- endif -%}</div>
       <div class="short-name">
-        <a href="/"><img src="/common/es-logo.png" width="48" height="48" alt="" />{%- if config.extra.es_site -%}&thinsp;.{{ config.extra.es_site }}{%- endif -%}</a>{%- if page_title -%}<span class="title">&thinsp;> <a href="#top">{{ page_title }}</a></span>{%- endif -%}</div>
+        <a href="/"><img src="/common/es-logo.png" width="48" height="48" alt="" />{%- if config.extra.es_site -%}&thinsp;.{{ config.extra.es_site }}{%- endif -%}</a>{%- if pos_title -%}<span class="title">&thinsp;> <a href="#top">{{ pos_title }}</a></span>{%- endif -%}</div>
     </div>
     {%- endblock brand -%}
 
-    {%- if config.build_search_index -%}
-    <div class="search-assembly">
-      <div class="control has-icons-left">
-        <input id="search" class="input is-rounded" type="text" placeholder="search the site">
-        <span class="icon is-small is-left">
-          <i class="fas fa-search"></i>
-        </span>
-      </div>
-    </div>
-    {%- endif -%}
-
     {%- block nav -%}{%- endblock -%}
   </header>
+
+  {%- include "about.html" -%}
 
   <div class="search-results">
     <h2>Search Results</h2>
@@ -98,43 +97,79 @@
 
   {%- block miniheader -%}{%- endblock -%}
 
+  {%- block root -%}
   <section class="section root">
     <div class="container">
       {%- block content -%}{%- endblock -%}
     </div>
   </section>
+  {%- endblock root -%}
 
-  <cta>
+  <cta id="subscribe">
     {%- block cta -%}
+    {%- set_global article_type = config.extra | get(key="article_type", default="travel stories") -%}
     <inner>
       <h3>If you’ve enjoyed this …</h3>
-      {%- block cta_inner -%}
-      {%- set_global article_type = config.extra | get(key="article_type", default="travel stories") -%}
-      <p>You can see more of my {{article_type}} without having to check back randomly to see if I’ve posted something new.</p>
-      {%- endblock cta_inner -%}
+      <p><b>Subscribe</b> to my free and occasional (never more than weekly) <a href="https://buttondown.email/scouten">e-mail newsletter</a> with my latest travel and other stories:
+        <form
+          action="https://buttondown.email/api/emails/embed-subscribe/scouten"
+          method="post"
+          target="popupwindow"
+          onsubmit="window.open('https://buttondown.email/scouten', 'popupwindow')"
+          class="embeddable-buttondown-form">
+          <input type="email" name="email" id="bd-email" placeholder="you-rock@example.com" class="email"/>
+          <input type="hidden" name="tag" value="{{ config.extra.es_site }}" />
+          <input type="submit" value="Subscribe" class="subscribe"/>
+        </form>
+      </p>
+      <p><b>Or follow</b> me on one or more of the socials:</p>
       <ul>
-        <li><b>Using Mastodon?</b> {% if config.extra.mastodon_site_account and config.extra.mastodon_site_url -%} Each post from this site is automatically posted to <a href="{{ config.extra.mastodon_site_url }}" rel="me">{{ config.extra.mastodon_site_account }}</a>.{%- endif %} You can find me, the real human, at <a href="https://ericscouten.social/@scouten">@scouten@ericscouten.social</a>. {% if not (config.extra.mastodon_site_account) or not (config.extra.mastodon_site_url) -%} (I’ll share posts from this site as they happen.){%- endif %}</li>
-        <li><b>Using a feed reader?</b> Here’s an <a href="{{ get_url(path='rss.xml', trailing_slash=false) | safe }}">RSS feed for you</a>.</li>
-        <li>Or, if you prefer, you can drop your e-mail address here to subscribe to my at-most-weekly newsletter with my latest travel and other stories, powered by the good folks at <a href="https://buttondown.email" target="_blank">Buttondown</a>. <form
-            action="https://buttondown.email/api/emails/embed-subscribe/scouten"
-            method="post"
-            target="popupwindow"
-            onsubmit="window.open('https://buttondown.email/scouten', 'popupwindow')"
-            class="embeddable-buttondown-form">
-            <input type="email" name="email" id="bd-email" placeholder="you-rock@example.com" class="email"/>
-            <input type="hidden" name="tag" value="{{ config.extra.es_site }}" />
-            <input type="submit" value="Subscribe" class="subscribe"/>
-          </form>
-        </li>    
+        <li>
+          <a href="https://ericscouten.social/@scouten">
+            <span class="icon is-small"><i class="fab fa-mastodon"></i></span>
+            <b>Mastodon</b> <span class="optional">@scouten@ericscouten.social</span>
+          </a>
+        </li>
+        {%- if config.extra.mastodon_site_account and config.extra.mastodon_site_url -%}
+        <li>
+          <a href="{{ config.extra.mastodon_site_url }}">
+            <span class="icon is-small"><i class="fab fa-mastodon"></i></span>
+            <b>Mastodon</b> {{ config.extra.mastodon_site_account }} <span class="optional">(for this site)</span>
+          </a>
+        </li>
+        {%- endif -%}
+        <li>
+          <a href="https://www.linkedin.com/in/ericscouten/">
+            <span class="icon is-small"><i class="fab fa-linkedin"></i></span>
+            <b>LinkedIn</b>
+          </a>
+        </li>
+        <li>
+          <a href="https://www.facebook.com/eric.scouten.photo/">
+            <span class="icon is-small"><i class="fab fa-facebook-square"></i></span>
+            <b>Facebook</b>
+          </a>
+        </li>
+        <li>
+          <a href="https://github.com/scouten">
+            <span class="icon is-small"><i class="fab fa-github"></i></span>
+            <b>GitHub</b> <span class="optional">@scouten</span> (personal)
+          </a>
+        </li>
+        <li>
+          <a href="https://github.com/scouten">
+            <span class="icon is-small"><i class="fab fa-github"></i></span>
+            <b>GitHub</b> <span class="optional">@scouten-adobe</span> (<span class="optional">open-source work for </span>Adobe)
+          </a>
+        </li>
       </ul> 
-      <p>Thank you for following along!</p>
     </inner>
     {%- endblock cta -%}
   </cta>
 
   <footer>
     {%- block footer -%}
-    <p>All text and photography copyright © 1996 – {{ now() | date(format="%Y") }}, <a href="https://ericscouten.com">Eric Scouten</a>, unless otherwise attributed.</p>
+    <p>All design, text, and photography copyright © 1996 – {{ now() | date(format="%Y") }}, <a href="https://ericscouten.com">Eric&nbsp;Scouten</a>, unless otherwise attributed.</p>
     {%- endblock footer -%}
   </footer>
 

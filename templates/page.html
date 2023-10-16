@@ -239,7 +239,7 @@
     <div id="next_prev">
       {%- if page.lower -%}
       <div id="prev">
-        &larr; <a href="{{ page.lower.permalink | safe }}">{{ page.lower.title }}</a>
+        <a href="{{ page.lower.permalink | safe }}">{{ page.lower.title }}</a> &rarr;
       </div>
       {%- endif -%}
       {%- if page.lower and page.higher -%}
@@ -247,7 +247,7 @@
       {%- endif -%}
       {%- if page.higher -%}
       <div id="next">
-        <a href="{{ page.higher.permalink | safe }}">{{ page.higher.title }}</a> &rarr;
+        &larr; <a href="{{ page.higher.permalink | safe }}">{{ page.higher.title }}</a>
       </div>
       {%- endif -%}
     </div>

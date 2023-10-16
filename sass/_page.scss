@@ -1,5 +1,6 @@
 .page, .section, .taxonomy {
-  padding-top: 4em;
+  padding-top: 2em;
+  margin-top: 0;
 
   p:first-of-type {
     font-size: $first-paragraph-size;
@@ -89,11 +90,17 @@
     p:first-of-type { font-size: 1.35rem; }
   }
 
-  .card { margin: 4rem 0; }
+  .card {
+    background-color: #ddd;
+    margin: 4rem 0;
+  }
 
   .card-header {
     font-family: $header-font-family;
+    margin: .5em .5em 0 .5em;
     padding-bottom: .5em;
+    border-bottom: 1px solid #aaa;
+    box-shadow: none;
 
     .card-header-title {
       display: block;
@@ -123,6 +130,10 @@
         line-height: 1.0;
       }
     }
+  }
+
+  .card-image {
+    margin-top: -1px; // overwrite 1px border
   }
 
   .card-content {
@@ -183,12 +194,18 @@
 }
 
 .es-dark-mode {
-  .card-header {
-    .card-header-title {
-      color: #ccc;
+  .card {
+    background-color: $scheme-main;
 
-      a { color: #ccc; }
-      a:hover { color: white; }
+    .card-header {
+      border-bottom-color: lighten($color: $scheme-main, $amount: 15%);
+
+      .card-header-title {
+        color: #ccc;
+
+        a { color: #ccc; }
+        a:hover { color: white; }
+      }
     }
   }
 
@@ -269,7 +286,7 @@
   color: $header-text-color;
 
   a { color: $header-text-color; }
-  #next { text-align: right; }
+  #prev { text-align: right; }
 }
 
 .es-dark-mode #next_prev {
@@ -287,7 +304,7 @@
 
   h2 {
     color: #6f6f82;
-    margin-top: 2.5em;
+    margin-top: 0;
   }
 
   .search-results__items {

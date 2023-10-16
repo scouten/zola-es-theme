@@ -1,12 +1,14 @@
 {%- extends "base.html" -%}
 
 {%- block content -%}
-<div class="section">
 
+<div class="section">
+  {%- if section.components | length >= 1 -%}
   <div class="title-assembly">
     {%- include "breadcrumbs.html" -%}
     {%- include "title.html" -%}
   </div>
+  {%- endif -%}
 
   {# TO DO: Add summary map option? #}
 
@@ -41,9 +43,9 @@
     {%- if section.extra.recent -%}
       {%- set pages = section.pages | sort(attribute = "updated") | reverse -%}
     {%- elif section.extra.reverse -%}
-      {%- set pages = section.pages | reverse -%}
-    {%- else -%}
       {%- set pages = section.pages -%}
+    {%- else -%}
+      {%- set pages = section.pages | reverse -%}
     {%- endif -%}
     {%- if section.extra.limit -%}
       {%- set pages = pages | slice(end=section.extra.limit) -%}

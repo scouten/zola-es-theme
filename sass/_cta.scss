@@ -9,11 +9,12 @@ cta {
     display: block;
     background-color: #bcc1cc;
     color: darken($text, 20%);
-    padding: 1.2em 0;
+    padding: 1em;
 
     inner {
         display: block;
         margin: 0 auto;
+        padding: 0;
         max-width: $preferred-text-width;
     }
 
@@ -27,16 +28,16 @@ cta {
     p {
         display: block;
         max-width: 32rem;
-        margin: .5em auto .5em 0;
+        margin: 1em auto 1em 0;
     }
 
     ul {
-        margin: .9em auto .9em 0;
+        margin: .5em auto .5em 0;
 
         li {
-            margin: .5em 0 .5em 1.5em;
+            margin: .25em 0 .25em .5em;
             max-width: 32rem;
-            list-style: disc;
+            list-style: none;
         }
     }
 
@@ -67,4 +68,8 @@ cta {
             color: white !important;
         }
     }
+}
+
+@media screen and ((max-height: 1024px) or (max-width: 600px)) {
+    cta { font-size: 72%; }
 }

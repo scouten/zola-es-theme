@@ -1,0 +1,42 @@
+{%- block about -%}
+<about>
+  {%- if config.build_search_index -%}
+  <div class="search-assembly">
+    <div class="control has-icons-left">
+      <input id="search" class="input is-rounded" type="text" placeholder="search">
+      <span class="icon is-small is-left">
+        <i class="fas fa-search"></i>
+      </span>
+    </div>
+  </div>
+  {%- endif -%}
+  <div class="content">
+    <div class="media">
+      <figure class="media-left">
+        <div class="image is-128x128">
+          <img class="is-rounded" src="/common/es-4571-087.jpg">
+        </div>
+      </figure>
+      <div class="media-content">
+        <div class="about-text">
+          <p><strong>Hi, I'm Eric.</strong></p>
+          <p>
+            I’m an avid world traveler, photographer, software developer, and digital storyteller.
+          </p>
+          <p class="optional">
+            I help implement the Content Authenticity Initiative at Adobe.
+            <!-- More <a href="https://ericscouten.com/about/">about me</a>. -->
+          </a>
+          </p>
+          <div class="links-wide">
+          {%- include "about_links.html" -%}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="links-narrow">
+      {%- include "about_links.html" -%}
+    </div>
+  </div>
+</about>
+{%- endblock about -%}
