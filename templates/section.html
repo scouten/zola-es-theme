@@ -42,7 +42,7 @@
   <ul class="pages">
     {%- if section.extra.recent -%}
       {%- set pages = section.pages | sort(attribute = "updated") | reverse -%}
-    {%- elif section.extra.reverse -%}
+    {%- elif section.extra.reverse or config.extra.section_reverse_default -%}
       {%- set pages = section.pages -%}
     {%- else -%}
       {%- set pages = section.pages | reverse -%}

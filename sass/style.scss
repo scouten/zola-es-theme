@@ -9,6 +9,7 @@
 @import "./header";
 @import "./about";
 @import "./page";
+@import "./comments";
 @import "./cta";
 @import "./footer";
 
@@ -38,13 +39,15 @@ strong {
 
 h1, h2, h3, h4, h5, h6, p, ul, ol, #next_prev {
     max-width: $preferred-text-width;
-    margin: 1.6em auto;
+    width: 100%;
+    margin: 1.2rem auto;
 }
 
 h1, h2, h3, h4, h5, h6, .title {
     font-family: $header-font-family;
+    font-weight: bold;
     color: $header-text-color;
-    margin: 2em auto 1.4em;
+    margin: 2rem auto 1rem;
     line-height: 1.2em;
 }
 
@@ -56,22 +59,22 @@ h1.title {
     color: #ddd;
 }
 
-h1, h1.title, h2 {
+h1, h2 {
+    font-size: 160%;
     font-weight: 700;
     letter-spacing: -1px;
 }
 
-h1, h1.title {
-    font-size: 200%;
+h1.title {
     margin-bottom: 1.5em;
 }
 
 h2 {
-    font-size: 160%;
+    font-size: 140%;
 }
 
 h2, h3, h4, h5, h6 {
-    font-weight: 400;
+    font-weight: 700;
 }
 
 @font-face {
