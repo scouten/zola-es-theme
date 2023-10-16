@@ -128,7 +128,9 @@
       a { color: black; }
 
       .breadcrumb {
+        padding-top: .5em;
         line-height: 1em;
+        opacity: 50%;
 
         ul { margin: 0; }
         a:hover { color: white; }
