@@ -280,7 +280,7 @@
 
   {%- block comments -%}
   {%- set_global comments = page.extra | get(key = "comments", default = config.extra.comments_enabled_default) -%}
-  {%- if comments -%}
+  {%- if comments and config.extra.hyvor_site_id -%}
   <div class="comments">
     <hyvor-talk-comments website-id="{{ config.extra.hyvor_site_id }}" page-id="{{ page.path }}"></hyvor-talk-comments>
   </div>
