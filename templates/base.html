@@ -35,7 +35,11 @@
     {%- set_global pos_description = pos.content | striptags | trim -%}
   {%- endif -%}
   {%- if pos.extra.cover -%}
-    {%- set_global pos_image = pos.permalink ~ "cover-" ~ pos.extra.cover ~ ".jpg" -%}
+    {%- if pos.extra.cover_cdn_key -%}
+      {%- set_global pos_image = "https://img.ericscouten.com/" ~ pos.extra.cover_cdn_key ~ "/" ~ "cover-" ~ pos.extra.cover ~ "-1000w.jpg" -%}
+    {%- else -%}
+      {%- set_global pos_image = pos.permalink ~ "cover-" ~ pos.extra.cover ~ ".jpg" -%}
+    {%- endif -%}
   {%- endif -%}
   {%- if pos.extra.cover_abs -%}
     {%- set_global pos_image = config.base_url ~ pos.extra.cover_abs -%}
