@@ -1,0 +1,19 @@
+<div class="es_image anti-section" id="{{id}}">
+  <img src="{{id}}.jpg" srcset="https://img.ericscouten.com/{{cdn_key}}/{{id}}-400w.jpg 400w,
+  https://img.ericscouten.com/{{cdn_key}}/{{id}}-1000w.jpg 1000w,
+  https://img.ericscouten.com/{{cdn_key}}/{{id}}-1500w.jpg 1500w,
+  https://img.ericscouten.com/{{cdn_key}}/{{id}}-2400w.jpg 2400w" sizes="(max-width: 800px) 400px, (max-width: 2000px) 1000px, (max-width: 3000px) 1500px, 2400px" alt="" />
+  {% if caption or title or creator -%}
+  <div class="caption">
+    {% if title -%}
+      <span class="caption-title">{{ title }} </span>
+      {% if caption or creator %} &middot; {% endif -%}
+    {% endif -%}
+    {% if caption -%}{{ caption }}{% endif -%}
+    {% if creator -%}
+      {% if title or caption %} &middot; {% endif -%}
+      by {{ creator }}
+    {% endif -%}
+  </div>
+  {%- endif -%}
+</div>
