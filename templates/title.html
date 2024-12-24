@@ -42,7 +42,7 @@
         <span class="date">
           {{ page.date | date(format="%e %B %Y") }}
         </span>
-        {%- if page.extra.distance and page.extra.track -%}
+        {%- if page.extra.distance and (page.extra.track or page.extra.track_log_key) -%}
           • <a href="#map">{{ page.extra.distance }} (map)</a>
         {%- endif -%}
         {%- if config.extra.taxonomies.via.title -%}
