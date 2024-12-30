@@ -76,7 +76,7 @@
     {{ page.content | safe }}
   </div>
 
-  {%- if page.extra.markers or page.extra.track or page.extra.lat or page.extra.lon -%}
+  {%- if page.extra.markers or page.extra.track or page.extra.track_log_key or page.extra.lat or page.extra.lon -%}
   <div id="map"{%- if config.extra.is_dark %} class="map-dark-mode"{%- endif %}></div>
 
   {%- if page.extra.markers -%}
@@ -206,10 +206,12 @@
       map.fitBounds(bounds);
       {%- endif -%}
 
-      {%- if page.extra.track -%}
+      {%- if page.extra.track or page.extra.track_log_key -%}
       var kmlLayer = new google.maps.KmlLayer({
         {%- if config.extra.kml_folder -%}
         url: '{{config.base_url | safe }}/kml/{{ page.extra.track }}',
+        {%- elif page.extra.track_log_key -%}
+        url: 'https://img.ericscouten.com/{{ page.extra.track_log_key | safe }}',
         {%- else -%}
         url: '{{config.base_url | safe }}{{ current_path | safe }}{{ page.extra.track }}',
         {%- endif -%}
@@ -219,8 +221,8 @@
       google.maps.event.addListener(kmlLayer, 'status_changed', function(evt) {
         console.log("KML layer status: " + kmlLayer.getStatus());
       });
-
       {%- endif -%}
+
       {%- if page.extra.markers -%}
       markers = addGpxMarkers(map);
       {%- if config.extra.map_clustering -%}
@@ -278,13 +280,6 @@
     {%- endif -%}
   {%- endblock next_prev -%}
 
-  {%- block comments -%}
-  {%- set_global comments = page.extra | get(key = "comments", default = config.extra.comments_enabled_default) -%}
-  {%- if comments and config.extra.hyvor_site_id -%}
-  <div class="comments">
-    <hyvor-talk-comments website-id="{{ config.extra.hyvor_site_id }}" page-id="{{ page.path }}"></hyvor-talk-comments>
-  </div>
-  {%- endif -%}
-  {%- endblock comments -%}
+  {%- include "comments.html" -%}
 </div>
 {%- endblock content -%}

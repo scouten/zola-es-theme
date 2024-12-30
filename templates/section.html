@@ -76,8 +76,13 @@
         {%- if page.extra.cover -%}
         <div class="card-image">
           <figure class="image is-16by9">
+            {%- if page.extra.cover_cdn_key -%}
+              {%- set_global cover_url = "https://img.ericscouten.com/" ~ page.extra.cover_cdn_key ~ "/" ~ "cover-" ~ page.extra.cover ~ "-1000w.jpg" -%}
+            {%- else -%}
+              {%- set_global cover_url = page.permalink ~ "cover-" ~ page.extra.cover ~ ".jpg" -%}
+            {%- endif -%}
             <a href="{{ page.permalink | safe }}">
-              <img src="{{ page.permalink | safe }}cover-{{ page.extra.cover | safe}}.jpg" alt="{{ page.title }}" />
+              <img src="{{ cover_url }}" alt="{{ page.title }}" />
             </a>
           </figure>
         </div>

@@ -34,10 +34,13 @@
   {%- elif pos.content -%}
     {%- set_global pos_description = pos.content | striptags | trim -%}
   {%- endif -%}
-  {%- if pos.extra.cover -%}
+  {%- if pos.extra.cover_cdn_key -%}
+    {%- set_global pos_image = "https://img.ericscouten.com/" ~ pos.extra.cover_cdn_key ~ "/" ~ "cover-" ~ pos.extra.cover ~ "-1000w.jpg" -%}
+  {%- elif pos.extra.cover -%}
     {%- set_global pos_image = pos.permalink ~ "cover-" ~ pos.extra.cover ~ ".jpg" -%}
-  {%- endif -%}
-  {%- if pos.extra.cover_abs -%}
+  {%- elif pos.extra.cover_abs_key -%}
+    {%- set_global pos_image = "https://img.ericscouten.com/" ~ pos.extra.cover_abs_key -%}
+  {%- elif pos.extra.cover_abs -%}
     {%- set_global pos_image = config.base_url ~ pos.extra.cover_abs -%}
   {%- endif -%}
 
@@ -129,7 +132,7 @@
       <p><b>Or follow</b> me on one or more of the socials:</p>
       <ul>
         <li>
-          <a href="https://ericscouten.social/@scouten">
+          <a rel="me" href="https://ericscouten.social/@scouten">
             <span class="icon is-small"><i class="fab fa-mastodon"></i></span>
             <b>Mastodon</b> <span class="optional">@scouten@ericscouten.social</span>
           </a>
