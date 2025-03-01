@@ -42,6 +42,11 @@
         <span class="date">
           {{ page.date | date(format="%e %B %Y") }}
         </span>
+        {%- if page and page.extra and page.extra.from -%}
+        <span class="from">
+          from <b>{{ page.extra.from }}</b>
+        </span>
+        {%- endif -%}
         {%- if page.extra.distance and (page.extra.track or page.extra.track_log_key) -%}
           • <a href="#map">{{ page.extra.distance }} (map)</a>
         {%- endif -%}
