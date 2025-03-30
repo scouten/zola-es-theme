@@ -1,0 +1,19 @@
+{%- block next_prev -%}
+{%- if not page.extra.hide_from_section -%}
+<div id="next_prev">
+  {%- if page.lower -%}
+  <div id="prev">
+    <a href="{{ page.lower.permalink | safe }}">{{ page.lower.title }}</a> &rarr;
+  </div>
+  {%- endif -%}
+  {%- if page.lower and page.higher -%}
+  <div id="divider"></div>
+  {%- endif -%}
+  {%- if page.higher -%}
+  <div id="next">
+    &larr; <a href="{{ page.higher.permalink | safe }}">{{ page.higher.title }}</a>
+  </div>
+  {%- endif -%}
+</div>
+{%- endif -%}
+{%- endblock next_prev -%}
