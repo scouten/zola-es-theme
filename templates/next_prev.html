@@ -1,17 +1,26 @@
 {%- block next_prev -%}
+
+{%- if config.extra.reverse_next_prev -%}
+{%- set_global lower = page.higher -%}
+{%- set_global higher = page.lower -%}
+{%- else -%}
+{%- set_global lower = page.lower -%}
+{%- set_global higher = page.higher -%}
+{%- endif -%}
+
 {%- if not page.extra.hide_from_section -%}
 <div id="next_prev">
-  {%- if page.lower -%}
+  {%- if lower -%}
   <div id="prev">
-    <a href="{{ page.lower.permalink | safe }}">{{ page.lower.title }}</a> &rarr;
+    <a href="{{ lower.permalink | safe }}">{{ lower.title }}</a> &rarr;
   </div>
   {%- endif -%}
-  {%- if page.lower and page.higher -%}
+  {%- if lower and higher -%}
   <div id="divider"></div>
   {%- endif -%}
-  {%- if page.higher -%}
+  {%- if higher -%}
   <div id="next">
-    &larr; <a href="{{ page.higher.permalink | safe }}">{{ page.higher.title }}</a>
+    &larr; <a href="{{ higher.permalink | safe }}">{{ higher.title }}</a>
   </div>
   {%- endif -%}
 </div>
