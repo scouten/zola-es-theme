@@ -167,15 +167,12 @@
   src="https://maps.googleapis.com/maps/api/js?key={{ get_env(name="GOOGLE_API_KEY", default="none") }}&callback=initMap&libraries=&v=weekly"
   async>
 </script>
-{%- if page.extra.route or page.extra.distance -%}
-  <div class="map-caption">
-    {%- if page.extra.route -%}{{ page.extra.route }}{%- endif -%}
-    {%- if page.extra.route and page.extra.distance -%}&nbsp;· {% endif -%}
-    {%- if page.extra.distance -%}{{ page.extra.distance }}{%- endif -%}
-    {%- if page.extra.markers -%}
-    <br/>
-    (Mouse over or tap on the markers to see the photos there.)
-    {%- endif -%}
-  </div>
-{%- endif -%}
+<div class="map-caption">
+  {%- if page.extra.route -%}{{ page.extra.route }}{%- endif -%}
+  {%- if page.extra.route and page.extra.distance -%}&nbsp;· {% endif -%}
+  {%- if page.extra.distance -%}{{ page.extra.distance }}{%- endif -%}
+  
+  <br/>
+  ({%- if page.extra.markers -%}Mouse over or tap on the markers to see the photos there. {% endif -%} Use the <img src="data:image/svg+xml,%3Csvg%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M12%2019.175l2.125-2.125%201.425%201.4L12%2022l-3.55-3.55%201.425-1.4L12%2019.175zM4.825%2012l2.125%202.125-1.4%201.425L2%2012l3.55-3.55%201.4%201.425L4.825%2012zm14.35%200L17.05%209.875l1.4-1.425L22%2012l-3.55%203.55-1.4-1.425L19.175%2012zM12%204.825L9.875%206.95%208.45%205.55%2012%202l3.55%203.55-1.425%201.4L12%204.825z%22%20fill%3D%22%23666%22/%3E%3C/svg%3E" width="24" height="24" /> button to adjust the map’s position and zoom.)
+</div>
 {%- endif -%}
