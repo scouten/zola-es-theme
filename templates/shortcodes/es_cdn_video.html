@@ -1,0 +1,22 @@
+<div class="es_video anti-section" id="{{id}}">
+  <video controls preload="metadata" playsinline>
+    <source src="https://img.ericscouten.com/{{cdn_key}}/{{id}}-2160p.mp4" type="video/mp4; codecs=avc1.640033" media="(min-width: 1920px)">
+    <source src="https://img.ericscouten.com/{{cdn_key}}/{{id}}-1080p.mp4" type="video/mp4; codecs=avc1.64002a" media="(min-width: 1280px)">
+    <source src="https://img.ericscouten.com/{{cdn_key}}/{{id}}-720p.mp4" type="video/mp4; codecs=avc1.640029">
+    <source src="https://img.ericscouten.com/{{cdn_key}}/{{id}}-480p.mp4" type="video/mp4; codecs=avc1.640028">
+    Your browser does not support the video tag.
+  </video>
+  {% if caption or title or creator -%}
+  <div class="caption">
+    {% if title -%}
+      <span class="caption-title">{{ title }} </span>
+      {% if caption or creator %} &middot; {% endif -%}
+    {% endif -%}
+    {% if caption -%}{{ caption }}{% endif -%}
+    {% if creator -%}
+      {% if title or caption %} &middot; {% endif -%}
+      by {{ creator }}
+    {% endif -%}
+  </div>
+  {%- endif -%}
+</div>
