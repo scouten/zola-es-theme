@@ -70,6 +70,10 @@
   <link rel="stylesheet" href="/style.css">
   <script src="https://kit.fontawesome.com/{{ get_env(name="FONT_AWESOME_API_KEY", default="none") }}.js" crossorigin="anonymous"></script>
 
+  {# Video.js for HLS playback #}
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/video.js@8.23.4/dist/video-js.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/video.js@8.23.4/dist/video.min.js"></script>
+
   {%- if config.extra.fathom_site_id and not config.base_url is starting_with("http://127.0.0.1") -%}
   <script src="https://cdn.usefathom.com/script.js" data-site="{{ config.extra.fathom_site_id }}" defer></script>
   {%- endif -%}

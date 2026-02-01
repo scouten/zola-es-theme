@@ -1,0 +1,23 @@
+.es_video {
+    padding: 2vw 0;
+    text-align: center;
+    width: 100%;
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    .video-js {
+        width: 100%;
+        max-width: min(100vw, calc(80vh * 16 / 9));
+        aspect-ratio: 16 / 9;
+        max-height: 80vh;
+    }
+
+    .caption {
+        text-align: center;
+        font-style: italic;
+        font-size: 80%;
+        margin-top: .2em;
+    }
+}

@@ -1,10 +1,31 @@
-<div class="es_video anti-section" id="{{id}}">
-  <video controls preload="metadata" playsinline>
-    <source src="https://img.ericscouten.com/{{cdn_key}}/{{id}}-2160p.mp4" type="video/mp4; codecs=avc1.640033" media="(min-width: 1920px)">
-    <source src="https://img.ericscouten.com/{{cdn_key}}/{{id}}-1080p.mp4" type="video/mp4; codecs=avc1.64002a" media="(min-width: 1280px)">
-    <source src="https://img.ericscouten.com/{{cdn_key}}/{{id}}-720p.mp4" type="video/mp4; codecs=avc1.640029">
-    <source src="https://img.ericscouten.com/{{cdn_key}}/{{id}}-480p.mp4" type="video/mp4; codecs=avc1.640028">
-    Your browser does not support the video tag.
+{% set poster = poster | default(value="") %}
+{% set controls = controls | default(value=true) %}
+{% set autoplay = autoplay | default(value=false) %}
+{% set muted = muted | default(value=false) %}
+{% set loop = loop | default(value=false) %}
+{% set preload = preload | default(value="metadata") %}
+
+{# Construct HLS master playlist URL from cdn_key #}
+{% set hls_src = "https://img.ericscouten.com/" ~ cdn_key ~ "/hls/master.m3u8" %}
+
+{# If no poster provided, try default poster.jpg location #}
+{% if not poster %}
+  {% set poster = "https://img.ericscouten.com/" ~ cdn_key ~ "/poster.jpg" %}
+{% endif %}
+
+<div class="es_video anti-section">
+  <video
+    id="{{ id }}"
+    class="video-js vjs-default-skin vjs-fluid"
+    {% if controls %}controls{% endif %}
+    {% if autoplay %}autoplay{% endif %}
+    {% if muted %}muted{% endif %}
+    {% if loop %}loop{% endif %}
+    preload="{{ preload }}"
+    playsinline
+    poster="{{ poster }}"
+  >
+    <source src="{{ hls_src }}" type="application/x-mpegURL" />
   </video>
   {% if caption or title or creator -%}
   <div class="caption">
@@ -20,3 +41,28 @@
   </div>
   {%- endif -%}
 </div>
+
+{# Initialize Video.js #}
+<script>
+  (function () {
+    var initPlayer = function() {
+      var player = window.videojs(document.getElementById({{ id | json_encode() | safe }}), {
+        fluid: true,
+        responsive: true
+      });
+    };
+    
+    if (window.videojs) {
+      initPlayer();
+    } else {
+      document.addEventListener('DOMContentLoaded', function() {
+        var checkVideojs = setInterval(function() {
+          if (window.videojs) {
+            clearInterval(checkVideojs);
+            initPlayer();
+          }
+        }, 50);
+      });
+    }
+  })();
+</script>
