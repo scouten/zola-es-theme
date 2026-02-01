@@ -14,19 +14,21 @@
 {% endif %}
 
 <div class="es_video anti-section">
-  <video
-    id="{{ id }}"
-    class="video-js vjs-default-skin vjs-fluid"
-    {% if controls %}controls{% endif %}
-    {% if autoplay %}autoplay{% endif %}
-    {% if muted %}muted{% endif %}
-    {% if loop %}loop{% endif %}
-    preload="{{ preload }}"
-    playsinline
-    poster="{{ poster }}"
-  >
-    <source src="{{ hls_src }}" type="application/x-mpegURL" />
-  </video>
+  <div class="video-wrapper">
+    <video
+      id="{{ id }}"
+      class="video-js vjs-default-skin"
+      {% if controls %}controls{% endif %}
+      {% if autoplay %}autoplay{% endif %}
+      {% if muted %}muted{% endif %}
+      {% if loop %}loop{% endif %}
+      preload="{{ preload }}"
+      playsinline
+      poster="{{ poster }}"
+    >
+      <source src="{{ hls_src }}" type="application/x-mpegURL" />
+    </video>
+  </div>
   {% if caption or title or creator -%}
   <div class="caption">
     {% if title -%}
