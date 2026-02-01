@@ -53,31 +53,37 @@ Then include them:
 
 ---
 
-## 2) Create a Zola shortcode for video embeds
+## 2) Update the existing `es_cdn_video` shortcode for HLS
 
-Create a file:
+The project already has a shortcode at `templates/shortcodes/es_cdn_video.html` that uses progressive MP4 downloads. We'll update it to use Video.js with HLS streaming.
 
-```
-templates/shortcodes/video.html
-```
+The shortcode follows the project's existing pattern:
+- Uses `cdn_key` parameter for the CDN path (e.g., `vid/v1/2012/12/es-2251-027`)
+- Uses `id` parameter for the asset ID (e.g., `es-2251-027`)
+- Supports optional `title`, `caption`, and `creator` parameters
+- Uses the `es_video` CSS class and `anti-section` class for styling consistency
 
-Suggested shortcode template (responsive + optional poster + optional class):
+Updated shortcode template:
 
 ```html
-{# templates/shortcodes/video.html #}
-{% set src = src | default(value="") %}
+{# templates/shortcodes/es_cdn_video.html #}
+{% set cdn_key = cdn_key | default(value="") %}
 {% set poster = poster | default(value="") %}
-{% set class = class | default(value="") %}
 {% set controls = controls | default(value=true) %}
 {% set autoplay = autoplay | default(value=false) %}
 {% set muted = muted | default(value=false) %}
 {% set loop = loop | default(value=false) %}
 {% set preload = preload | default(value="metadata") %}
 
-{# A unique-ish id so multiple players can coexist on a page #}
-{% set id = id | default(value="vjs-" ~ get_random(start=100000, end=999999)) %}
+{# Construct HLS master playlist URL from cdn_key #}
+{% set hls_src = "https://img.ericscouten.com/" ~ cdn_key ~ "/hls/master.m3u8" %}
 
-<div class="video-embed {% if class %}{{ class }}{% endif %}">
+{# If no poster provided, try default poster.jpg location #}
+{% if not poster %}
+  {% set poster = "https://img.ericscouten.com/" ~ cdn_key ~ "/poster.jpg" %}
+{% endif %}
+
+<div class="es_video anti-section" id="{{ id }}">
   <video
     id="{{ id }}"
     class="video-js vjs-default-skin"
@@ -87,18 +93,29 @@ Suggested shortcode template (responsive + optional poster + optional class):
     {% if loop %}loop{% endif %}
     preload="{{ preload }}"
     playsinline
-    {% if poster %}poster="{{ poster }}"{% endif %}
+    poster="{{ poster }}"
     data-setup='{"fluid": true, "responsive": true}'
   >
-    <source src="{{ src }}" type="application/x-mpegURL" />
+    <source src="{{ hls_src }}" type="application/x-mpegURL" />
   </video>
+  {% if caption or title or creator -%}
+  <div class="caption">
+    {% if title -%}
+      <span class="caption-title">{{ title }} </span>
+      {% if caption or creator %} &middot; {% endif -%}
+    {% endif -%}
+    {% if caption -%}{{ caption }}{% endif -%}
+    {% if creator -%}
+      {% if title or caption %} &middot; {% endif -%}
+      by {{ creator }}
+    {% endif -%}
+  </div>
+  {%- endif -%}
 </div>
 
-{# Optional: per-player initialization hook (usually not required) #}
+{# Optional: per-player initialization hook #}
 <script>
   (function () {
-    // If Video.js is loaded, initializing is optional when using data-setup,
-    // but explicit init lets you attach events consistently.
     if (window.videojs) {
       window.videojs(document.getElementById({{ id | json_encode() }}));
     }
@@ -108,44 +125,39 @@ Suggested shortcode template (responsive + optional poster + optional class):
 
 ### How to use the shortcode in Markdown
 
+The shortcode usage matches the existing pattern in the project:
+
 ```text
-{{ video(src="https://cdn.example.com/video/my-asset/hls/master.m3u8",
-         poster="https://cdn.example.com/video/my-asset/poster.jpg") }}
+{{ es_cdn_video(id = "es-2251-027", 
+                cdn_key = "vid/v1/2012/12/es-2251-027", 
+                caption = "Trem do Corcovado, Rio de Janerio, Brazil") }}
 ```
 
 Common optional parameters:
-- `controls=true|false`
-- `autoplay=true|false`
-- `muted=true|false`  (often required if you use autoplay)
-- `loop=true|false`
-- `preload="none"|"metadata"|"auto"`
-- `class="..."`
-- `id="..."` (if you need stable IDs for custom scripts)
+- `title="..."` - Video title (bold in caption)
+- `caption="..."` - Video caption text
+- `creator="..."` - Creator attribution
+- `poster="..."` - Custom poster image URL (defaults to `{cdn_key}/poster.jpg`)
+- `controls=true|false` - Show playback controls (default: true)
+- `autoplay=true|false` - Auto-start playback (default: false)
+- `muted=true|false` - Mute audio (often required for autoplay, default: false)
+- `loop=true|false` - Loop playback (default: false)
+- `preload="none"|"metadata"|"auto"` - Preload behavior (default: "metadata")
 
 ---
 
-## 3) Add minimal CSS for spacing and max width
+## 3) Update CSS for Video.js integration
 
-Add something like this to your site CSS (wherever you keep styles):
+The project already has `.es_video` styling. Update your site CSS to work with Video.js:
 
 ```css
-.video-embed {
-  margin: 1rem 0;
-}
-
-.video-embed .video-js {
+.es_video .video-js {
   width: 100%;
   height: auto;
 }
 ```
 
-If you want a max width (e.g., keep videos from becoming enormous on ultrawide monitors):
-
-```css
-.video-embed {
-  max-width: 960px;
-}
-```
+The existing `.es_video` and `.anti-section` classes should handle spacing and layout.
 
 ---
 
@@ -204,7 +216,13 @@ Video.js can be extended with plugins to expose quality selection controls. This
 
 ### Poster generation
 
-Generate a `poster.jpg` during encoding (first frame or a frame near 1–2s). Store it alongside the HLS output and reference it in the shortcode.
+Generate a `poster.jpg` during encoding (first frame or a frame near 1–2s). Store it at:
+
+```
+/vid/v1/{year}/{mo}/{pid}/poster.jpg
+```
+
+The shortcode will automatically use this location if no explicit `poster` parameter is provided.
 
 ---
 
@@ -223,8 +241,9 @@ For blog video embeds, these defaults are usually comfortable:
 ## Quick checklist
 
 - [ ] Video.js CSS and JS included site-wide (pinned version)
-- [ ] `templates/shortcodes/video.html` created
-- [ ] HLS `master.m3u8` URLs accessible publicly
-- [ ] CORS configured if cross-domain
+- [ ] `templates/shortcodes/es_cdn_video.html` updated with HLS support
+- [ ] HLS assets uploaded to CDN following `/vid/v1/{year}/{mo}/{pid}/hls/` structure
+- [ ] CORS configured on CDN (img.ericscouten.com)
 - [ ] MIME types correct for `.m3u8` and `.ts`
-- [ ] Videos render responsively in your theme
+- [ ] Poster images generated at `/vid/v1/{year}/{mo}/{pid}/poster.jpg`
+- [ ] Videos render responsively with existing theme styles
