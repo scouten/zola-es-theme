@@ -70,6 +70,10 @@
   <link rel="stylesheet" href="/style.css">
   <script src="https://kit.fontawesome.com/{{ get_env(name="FONT_AWESOME_API_KEY", default="none") }}.js" crossorigin="anonymous"></script>
 
+  {# Video.js for HLS playback #}
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/video.js@8.23.4/dist/video-js.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/video.js@8.23.4/dist/video.min.js"></script>
+
   {%- if config.extra.fathom_site_id and not config.base_url is starting_with("http://127.0.0.1") -%}
   <script src="https://cdn.usefathom.com/script.js" data-site="{{ config.extra.fathom_site_id }}" defer></script>
   {%- endif -%}
@@ -105,7 +109,7 @@
   {%- block miniheader -%}{%- endblock -%}
 
   {%- block root -%}
-  <section class="section root">
+  <section class="section">
     <div class="container">
       {%- block content -%}{%- endblock -%}
     </div>
@@ -116,6 +120,8 @@
     {%- block cta -%}
     {%- set_global article_type = config.extra | get(key="article_type", default="travel stories") -%}
     <inner>
+      {%- block site_specific_cta -%}
+      {%- endblock -%}
       <h3>If you’ve enjoyed this …</h3>
       <p><b>Subscribe</b> to my free and occasional (never more than weekly) <a href="https://buttondown.email/scouten">e-mail newsletter</a> with my latest travel and other stories:
         <form
@@ -167,6 +173,12 @@
           <a href="https://github.com/scouten">
             <span class="icon is-small"><i class="fab fa-github"></i></span>
             <b>GitHub</b> <span class="optional">@scouten-adobe</span> (<span class="optional">open-source work for </span>Adobe)
+          </a>
+        </li>
+        <li>
+          <a href="https://now.ericscouten.com">
+            <span class="icon is-small"><i class="fas fa-clock"></i></span>
+            <b>My “now” page</b> <span class="optional">(What I’m working on now)</span>
           </a>
         </li>
       </ul> 

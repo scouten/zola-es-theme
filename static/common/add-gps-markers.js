@@ -72,7 +72,7 @@ function addCdnGpxMarker(map, id, lat, lon, cdn_key) {
             scale: 7,
             fillOpacity: 1,
             strokeWeight: 2,
-            fillColor: '#36b3b3',
+            fillColor: '#ff0000',
             strokeColor: '#ffffff',
         },
         title: "{{id}}",

@@ -1,3 +1,7 @@
+html {
+  scroll-padding-top: 7rem;
+}
+
 .page, .section, .taxonomy {
   padding-top: 2em;
   margin-top: 0;
@@ -241,10 +245,11 @@
   }
 
   blockquote {
-    margin: 0 2em 0 4em;
+    background-color: lighten($color: $scheme-main, $amount: 8%);
+    border-left: 6px solid darken($color: $scheme-main, $amount: 2%);
 
     p {
-      border-left: solid 5px lighten($main-section-background, 20%);
+      background-color: none;
       color: #ccc;
       padding: 0 4em 0 .75em;
     }
