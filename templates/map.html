@@ -130,10 +130,10 @@
 
     {%- if page.extra.track or page.extra.track_log_key -%}
     var kmlLayer = new google.maps.KmlLayer({
-      {%- if config.extra.kml_folder -%}
-      url: '{{config.base_url | safe }}/kml/{{ page.extra.track }}',
-      {%- elif page.extra.track_log_key -%}
+      {%- if page.extra.track_log_key -%}
       url: 'https://img.ericscouten.com/{{ page.extra.track_log_key | safe }}',
+      {%- elif config.extra.kml_folder -%}
+      url: '{{config.base_url | safe }}/kml/{{ page.extra.track }}',
       {%- else -%}
       url: '{{config.base_url | safe }}{{ current_path | safe }}{{ page.extra.track }}',
       {%- endif -%}
