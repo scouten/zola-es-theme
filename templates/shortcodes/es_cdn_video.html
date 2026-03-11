@@ -50,7 +50,23 @@
     var initPlayer = function() {
       var player = window.videojs(document.getElementById({{ id | json_encode() | safe }}), {
         fluid: true,
-        responsive: true
+        responsive: true,
+        html5: {
+          vhs: {
+            // Don't start with lowest quality; use bandwidth estimation from the start.
+            enableLowInitialPlaylist: false,
+            // Limit rendition selection to those matching player dimensions.
+            limitRenditionByPlayerDimensions: true,
+            // Use device pixel ratio for sharper video on high-DPI screens.
+            useDevicePixelRatio: true,
+            // Start with a reasonable bandwidth estimate (4 Mbps) to avoid lowest quality.
+            initialBandwidth: 4194304,
+            // Use VHS instead of native HLS (Safari) so these settings apply.
+            overrideNative: true
+          },
+          nativeAudioTracks: false,
+          nativeVideoTracks: false
+        }
       });
     };
     
