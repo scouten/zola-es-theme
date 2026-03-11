@@ -49,8 +49,7 @@
   (function () {
     var initPlayer = function() {
       var player = window.videojs(document.getElementById({{ id | json_encode() | safe }}), {
-        fluid: true,
-        responsive: true,
+        fill: true,
         html5: {
           vhs: {
             // Don't start with lowest quality; use bandwidth estimation from the start.
