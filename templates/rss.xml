@@ -35,6 +35,10 @@
           <link>{{ page.permalink | escape_xml | safe }}</link>
           <guid>{{ page.permalink | escape_xml | safe }}</guid>
           <description>{% if page.summary %}{{ page.summary }}{% else %}{{ page.content }}{% endif %}</description>
+          {%- if page.extra.cover_cdn_key -%}
+          {%- set cover_url = "https://img.ericscouten.com/" ~ page.extra.cover_cdn_key ~ "/cover-" ~ page.extra.cover ~ "-1000w.jpg" -%}
+          <enclosure url="{{ cover_url | escape_xml | safe }}" length="0" type="image/jpeg"/>
+          {%- endif -%}
       </item>
       {%- endif -%}
       {%- endfor %}
