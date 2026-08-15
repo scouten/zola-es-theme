@@ -57,9 +57,12 @@
   <meta name="twitter:description" content="{{ pos_description }}">
   {%- endif -%}
   {%- if pos_image -%}
+  {%- set pos_image_alt = pos.extra.cover_alt | default(value=pos_title) -%}
   <meta property="og:image" content="{{ pos_image | safe }}" />
+  <meta property="og:image:alt" content="{{ pos_image_alt }}" />
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:image" content="{{ pos_image | safe }}">
+  <meta name="twitter:image:alt" content="{{ pos_image_alt }}">
   {%- endif -%}
   <meta property="og:type" content="website">
   <meta property="twitter:domain" content="{{ config.base_url | safe }}">
@@ -188,7 +191,7 @@
 
   <footer>
     {%- block footer -%}
-    <p>All design, text, and photography copyright © 1996 – {{ now() | date(format="%Y") }}, <a href="https://ericscouten.com">Eric&nbsp;Scouten</a>, unless otherwise attributed.</p>
+    <p>All design, text, and photography copyright © 1996–{{ now() | date(format="%Y") }}, <a href="https://ericscouten.com">Eric&nbsp;Scouten</a>, unless otherwise attributed.</p>
     {%- endblock footer -%}
   </footer>
 

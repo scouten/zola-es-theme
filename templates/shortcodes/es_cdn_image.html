@@ -5,7 +5,7 @@
                https://img.ericscouten.com/{{cdn_key}}/{{id}}-1500w.jpg 1500w,
               https://img.ericscouten.com/{{cdn_key}}/{{id}}-2400w.jpg 2400w"
        sizes="(max-width: 400px) 400px, (max-width: 1000px) 1000px, (max-width: 1500px) 1500px, 2400px"
-       alt="" />
+       alt="{{ alt | default(value='') }}" />
   {% if caption or title or creator -%}
   <div class="caption">
     {% if title -%}

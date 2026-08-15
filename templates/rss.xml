@@ -29,12 +29,17 @@
             {%- elif config.author -%}
               {{ config.author }}
             {%- else -%}
-              Unknown
+              Eric Scouten
             {%- endif -%}
           </author>
           <link>{{ page.permalink | escape_xml | safe }}</link>
           <guid>{{ page.permalink | escape_xml | safe }}</guid>
+          {%- if page.extra.cover_cdn_key -%}
+          {%- set cover_url = "https://img.ericscouten.com/" ~ page.extra.cover_cdn_key ~ "/cover-" ~ page.extra.cover ~ "-1000w.jpg" -%}
+          <description>&lt;img src="{{ cover_url }}" alt="{{ page.extra.cover_alt | default(value=page.title) }}" /&gt;{% if page.summary %}{{ page.summary }}{% else %}{{ page.content }}{% endif %}</description>
+          {%- else -%}
           <description>{% if page.summary %}{{ page.summary }}{% else %}{{ page.content }}{% endif %}</description>
+          {%- endif -%}
       </item>
       {%- endif -%}
       {%- endfor %}
