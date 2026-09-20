@@ -26,6 +26,7 @@ $track-widget-map-height: 270px !default;
   --es-track-shadow: 0 14px 34px rgba(0, 0, 0, .22);
   --es-track-hillshade-highlight: #ffffff;
   --es-track-basemap: positron;
+  --es-track-vignette: rgba(0, 0, 0, .12);
 }
 
 .es-dark-mode .es-track-widget {
@@ -45,6 +46,7 @@ $track-widget-map-height: 270px !default;
   --es-track-shadow: 0 14px 34px rgba(0, 0, 0, .5);
   --es-track-hillshade-highlight: #7c828f;
   --es-track-basemap: dark;
+  --es-track-vignette: rgba(0, 0, 0, .32);
 }
 
 // ---------- the widget ----------
@@ -75,6 +77,14 @@ $track-widget-map-height: 270px !default;
 
   #es-track-canvas { position: absolute; inset: 0; }
   .maplibregl-ctrl-attrib, .maplibregl-ctrl-logo { display: none; }
+
+  // A screen-space gradient, lightest at top right and darkest at bottom left. MapLibre
+  // fills can't carry a gradient, so this sits over the whole map; on the dark basemap
+  // it reads mostly on the water, the largest flat area.
+  &::after {
+    content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background: linear-gradient(225deg, rgba(0, 0, 0, 0) 35%, var(--es-track-vignette) 100%);
+  }
 }
 .es-track-widget.basemap-muted #es-track-canvas canvas { filter: saturate(.7) contrast(.96); }
 
