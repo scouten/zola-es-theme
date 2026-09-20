@@ -52,7 +52,7 @@ Produced by the CDN toolchain from a GPX that Waysmith has cut into legs. The fu
   "photos": [ { "id": "lr-263-7376", "leg": 1, "i": 0, "f": 0.2138 } ] }
 ```
 
-Modes: `drive`, `taxi`, `walk`, `hike`, `run`, `bike`, `horse`, `bus`, `train`, `tram`, `cable`, `boat`, `ferry`, `kayak`, `fly`, `helicopter`, `stop`. A leg without a mode shows its distance only. A file with `photos` absent still works: photos snap to the nearest track point in page order.
+Modes: `drive`, `taxi`, `walk`, `hike`, `run`, `bike`, `horse`, `bus`, `train`, `tram`, `cable`, `boat`, `ferry`, `kayak`, `fly` (jet), `prop` (light aircraft), `helicopter`, `stop`. A leg without a mode shows its distance only. A file with `photos` absent still works: photos snap to the nearest track point in page order.
 
 ## What the reader sees
 
@@ -62,7 +62,7 @@ Modes: `drive`, `taxi`, `walk`, `hike`, `run`, `bike`, `horse`, `bus`, `train`, 
 - **Expanded**: tapping the corner map opens it full-screen with the full OpenFreeMap detail.
 - **Phones**: a bottom strip, collapsed to the status line by default.
 
-Durations appear only on `fly`, `helicopter`, `boat`, and `ferry` legs. No clock times are shown or shipped.
+Durations appear only on `fly`, `prop`, `helicopter`, `boat`, and `ferry` legs. No clock times are shown or shipped.
 
 ## Fonts
 

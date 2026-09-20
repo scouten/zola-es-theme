@@ -26,13 +26,14 @@ Keep to these and a new glyph sits beside the others without looking borrowed.
 | `bus` | `bus` | Tall rounded body, window line, two lights |
 | `train` | `train` | Rounded body, window line, two lights, splayed rails below |
 | `cable` | `cable` | Cabin hanging from a sloped line |
-| `fly` | `plane` | Paper-plane silhouette |
-| `boat` | `boat` | Hull, mast, waves |
+| `fly` | `jet` | Airliner from above, nose up, like an airport pictogram |
+| `prop` | `prop` | Light aircraft in side profile: high wing, tail fin, propeller, two wheels |
+| `boat` | `boat` | Sailboat in side profile: hull, mast, sail, waves |
 | `stop` | `pin` | Map pin |
 | `taxi` | `taxi` | The car with a roof sign |
-| `ferry` | `ferry` | Hull and waves with a cabin and funnel instead of a mast |
+| `ferry` | `ferry` | Ship in side profile: long hull with a bow, superstructure with windows, funnel, waves |
 | `tram` | `tram` | Rounded body with a pantograph above and a flat rail below |
-| `horse` | `horse` | Horse head and neck in profile |
+| `horse` | `horse` | Whole horse in side profile: body, neck and head, tail, four legs |
 | `kayak` | `kayak` | Long pointed hull with a paddle across it |
 | `helicopter` | `heli` | Cabin, rotor bar, tail boom, skids |
 | (unknown) | `route` | Two nodes joined by an S-curve; used for legs without a mode |
