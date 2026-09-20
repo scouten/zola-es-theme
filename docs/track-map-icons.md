@@ -30,7 +30,7 @@ Keep to these and a new glyph sits beside the others without looking borrowed.
 | `boat` | `boat` | Sailboat in side profile: hull, mast, sail, waves |
 | `stop` | `pin` | Map pin |
 | `taxi` | `taxi` | The car with a roof sign |
-| `ferry` | `ferry` | Ship in side profile: long hull with a bow, superstructure with windows, funnel, waves |
+| `ferry` | `ferry` | Ship in side profile, bow to the left: long hull, superstructure with windows, funnel, waves |
 | `tram` | `tram` | Rounded body with a pantograph above and a flat rail below |
 | `horse` | `horse` | Head and neck in side profile, traced from a silhouette: ear, long convex nose, straight jaw with the jowl tucked behind it, throat line, and two mane strokes blown straight back off the neck; the whole head is rotated 14° so it's tipped up. Full-body drawings were tried and read as camels at 20 px |
 | `kayak` | `kayak` | Long pointed hull with a paddle across it |
