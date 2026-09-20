@@ -68,14 +68,7 @@ Durations appear only on `fly`, `helicopter`, `boat`, and `ferry` legs. No clock
 
 All HTML parts use the theme's `$header-font-family` (Expo Sans on the sites that load it).
 
-Map labels are different: MapLibre draws them from pre-rasterised glyph files (`{fontstack}/{range}.pbf`), not from web fonts. By default the labels use the fonts OpenFreeMap serves (Noto Sans). To label the map in Expo Sans, generate glyph ranges from the font files with a tool such as [font-maker](https://maplibre.org/font-maker/), host them on the CDN, and set:
-
-```toml
-glyphs = "https://img.ericscouten.com/theme/glyphs/{fontstack}/{range}.pbf"
-label_font = ["Expo Sans Pro Regular"]
-```
-
-Check the font licence first: an Adobe Fonts (Typekit) subscription generally does not permit converting and self-hosting the font files.
+Map labels are different: MapLibre draws them from pre-rasterised glyph files (`{fontstack}/{range}.pbf`), not from web fonts, so they use the fonts OpenFreeMap serves (Noto Sans). Expo Sans is not used for map labels: the sites' licence for it does not include web distribution of the font files, which generating glyphs would require. The `glyphs` and `label_font` keys remain for a font that is licensed for it: generate ranges with a tool such as [font-maker](https://maplibre.org/font-maker/), host them, and point `glyphs` at them.
 
 ## Files
 
