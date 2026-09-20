@@ -385,12 +385,17 @@
     if (!view) return;
     const seg = SEGMENTS[view.capSeg], md = MODES[seg.mode];
     document.getElementById('es-track-ico').innerHTML = iconSvg(md ? md.icon : 'route');
-    // No clock times in public. Durations only for flights and ferries.
+    // No clock times in public. A duration appears only on flights and boat rides, on the
+    // second line between the endpoints: "ATL → 14 h 15 min → CPT".
     const showDur = TIMED.includes(seg.mode) && seg.dur_s;
     let head;
     if (seg.mode === 'stop') head = seg.label || md.name;
-    else head = `${md ? md.name + ' · ' : ''}${fmtBoth(segDist(seg))}${showDur ? ' · ' + fmtDur(seg.dur_s) : ''}`;
-    const sub = seg.mode === 'stop' ? '' : (seg.label || '');
+    else head = `${md ? md.name + ' · ' : ''}${fmtBoth(segDist(seg))}`;
+    let sub = seg.mode === 'stop' ? '' : (seg.label || '');
+    if (showDur) {
+      const m = sub.match(/^(.*?)\s*(→|->|⟶|–)\s*(.*)$/);
+      sub = m ? `${m[1]} ${m[2]} ${fmtDur(seg.dur_s)} ${m[2]} ${m[3]}` : (sub ? `${sub} · ${fmtDur(seg.dur_s)}` : fmtDur(seg.dur_s));
+    }
     document.getElementById('es-track-text').innerHTML = `<span class="mode">${head}</span>${sub ? `<span class="label">${sub}</span>` : ''}`;
     document.getElementById('es-track-fill').style.width = (view.frac * 100).toFixed(2) + '%';
     positionProgressLabels();

@@ -62,7 +62,7 @@ Modes: `drive`, `taxi`, `walk`, `hike`, `run`, `bike`, `horse`, `bus`, `train`, 
 - **Expanded**: tapping the corner map opens it full-screen with the full OpenFreeMap detail.
 - **Phones**: a bottom strip, collapsed to the status line by default.
 
-Durations appear only on `fly`, `prop`, `helicopter`, `boat`, and `ferry` legs. No clock times are shown or shipped.
+Durations appear only on `fly`, `prop`, `helicopter`, `boat`, and `ferry` legs, on the caption's second line between the leg's endpoints when its name has an arrow ("ATL → 14 h 15 min → CPT"). No clock times are shown or shipped.
 
 ## Fonts
 
