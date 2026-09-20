@@ -21,7 +21,6 @@ Keep to these and a new glyph sits beside the others without looking borrowed.
 | `drive` | `car` | Body, cabin, two wheels |
 | `walk` | `walk` | Striding figure |
 | `hike` | `hike` | The walker plus a trekking pole at right |
-| `run` | `run` | Leaning figure, longer stride |
 | `bike` | `bike` | Two wheels, frame, handlebar |
 | `bus` | `bus` | Tall rounded body, window line, two lights |
 | `train` | `train` | Rounded body, window line, two lights, splayed rails below |
@@ -33,7 +32,7 @@ Keep to these and a new glyph sits beside the others without looking borrowed.
 | `taxi` | `taxi` | The car with a roof sign |
 | `ferry` | `ferry` | Ship in side profile: long hull with a bow, superstructure with windows, funnel, waves |
 | `tram` | `tram` | Rounded body with a pantograph above and a flat rail below |
-| `horse` | `horse` | Head and neck in side profile, traced from a silhouette: ear, long convex nose, round jowl, throat line. Full-body drawings were tried and read as camels at 20 px |
+| `horse` | `horse` | Head and neck in side profile, traced from a silhouette: ear, long convex nose, straight jaw with the jowl tucked behind it, throat line, and a mane swept back off the neck. Full-body drawings were tried and read as camels at 20 px |
 | (alternate) | `knight` | Chess-knight silhouette on a base; not mapped to a mode, kept as an alternative for `horse` |
 | `kayak` | `kayak` | Long pointed hull with a paddle across it |
 | `helicopter` | `heli` | Cabin, rotor bar, tail boom to the left, skids; faces right |

@@ -16,7 +16,6 @@
     taxi: { name: 'By taxi', icon: 'taxi' },
     walk: { name: 'Walking', icon: 'walk' },
     hike: { name: 'Hiking', icon: 'hike' },
-    run: { name: 'Running', icon: 'run' },
     bike: { name: 'Cycling', icon: 'bike' },
     horse: { name: 'On horseback', icon: 'horse' },
     bus: { name: 'By bus', icon: 'bus' },
@@ -33,14 +32,13 @@
   };
   // legs drawn dashed (vehicles) vs dotted (self-powered); anything else is solid
   const RIDES = ['cable', 'boat', 'ferry', 'fly', 'prop', 'helicopter', 'train', 'tram', 'bus', 'taxi'];
-  const SELF = ['walk', 'hike', 'run', 'horse', 'kayak'];
+  const SELF = ['walk', 'hike', 'horse', 'kayak'];
   // legs whose caption may show a duration (the only time-derived value ever shown)
   const TIMED = ['fly', 'prop', 'boat', 'ferry', 'helicopter'];
   const ICONS = {
     car: '<path d="M5 11l1.6-4.2A1.5 1.5 0 0 1 8 6h8a1.5 1.5 0 0 1 1.4.8L19 11"/><path d="M3 17v-4.5A1.5 1.5 0 0 1 4.5 11h15a1.5 1.5 0 0 1 1.5 1.5V17h-2.5M3 17h2.5M9 17h6"/><circle cx="7.5" cy="17" r="1.6"/><circle cx="16.5" cy="17" r="1.6"/>',
     walk: '<circle cx="13" cy="4" r="1.8"/><path d="M12 7.5l-1.5 6 3.5 3 1 5"/><path d="M10.5 13.5l-3 6.5"/><path d="M12 7.5l3 2.5 2.5 1"/><path d="M12 7.5l-3.5 1.5-1 3.5"/>',
     hike: '<circle cx="12" cy="4" r="1.8"/><path d="M11 7.5l-1.5 6 3.5 3 1 5"/><path d="M9.5 13.5l-3 6.5"/><path d="M11 7.5l3 2.5 2 1"/><path d="M11 7.5l-3.5 1.5-1 3.5"/><path d="M18.5 10v11"/>',
-    run: '<circle cx="14.5" cy="4" r="1.8"/><path d="M13 7.5l-4 3.5 3.5 3.5-2 6.5"/><path d="M12.5 14.5l4 2 1.5 4.5"/><path d="M13 7.5l3.5 2 3-1"/><path d="M9 11l-4.5 1"/>',
     bike: '<circle cx="5.5" cy="16.5" r="3.3"/><circle cx="18.5" cy="16.5" r="3.3"/><path d="M5.5 16.5L10 9h4.5l4 7.5"/><path d="M10 9l3 7.5H5.5"/><path d="M13 6h2.5"/>',
     bus: '<rect x="4" y="4" width="16" height="14" rx="2.5"/><path d="M4 11h16"/><path d="M7.5 18v2.5M16.5 18v2.5"/><circle cx="8" cy="14.5" r="1.1"/><circle cx="16" cy="14.5" r="1.1"/>',
     train: '<rect x="5" y="3.5" width="14" height="13.5" rx="3"/><path d="M5 10.5h14"/><circle cx="9" cy="13.8" r="1.1"/><circle cx="15" cy="13.8" r="1.1"/><path d="M8.5 21l1.8-4M15.5 21l-1.8-4"/>',
@@ -53,7 +51,7 @@
     taxi: '<path d="M5 11l1.6-4.2A1.5 1.5 0 0 1 8 6h8a1.5 1.5 0 0 1 1.4.8L19 11"/><path d="M3 17v-4.5A1.5 1.5 0 0 1 4.5 11h15a1.5 1.5 0 0 1 1.5 1.5V17h-2.5M3 17h2.5M9 17h6"/><circle cx="7.5" cy="17" r="1.6"/><circle cx="16.5" cy="17" r="1.6"/><path d="M9.5 6V3.5h5V6"/>',
     ferry: '<path d="M3 13.5h15.5l2.5-2 1 2-2.5 4H5.5z"/><rect x="6" y="8" width="10" height="5.5" rx="1"/><path d="M8.5 10.8h5"/><path d="M13.5 8V5.5h2"/><path d="M3 21c1.5 1.2 3.5 1.2 5 0 1.5 1.2 3.5 1.2 5 0 1.5 1.2 3.5 1.2 5 0"/>',
     tram: '<rect x="5" y="6" width="14" height="12" rx="3"/><path d="M5 12h14"/><circle cx="9" cy="15" r="1.1"/><circle cx="15" cy="15" r="1.1"/><path d="M12 6V3.5M9.5 3.5h5"/><path d="M4 21h16"/>',
-    horse: '<path d="M2 6.5c4-1.5 7.5-2 10-2l1-3.2 2.5 2.7c2.5 2.5 5 6.5 6 11 .5 2.5-.5 4.5-3 4.5-2.5 0-4-1.5-5-3.5-.5-1.5-1.5-2.5-3-3"/><path d="M10.5 13c-1 2.5-2.5 5.5-3.5 9"/><path d="M17 8.5h.01"/>',
+    horse: '<path d="M2 6.5c4-1.5 7.5-2 10-2l1-3.2 2.5 2.7c2.5 2.5 4.5 6.5 5.5 11.5.3 1.5-.5 2.5-2 2.5h-1.5c-1 0-2-.5-2.5-1.5L11 12"/><path d="M11 12c-1.5 1.5-3 4.5-4 10"/><path d="M17 8.5h.01"/><path d="M6.5 6.5c-.5-1.2-1.5-2-3-2.5M9.5 5.2c-.3-1.2-1-2.2-2.5-2.8"/>',
     knight: '<path d="M5.5 20v-5c0-5 3-8 6-10l1-3 2.5 3 4 1 2.5 5-1.5 2-3.5-.5-2 2.5-.5 5"/><path d="M16.5 10h.01"/><path d="M8.5 8.5l-1.5 1M10 6.5l-1.5.5"/><path d="M4 20h13"/>',
     kayak: '<path d="M2 12c4-3 16-3 20 0-4 3-16 3-20 0z"/><path d="M6.5 17.5l11-11"/><path d="M4.5 19.5l2-2M17.5 6.5l2-2"/>',
     heli: '<path d="M3 5h18"/><path d="M12 5v3"/><path d="M16 8h-5a4 4 0 0 0-4 4v1a3 3 0 0 0 3 3h6a3 3 0 0 0 3-3v-2a3 3 0 0 0-3-3z"/><path d="M7 11H3"/><path d="M5 9v4"/><path d="M7 19h10M9 16v3M15 16v3"/>',
