@@ -88,7 +88,9 @@
     let el = document.getElementById(m.id);
     if (!el) return;
     el = el.closest('.es_image, .es_video') || el;
-    photos.push({ id: m.id, lat: m.lat, lon: m.lon, thumb: m.thumb, el });
+    const cap = el.querySelector('.caption');
+    const loc = cap ? cap.textContent.replace(/\s+/g, ' ').replace(/\s*·\s*by\s.*$/, '').trim() : '';
+    photos.push({ id: m.id, lat: m.lat, lon: m.lon, thumb: m.thumb, loc, el });
   });
   const items = photos.map(p => ({ kind: 'photo', el: p.el, photo: p }));
   const content = document.getElementById('es-content');
@@ -103,6 +105,7 @@
   const notice = document.getElementById('es-track-notice');
   const thumb = document.getElementById('es-track-thumb');
   const thumbImg = thumb.querySelector('img');
+  const thumbLoc = document.getElementById('es-track-thumb-loc');
   const collapseBtn = document.getElementById('es-track-collapse');
   const attrBtn = document.getElementById('es-track-attr-btn');
   const showNotice = msg => { notice.textContent = msg || ''; notice.hidden = !msg; };
@@ -224,7 +227,6 @@
       done: { type: 'geojson', lineMetrics: true, data: doneData(cur) },
       ahead: { type: 'geojson', data: aheadData(cur) },
       modes: { type: 'geojson', data: { type: 'FeatureCollection', features: SEGMENTS.filter(s => s.coords.length > 1).map(s => ({ type: 'Feature', properties: { mode: s.mode || '' }, geometry: { type: 'LineString', coordinates: s.coords } })) } },
-      stops: { type: 'geojson', data: { type: 'FeatureCollection', features: SEGMENTS.filter(s => s.mode === 'stop').map(s => ({ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: s.coords[0] } })) } },
       next: { type: 'geojson', data: nextLegData(cur) },
       current: { type: 'geojson', data: currentLegData(cur) },
       photos: { type: 'geojson', data: { type: 'FeatureCollection', features: photos.map((p, i) => ({ type: 'Feature', properties: { i, seg: p.seg, id: p.id }, geometry: { type: 'Point', coordinates: [p.lon, p.lat] } })) } },
@@ -246,7 +248,6 @@
       layers.push({ id: 'es-mode-ride', type: 'line', source: 'modes', filter: ['in', ['get', 'mode'], ['literal', RIDES]], paint: { 'line-color': ov, 'line-width': 1.3, 'line-opacity': .55, 'line-dasharray': [3, 2.2] } });
     }
     layers.push({ id: 'es-next-leg', type: 'line', source: 'next', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': accent, 'line-width': big ? 3.5 : 3, 'line-opacity': .85, 'line-dasharray': [1.2, 1.6] } });
-    layers.push({ id: 'es-stops', type: 'circle', source: 'stops', paint: { 'circle-radius': big ? 5 : 3.5, 'circle-color': tok('ground-deep'), 'circle-opacity': .6, 'circle-stroke-color': tok('muted'), 'circle-stroke-width': 1.5 } });
     if (CFG.dots) {
       layers.push({ id: 'es-photos', type: 'circle', source: 'photos', paint: { 'circle-radius': big ? 5 : 3, 'circle-color': photoColorExpr(view ? view.photoIdx : -1, view ? view.capSeg : 0), 'circle-stroke-color': tok('ground-deep'), 'circle-stroke-width': 1 } });
     }
@@ -455,24 +456,34 @@
     map.on('style.load', () => { if (mapReady) { lastCamKey = null; lastGrad = ''; lastPhotoIdx = ''; applyView(true); } });
     map.on('error', e => { const m = (e && e.error && e.error.message) || ''; if (m) console.warn('track-map:', m); });
 
+    // Photos whose dots overlap the hovered one at the current zoom, in page order.
+    function clusterAt(i) {
+      const c = map.project([photos[i].lon, photos[i].lat]);
+      const group = [];
+      photos.forEach((p, k) => { const q = map.project([p.lon, p.lat]); if (Math.hypot(q.x - c.x, q.y - c.y) <= 12) group.push(k); });
+      return group.length ? group : [i];
+    }
     map.on('mousemove', 'es-photos', e => {
       if (placement === 'corner' || !e.features.length) return;
-      const f = e.features[0], p = photos[f.properties.i];
-      if (!p || !p.thumb) return;
-      if (thumbImg.getAttribute('src') !== p.thumb) thumbImg.src = p.thumb;
-      const pt = map.project(f.geometry.coordinates);
+      const group = clusterAt(e.features[0].properties.i), p = photos[group[0]];
+      if (!p) return;
+      if (p.thumb) { if (thumbImg.getAttribute('src') !== p.thumb) { thumbImg.style.display = ''; thumbImg.src = p.thumb; } }
+      else { thumbImg.removeAttribute('src'); thumbImg.style.display = 'none'; }
+      thumbLoc.textContent = p.loc || '';
+      if (group.length > 1) { const more = document.createElement('span'); more.className = 'more'; more.textContent = `+${group.length - 1} more`; thumbLoc.appendChild(more); }
+      const pt = map.project([p.lon, p.lat]);
       thumb.style.left = pt.x + 'px'; thumb.style.top = pt.y + 'px'; thumb.hidden = false;
       map.getCanvas().style.cursor = 'pointer';
     });
     map.on('mouseleave', 'es-photos', () => { thumb.hidden = true; map.getCanvas().style.cursor = ''; });
     map.on('click', 'es-photos', e => {
       if (placement === 'corner' || !e.features.length) return;
-      const p = photos[e.features[0].properties.i];
+      const p = photos[clusterAt(e.features[0].properties.i)[0]];
       if (expanded) { expanded = false; place(); }
       thumb.hidden = true;
       if (p) p.el.scrollIntoView({ behavior: RM ? 'auto' : 'smooth', block: 'center' });
     });
-    thumbImg.addEventListener('error', () => { thumb.hidden = true; });
+    thumbImg.addEventListener('error', () => { thumbImg.style.display = 'none'; });
   }
 
   // ------------------------------------------------------------ wiring

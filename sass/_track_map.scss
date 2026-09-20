@@ -109,6 +109,8 @@ $track-widget-map-height: 270px !default;
   position: absolute; z-index: 3; pointer-events: none; transform: translate(-50%, calc(-100% - 12px));
   background: var(--es-track-panel-solid); border: 1px solid var(--es-track-edge); border-radius: 6px; padding: 3px; box-shadow: var(--es-track-shadow);
   img { display: block; width: 160px; height: auto; border-radius: 3px; }
+  .es-track-thumb-loc { width: 160px; padding: 4px 2px 1px; font-size: .7rem; line-height: 1.25; color: var(--es-track-muted); white-space: normal; }
+  .more { display: block; margin-top: 2px; color: var(--es-track-accent); font-weight: 600; }
 }
 
 // status bar: progress band above, caption row below
