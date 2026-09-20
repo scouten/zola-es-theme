@@ -135,6 +135,7 @@
   let map = null, mapReady = false, baseStyle = null;
   let placement = 'corner', placedOnce = false, slotVisible = false, expanded = false, collapsed = false;
   let view = null, lastCamKey = null, lastGrad = '', lastPhotoIdx = '';
+  let browseLeg = null;   // leg being stepped through with the arrows, or null to follow the article
 
   // ------------------------------------------------------------ track
   function flatten() {
@@ -216,7 +217,7 @@
     if (next.seg <= prev.seg) return mk('photo', pi, [prev.seg, prev.seg], prev.seg, [prev.lon, prev.lat]);
     return mk('transit', pi, [prev.seg + 1, next.seg], headlineSeg(prev.seg + 1, next.seg), [prev.lon, prev.lat], true);
   }
-  const viewIdx = v => v && v.photoIdx >= 0 ? photos[v.photoIdx].idx : 0;
+  const viewIdx = v => v ? (v.idx != null ? v.idx : (v.photoIdx >= 0 ? photos[v.photoIdx].idx : 0)) : 0;
 
   // ------------------------------------------------------------ map data
   const lineOrEmpty = coords => coords.length > 1
@@ -399,6 +400,7 @@
     document.getElementById('es-track-text').innerHTML = `<span class="mode">${head}</span>${sub ? `<span class="label">${sub}</span>` : ''}`;
     document.getElementById('es-track-fill').style.width = (view.frac * 100).toFixed(2) + '%';
     positionProgressLabels();
+    document.getElementById('es-track-step-label').textContent = `${(browseLeg == null ? view.capSeg : browseLeg) + 1} / ${SEGMENTS.length}`;
     if (!mapReady) return;
     map.getSource('dot').setData(dotData(view));
     map.getSource('next').setData(nextLegData(view));
@@ -419,6 +421,7 @@
     if (ticking) return; ticking = true;
     requestAnimationFrame(() => {
       ticking = false;
+      if (browseLeg != null && placement !== 'corner') { updateOverlap(); return; }
       const v = computeView(currentItem());
       if (v && (!view || v.kind !== view.kind || v.photoIdx !== view.photoIdx || v.segs[0] !== view.segs[0] || v.segs[1] !== view.segs[1])) { view = v; applyView(false); }
       updateOverlap();
@@ -443,6 +446,7 @@
     if (placedOnce && target === placement) return;
     placedOnce = true;
     placement = target;
+    if (browseLeg != null) { browseLeg = null; view = computeView(currentItem()) || view; }
     widget.classList.remove('is-corner', 'is-docked', 'is-expanded');
     widget.classList.add('is-' + target);
     (target === 'corner' ? document.body : target === 'docked' ? slot : modal).appendChild(widget);
@@ -532,6 +536,19 @@
     thumbImg.addEventListener('error', () => { thumbImg.style.display = 'none'; });
   }
 
+  // ------------------------------------------------------------ stepping through legs
+  function browseTo(i) {
+    if (!mapReady || !SEGMENTS.length || placement === 'corner') return;
+    browseLeg = Math.max(0, Math.min(SEGMENTS.length - 1, i));
+    const s = SEGMENTS[browseLeg];
+    view = { kind: 'browse', photoIdx: -1, idx: s.start, segs: [browseLeg, browseLeg], capSeg: browseLeg, dot: s.coords[0], frac: total ? cum[s.start] / total : 0, m: cum[s.start], transit: true };
+    applyView(true);
+    map.fitBounds(boundsOf([s.coords], [s.coords[0]]), { padding: isPhone() ? 40 : 90, duration: RM ? 0 : 700, maxZoom: 15.5 });
+  }
+  const stepFrom = () => (browseLeg == null ? (view ? view.capSeg : 0) : browseLeg);
+  document.getElementById('es-track-prev').addEventListener('click', e => { e.stopPropagation(); browseTo(stepFrom() - 1); });
+  document.getElementById('es-track-next').addEventListener('click', e => { e.stopPropagation(); browseTo(stepFrom() + 1); });
+
   // ------------------------------------------------------------ wiring
   widget.addEventListener('click', e => {
     if (placement !== 'corner') return;
@@ -542,7 +559,10 @@
   document.getElementById('es-track-expand').addEventListener('click', e => { e.stopPropagation(); expanded = true; place(); });
   document.getElementById('es-track-close').addEventListener('click', e => { e.stopPropagation(); expanded = false; place(); });
   modal.addEventListener('click', e => { if (e.target === modal) { expanded = false; place(); } });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && expanded) { expanded = false; place(); } });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && expanded) { expanded = false; place(); }
+    if (expanded && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) { e.preventDefault(); browseTo(stepFrom() + (e.key === 'ArrowLeft' ? -1 : 1)); }
+  });
   attrBtn.addEventListener('click', e => { e.stopPropagation(); attrBtn.setAttribute('aria-expanded', String(attrBtn.getAttribute('aria-expanded') !== 'true')); });
   collapseBtn.addEventListener('click', e => { e.stopPropagation(); setCollapsed(!collapsed, true); });
   document.getElementById('es-track-zoom-in').addEventListener('click', e => { e.stopPropagation(); if (mapReady) map.zoomIn({ duration: RM ? 0 : 300 }); });

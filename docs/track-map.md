@@ -60,6 +60,7 @@ Modes: `drive`, `taxi`, `walk`, `hike`, `run`, `bike`, `horse`, `bus`, `train`, 
 - **Prose between photo groups** frames the leg that connects them and draws it dashed.
 - **Docked**: when the reader reaches the map slot at the end of the article (the `#map` anchor the title links to), the widget moves into it at full width and becomes interactive, with photo thumbnails on hover.
 - **Expanded**: tapping the corner map opens it full-screen with the full OpenFreeMap detail.
+- **Stepping through legs**: in the docked and expanded views, arrow buttons at the bottom of the map (and the keyboard arrows when expanded) walk through the day leg by leg, framing each one and showing its caption. Scrolling the article or changing views returns the map to following the reader.
 - **Phones**: a bottom strip, collapsed to the status line by default.
 
 Durations appear only on `fly`, `prop`, `helicopter`, `boat`, and `ferry` legs, on the caption's second line between the leg's endpoints when its name has an arrow ("ATL → 14 h 15 min → CPT"). No clock times are shown or shipped.

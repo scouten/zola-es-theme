@@ -108,6 +108,15 @@ $track-widget-map-height: 270px !default;
 .es-track-close { top: .5rem; right: .5rem; }
 .es-track-widget button.es-track-close { display: none; }
 .es-track-zoom { position: absolute; right: .5rem; bottom: .5rem; z-index: 2; display: flex; flex-direction: column; gap: 3px; }
+// step through the legs, only when the map is big enough to be worth it
+.es-track-step { position: absolute; left: 50%; bottom: .5rem; transform: translateX(-50%); z-index: 2; display: none; align-items: center; gap: .35rem; }
+.es-track-widget:not(.is-corner) .es-track-step { display: flex; }
+.es-track-widget .es-track-step .es-track-btn { position: static; }
+.es-track-step-label {
+  min-width: 3.4rem; text-align: center; padding: .25rem .5rem; border-radius: 999px;
+  background: var(--es-track-panel); border: 1px solid var(--es-track-edge); color: var(--es-track-text-soft);
+  font-size: .75rem; font-variant-numeric: tabular-nums; white-space: nowrap;
+}
 .es-track-widget .es-track-zoom .es-track-btn { position: static; width: 1.6rem; height: 1.6rem; }
 .es-track-widget .es-track-attr-btn { left: .5rem; bottom: .5rem; width: 1.4rem; height: 1.4rem; font-size: .7rem; font-weight: 600; }
 .es-track-attr {
