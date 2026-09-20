@@ -9,30 +9,32 @@
 (function () {
   'use strict';
 
-  const cfgEl = document.getElementById('es-track-config');
-  const widget = document.getElementById('es-track-widget');
-  if (!cfgEl || !widget) return;
-  const CFG = JSON.parse(cfgEl.textContent);
-  const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const tok = n => getComputedStyle(widget).getPropertyValue('--es-track-' + n).trim();
-  const isPhone = () => innerWidth <= 720;
-
   // ------------------------------------------------------------ modes and icons
   // Hand-drawn line icons; see docs/track-map-icons.md before adding one.
   const MODES = {
     drive: { name: 'Driving', icon: 'car' },
+    taxi: { name: 'By taxi', icon: 'taxi' },
     walk: { name: 'Walking', icon: 'walk' },
     hike: { name: 'Hiking', icon: 'hike' },
-    bike: { name: 'Cycling', icon: 'bike' },
     run: { name: 'Running', icon: 'run' },
+    bike: { name: 'Cycling', icon: 'bike' },
+    horse: { name: 'On horseback', icon: 'horse' },
     bus: { name: 'By bus', icon: 'bus' },
     train: { name: 'By train', icon: 'train' },
+    tram: { name: 'By tram', icon: 'tram' },
     cable: { name: 'Cable car', icon: 'cable' },
     boat: { name: 'By boat', icon: 'boat' },
+    ferry: { name: 'By ferry', icon: 'ferry' },
+    kayak: { name: 'By kayak', icon: 'kayak' },
     fly: { name: 'Flying', icon: 'plane' },
+    helicopter: { name: 'By helicopter', icon: 'heli' },
     stop: { name: 'Stopped', icon: 'pin' },
   };
-  const RIDES = ['cable', 'boat', 'fly', 'train', 'bus'];
+  // legs drawn dashed (vehicles) vs dotted (self-powered); anything else is solid
+  const RIDES = ['cable', 'boat', 'ferry', 'fly', 'helicopter', 'train', 'tram', 'bus', 'taxi'];
+  const SELF = ['walk', 'hike', 'run', 'horse', 'kayak'];
+  // legs whose caption may show a duration (the only time-derived value ever shown)
+  const TIMED = ['fly', 'boat', 'ferry', 'helicopter'];
   const ICONS = {
     car: '<path d="M5 11l1.6-4.2A1.5 1.5 0 0 1 8 6h8a1.5 1.5 0 0 1 1.4.8L19 11"/><path d="M3 17v-4.5A1.5 1.5 0 0 1 4.5 11h15a1.5 1.5 0 0 1 1.5 1.5V17h-2.5M3 17h2.5M9 17h6"/><circle cx="7.5" cy="17" r="1.6"/><circle cx="16.5" cy="17" r="1.6"/>',
     walk: '<circle cx="13" cy="4" r="1.8"/><path d="M12 7.5l-1.5 6 3.5 3 1 5"/><path d="M10.5 13.5l-3 6.5"/><path d="M12 7.5l3 2.5 2.5 1"/><path d="M12 7.5l-3.5 1.5-1 3.5"/>',
@@ -46,8 +48,24 @@
     boat: '<path d="M3 18c1.5 1.5 3.5 1.5 5 0 1.5 1.5 3.5 1.5 5 0 1.5 1.5 3.5 1.5 5 0 1 1 2 1.3 3 1"/><path d="M4 15.5l1.5-5.5h13l1.5 5.5"/><path d="M12 10V4h4.5L12 7.5"/>',
     pin: '<path d="M12 21s-6.5-6.2-6.5-11.2a6.5 6.5 0 0 1 13 0C18.5 14.8 12 21 12 21z"/><circle cx="12" cy="9.8" r="2.3"/>',
     route: '<circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="6" r="2.2"/><path d="M8.2 18H13a3 3 0 0 0 0-6h-2a3 3 0 0 1 0-6h4.8"/>',
+    taxi: '<path d="M5 11l1.6-4.2A1.5 1.5 0 0 1 8 6h8a1.5 1.5 0 0 1 1.4.8L19 11"/><path d="M3 17v-4.5A1.5 1.5 0 0 1 4.5 11h15a1.5 1.5 0 0 1 1.5 1.5V17h-2.5M3 17h2.5M9 17h6"/><circle cx="7.5" cy="17" r="1.6"/><circle cx="16.5" cy="17" r="1.6"/><path d="M9.5 6V3.5h5V6"/>',
+    ferry: '<path d="M3 18c1.5 1.5 3.5 1.5 5 0 1.5 1.5 3.5 1.5 5 0 1.5 1.5 3.5 1.5 5 0 1 1 2 1.3 3 1"/><path d="M4 15.5l1.5-4h13l1.5 4"/><rect x="8" y="7.5" width="8" height="4" rx="1"/><path d="M11 7.5V5h2"/>',
+    tram: '<rect x="5" y="6" width="14" height="12" rx="3"/><path d="M5 12h14"/><circle cx="9" cy="15" r="1.1"/><circle cx="15" cy="15" r="1.1"/><path d="M12 6V3.5M9.5 3.5h5"/><path d="M4 21h16"/>',
+    horse: '<path d="M5 20v-6c0-4 2.5-7 6.5-8L13 3l2.5 2.5L19 6l-1.5 3.5L14 10c-.5 3-1 6-1 10"/><path d="M14.3 7h.01"/>',
+    kayak: '<path d="M2 12c4-3 16-3 20 0-4 3-16 3-20 0z"/><path d="M6.5 17.5l11-11"/><path d="M4.5 19.5l2-2M17.5 6.5l2-2"/>',
+    heli: '<path d="M3 5h18"/><path d="M12 5v3"/><path d="M8 8h5a4 4 0 0 1 4 4v1a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3v-2a3 3 0 0 1 3-3z"/><path d="M17 11h4"/><path d="M19 9v4"/><path d="M7 19h10M9 16v3M15 16v3"/>',
   };
   const iconSvg = k => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONS[k] || ICONS.route}</svg>`;
+  // exposed for the icon preview page and for tooling; not used by the site itself
+  window.esTrackIcons = { MODES, ICONS, iconSvg };
+
+  const cfgEl = document.getElementById('es-track-config');
+  const widget = document.getElementById('es-track-widget');
+  if (!cfgEl || !widget) return;
+  const CFG = JSON.parse(cfgEl.textContent);
+  const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const tok = n => getComputedStyle(widget).getPropertyValue('--es-track-' + n).trim();
+  const isPhone = () => innerWidth <= 720;
 
   // ------------------------------------------------------------ helpers
   const R = 6371000;
@@ -244,7 +262,7 @@
     ];
     if (CFG.modes) {
       const ov = CFG.isDark ? '#ffffff' : '#000000';
-      layers.push({ id: 'es-mode-walk', type: 'line', source: 'modes', filter: ['in', ['get', 'mode'], ['literal', ['walk', 'hike', 'run']]], layout: { 'line-cap': 'round' }, paint: { 'line-color': ov, 'line-width': 1.3, 'line-opacity': .5, 'line-dasharray': [0.2, 2.2] } });
+      layers.push({ id: 'es-mode-walk', type: 'line', source: 'modes', filter: ['in', ['get', 'mode'], ['literal', SELF]], layout: { 'line-cap': 'round' }, paint: { 'line-color': ov, 'line-width': 1.3, 'line-opacity': .5, 'line-dasharray': [0.2, 2.2] } });
       layers.push({ id: 'es-mode-ride', type: 'line', source: 'modes', filter: ['in', ['get', 'mode'], ['literal', RIDES]], paint: { 'line-color': ov, 'line-width': 1.3, 'line-opacity': .55, 'line-dasharray': [3, 2.2] } });
     }
     layers.push({ id: 'es-next-leg', type: 'line', source: 'next', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': accent, 'line-width': big ? 3.5 : 3, 'line-opacity': .85, 'line-dasharray': [1.2, 1.6] } });
@@ -365,7 +383,7 @@
     const seg = SEGMENTS[view.capSeg], md = MODES[seg.mode];
     document.getElementById('es-track-ico').innerHTML = iconSvg(md ? md.icon : 'route');
     // No clock times in public. Durations only for flights and ferries.
-    const showDur = (seg.mode === 'fly' || seg.mode === 'boat') && seg.dur_s;
+    const showDur = TIMED.includes(seg.mode) && seg.dur_s;
     let head;
     if (seg.mode === 'stop') head = seg.label || md.name;
     else head = `${md ? md.name + ' · ' : ''}${fmtBoth(segDist(seg))}${showDur ? ' · ' + fmtDur(seg.dur_s) : ''}`;

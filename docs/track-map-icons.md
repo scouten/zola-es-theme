@@ -29,11 +29,17 @@ Keep to these and a new glyph sits beside the others without looking borrowed.
 | `fly` | `plane` | Paper-plane silhouette |
 | `boat` | `boat` | Hull, mast, waves |
 | `stop` | `pin` | Map pin |
+| `taxi` | `taxi` | The car with a roof sign |
+| `ferry` | `ferry` | Hull and waves with a cabin and funnel instead of a mast |
+| `tram` | `tram` | Rounded body with a pantograph above and a flat rail below |
+| `horse` | `horse` | Horse head and neck in profile |
+| `kayak` | `kayak` | Long pointed hull with a paddle across it |
+| `helicopter` | `heli` | Cabin, rotor bar, tail boom, skids |
 | (unknown) | `route` | Two nodes joined by an S-curve; used for legs without a mode |
 
 ## Adding a mode
 
 1. Draw the glyph to the rules above. Paste it next to the car in a scratch HTML file and adjust until the weights match.
 2. Add it to `ICONS` in `track-map.js`.
-3. Add the mode to `MODES` with a display name and the glyph key. If it's a ride whose leg should draw dashed, add the token to `RIDES`.
+3. Add the mode to `MODES` with a display name and the glyph key. Add the token to `RIDES` (vehicles, drawn dashed) or `SELF` (self-powered, drawn dotted); add it to `TIMED` only if its caption may show a duration.
 4. Add the token to the mode vocabulary in the track format spec so the CDN toolchain and Waysmith know it.
