@@ -250,6 +250,7 @@
     layers.push({ id: 'es-next-leg', type: 'line', source: 'next', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': accent, 'line-width': big ? 3.5 : 3, 'line-opacity': .85, 'line-dasharray': [1.2, 1.6] } });
     if (CFG.dots) {
       layers.push({ id: 'es-photos', type: 'circle', source: 'photos', paint: { 'circle-radius': big ? 5 : 3, 'circle-color': photoColorExpr(view ? view.photoIdx : -1, view ? view.capSeg : 0), 'circle-stroke-color': tok('ground-deep'), 'circle-stroke-width': 1 } });
+      layers.push({ id: 'es-photos-hit', type: 'circle', source: 'photos', paint: { 'circle-radius': big ? 12 : 6, 'circle-opacity': 0 } });
     }
     layers.push({ id: 'es-dot-halo', type: 'circle', source: 'dot', paint: { 'circle-radius': big ? 14 : 11, 'circle-color': accent, 'circle-opacity': .3, 'circle-blur': .4 } });
     layers.push({ id: 'es-dot', type: 'circle', source: 'dot', paint: { 'circle-radius': big ? 6 : 5, 'circle-color': tok('dot'), 'circle-stroke-color': accent, 'circle-stroke-width': 2.5 } });
@@ -463,10 +464,19 @@
       photos.forEach((p, k) => { const q = map.project([p.lon, p.lat]); if (Math.hypot(q.x - c.x, q.y - c.y) <= 12) group.push(k); });
       return group.length ? group : [i];
     }
-    map.on('mousemove', 'es-photos', e => {
+    let hoverGroup = null, hideTimer = null;
+    function goTo(i) {
+      const p = photos[i];
+      if (expanded) { expanded = false; place(); }
+      thumb.hidden = true; hoverGroup = null;
+      if (p) p.el.scrollIntoView({ behavior: RM ? 'auto' : 'smooth', block: 'center' });
+    }
+    map.on('mousemove', 'es-photos-hit', e => {
       if (placement === 'corner' || !e.features.length) return;
+      clearTimeout(hideTimer);
       const group = clusterAt(e.features[0].properties.i), p = photos[group[0]];
       if (!p) return;
+      hoverGroup = group;
       if (p.thumb) { if (thumbImg.getAttribute('src') !== p.thumb) { thumbImg.style.display = ''; thumbImg.src = p.thumb; } }
       else { thumbImg.removeAttribute('src'); thumbImg.style.display = 'none'; }
       thumbLoc.textContent = p.loc || '';
@@ -475,13 +485,17 @@
       thumb.style.left = pt.x + 'px'; thumb.style.top = pt.y + 'px'; thumb.hidden = false;
       map.getCanvas().style.cursor = 'pointer';
     });
-    map.on('mouseleave', 'es-photos', () => { thumb.hidden = true; map.getCanvas().style.cursor = ''; });
-    map.on('click', 'es-photos', e => {
+    map.on('mouseleave', 'es-photos-hit', () => {
+      map.getCanvas().style.cursor = '';
+      clearTimeout(hideTimer);
+      hideTimer = setTimeout(() => { thumb.hidden = true; hoverGroup = null; }, 300);
+    });
+    thumb.addEventListener('mouseenter', () => clearTimeout(hideTimer));
+    thumb.addEventListener('mouseleave', () => { thumb.hidden = true; hoverGroup = null; });
+    thumb.addEventListener('click', e => { e.stopPropagation(); if (hoverGroup) goTo(hoverGroup[0]); });
+    map.on('click', 'es-photos-hit', e => {
       if (placement === 'corner' || !e.features.length) return;
-      const p = photos[clusterAt(e.features[0].properties.i)[0]];
-      if (expanded) { expanded = false; place(); }
-      thumb.hidden = true;
-      if (p) p.el.scrollIntoView({ behavior: RM ? 'auto' : 'smooth', block: 'center' });
+      goTo(clusterAt(e.features[0].properties.i)[0]);
     });
     thumbImg.addEventListener('error', () => { thumbImg.style.display = 'none'; });
   }
