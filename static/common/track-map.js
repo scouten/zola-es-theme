@@ -69,6 +69,13 @@
     return `${Math.round(mi).toLocaleString('en-US')} mi`;
   }
   const fmtBoth = m => `${fmtMetric(m)} / ${fmtImperial(m)}`;
+  // Same units and rounding as a reference distance, so "0 km / 0 mi" sits beside "167 km / 104 mi".
+  function fmtLike(m, ref) {
+    const metric = ref < 950 ? `${Math.round(m / 10) * 10} m` : ref < 9950 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m / 1000).toLocaleString('en-US')} km`;
+    const refMi = ref / 1609.344, mi = m / 1609.344;
+    const imperial = refMi < 0.5 ? `${(Math.round(m * 3.28084 / 10) * 10).toLocaleString('en-US')} ft` : refMi < 9.95 ? `${mi.toFixed(1)} mi` : `${Math.round(mi).toLocaleString('en-US')} mi`;
+    return `${metric} / ${imperial}`;
+  }
   function fmtDur(s) {
     const m = Math.round(s / 60), h = Math.floor(m / 60);
     return h ? `${h} h ${String(m % 60).padStart(2, '0')} min` : `${m} min`;
@@ -338,7 +345,7 @@
   function positionProgressLabels() {
     if (!view) return;
     const band = document.getElementById('es-track-progress'), cur = document.getElementById('es-track-cur'), tot = document.getElementById('es-track-tot');
-    cur.textContent = fmtBoth(view.m);
+    cur.textContent = fmtLike(view.m, total);
     tot.textContent = fmtBoth(total);
     const W = band.clientWidth; if (!W) return;
     const x = view.frac * W, cw = cur.offsetWidth, tw = tot.offsetWidth;
