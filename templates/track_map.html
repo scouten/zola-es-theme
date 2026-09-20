@@ -34,7 +34,7 @@ function addParkMarker() { return null; }
   "detail": {{ tm.detail | default(value="minimal") | json_encode() | safe }},
   "hillshade": {{ tm.hillshade | default(value=true) | json_encode() }},
   "glyphs": {{ tm.glyphs | default(value="") | json_encode() | safe }},
-  "labelFont": {{ tm.label_font | default(value=[]) | json_encode() | safe }},
+  "labelFont": {% if tm.label_font %}{{ tm.label_font | json_encode() | safe }}{% else %}[]{% endif %},
   "dots": {{ tm.photo_dots | default(value=true) | json_encode() }},
   "modes": {{ tm.mode_dashes | default(value=true) | json_encode() }},
   "dim": {{ tm.dim_over_photos | default(value=true) | json_encode() }},
