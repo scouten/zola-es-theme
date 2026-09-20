@@ -481,8 +481,14 @@
       else { thumbImg.removeAttribute('src'); thumbImg.style.display = 'none'; }
       thumbLoc.textContent = p.loc || '';
       if (group.length > 1) { const more = document.createElement('span'); more.className = 'more'; more.textContent = `+${group.length - 1} more`; thumbLoc.appendChild(more); }
+      // keep the card inside the map: below the dot when there's no room above, clamped sideways
       const pt = map.project([p.lon, p.lat]);
-      thumb.style.left = pt.x + 'px'; thumb.style.top = pt.y + 'px'; thumb.hidden = false;
+      const box = map.getContainer().getBoundingClientRect();
+      thumb.classList.toggle('is-below', pt.y < 240);
+      const half = 88;
+      thumb.style.left = Math.max(half, Math.min(box.width - half, pt.x)) + 'px';
+      thumb.style.top = pt.y + 'px';
+      thumb.hidden = false;
       map.getCanvas().style.cursor = 'pointer';
     });
     map.on('mouseleave', 'es-photos-hit', () => {
