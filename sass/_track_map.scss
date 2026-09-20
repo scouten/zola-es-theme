@@ -1,0 +1,207 @@
+// Corner map for pages with a track_key (templates/track_map.html, static/common/track-map.js).
+//
+// Colours are exposed as custom properties on the widget so the JavaScript can
+// read them for the map layers; change them here, not in the script. Light
+// values are the defaults; the .es-dark-mode block overrides them.
+
+$track-accent: #f2a65a !default;
+$track-widget-width: 380px !default;
+$track-widget-map-height: 270px !default;
+
+.es-track-widget {
+  --es-track-accent: #c9762a;
+  --es-track-accent-dim: #dcae82;
+  --es-track-ahead: #a3a29d;
+  --es-track-casing: #f7f6f2;
+  --es-track-dot: #ffffff;
+  --es-track-water: #c9d9ea;
+  --es-track-map-bg: #e6e5df;
+  --es-track-ground-deep: #e9e8e2;
+  --es-track-panel: rgba(255, 255, 255, .9);
+  --es-track-panel-solid: #ffffff;
+  --es-track-edge: rgba(0, 0, 0, .12);
+  --es-track-text: #232227;
+  --es-track-text-soft: #3d3c44;
+  --es-track-muted: #6b6b76;
+  --es-track-shadow: 0 14px 34px rgba(0, 0, 0, .22);
+  --es-track-hillshade-highlight: #ffffff;
+  --es-track-basemap: positron;
+}
+
+.es-dark-mode .es-track-widget {
+  --es-track-accent: #{$track-accent};
+  --es-track-accent-dim: #9c6128;
+  --es-track-ahead: #6b6c75;
+  --es-track-casing: #121216;
+  --es-track-water: #28334f;
+  --es-track-map-bg: #1b1b20;
+  --es-track-ground-deep: #{$scheme-main};
+  --es-track-panel: rgba(24, 24, 28, .88);
+  --es-track-panel-solid: #1c1c21;
+  --es-track-edge: rgba(255, 255, 255, .13);
+  --es-track-text: #e6e5e9;
+  --es-track-text-soft: #c9c8cf;
+  --es-track-muted: #9b9ba6;
+  --es-track-shadow: 0 14px 34px rgba(0, 0, 0, .5);
+  --es-track-hillshade-highlight: #7c828f;
+  --es-track-basemap: dark;
+}
+
+// ---------- the widget ----------
+.es-track-widget[hidden], .es-track-notice[hidden], .es-track-thumb[hidden], .es-track-modal[hidden] { display: none !important; }
+
+.es-track-widget {
+  display: flex;
+  flex-direction: column;
+  background: var(--es-track-panel);
+  color: var(--es-track-text);
+  font-family: $header-font-family;
+  font-size: .85rem;
+  line-height: 1.3;
+  overflow: hidden;
+
+  a { color: var(--es-track-text-soft); }
+
+  button {
+    font-family: $header-font-family;
+    cursor: pointer;
+  }
+  button:focus-visible { outline: 2px solid var(--es-track-accent); outline-offset: 1px; }
+}
+
+.es-track-map {
+  position: relative;
+  background: var(--es-track-map-bg);
+
+  #es-track-canvas { position: absolute; inset: 0; }
+  .maplibregl-ctrl-attrib, .maplibregl-ctrl-logo { display: none; }
+}
+.es-track-widget.basemap-muted #es-track-canvas canvas { filter: saturate(.7) contrast(.96); }
+
+.es-track-notice {
+  position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 1rem;
+  color: var(--es-track-muted); font-size: .8rem; pointer-events: none;
+}
+
+// round buttons on the map
+.es-track-widget .es-track-btn {
+  position: absolute; z-index: 2; width: 1.9rem; height: 1.9rem; border-radius: 50%; padding: 0;
+  border: 1px solid var(--es-track-edge); background: var(--es-track-panel); color: var(--es-track-text-soft);
+  display: grid; place-items: center;
+
+  &:hover { color: var(--es-track-text); border-color: var(--es-track-text-soft); }
+  svg { width: 1rem; height: 1rem; }
+}
+.es-track-expand { top: .5rem; right: .5rem; }
+.es-track-close { top: .5rem; right: .5rem; }
+.es-track-widget button.es-track-close { display: none; }
+.es-track-zoom { position: absolute; right: .5rem; bottom: .5rem; z-index: 2; display: flex; flex-direction: column; gap: 3px; }
+.es-track-widget .es-track-zoom .es-track-btn { position: static; width: 1.6rem; height: 1.6rem; }
+.es-track-widget .es-track-attr-btn { left: .5rem; bottom: .5rem; width: 1.4rem; height: 1.4rem; font-size: .7rem; font-weight: 600; }
+.es-track-attr {
+  position: absolute; left: .5rem; bottom: 2.2rem; z-index: 2; display: none;
+  background: var(--es-track-panel); border: 1px solid var(--es-track-edge); border-radius: 6px; padding: .3rem .5rem;
+  font-size: .7rem; color: var(--es-track-muted);
+}
+.es-track-attr-btn[aria-expanded="true"] + .es-track-attr { display: block; }
+
+.es-track-thumb {
+  position: absolute; z-index: 3; pointer-events: none; transform: translate(-50%, calc(-100% - 12px));
+  background: var(--es-track-panel-solid); border: 1px solid var(--es-track-edge); border-radius: 6px; padding: 3px; box-shadow: var(--es-track-shadow);
+  img { display: block; width: 160px; height: auto; border-radius: 3px; }
+}
+
+// status bar: progress band above, caption row below
+.es-track-bar { display: flex; flex-direction: column; gap: .2rem; padding: .35rem .8rem .55rem; }
+.es-track-progress {
+  position: relative; height: 1.15rem;
+
+  .line { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--es-track-ahead); }
+  .fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--es-track-accent); transition: width .5s ease; }
+  .tick { position: absolute; top: -1px; width: 1px; height: 5px; background: var(--es-track-muted); opacity: .7; }
+  .cur, .tot {
+    position: absolute; top: 0; font-size: .66rem; line-height: 1; white-space: nowrap; font-variant-numeric: tabular-nums;
+    transition: left .5s ease;
+  }
+  .cur { color: var(--es-track-accent); font-weight: 600; }
+  .tot { right: 0; color: var(--es-track-muted); }
+}
+.es-track-caption { display: flex; align-items: center; gap: .55rem; min-height: 2.2rem; }
+.es-track-ico { flex: 0 0 auto; width: 1.25rem; height: 1.25rem; color: var(--es-track-accent); display: inline-flex; svg { width: 100%; height: 100%; } }
+.es-track-text {
+  flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; line-height: 1.25;
+  .mode { font-weight: 600; color: var(--es-track-text); }
+  .label { color: var(--es-track-muted); font-size: .78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+}
+.es-track-widget .es-track-bar-btn {
+  flex: 0 0 auto; width: 1.6rem; height: 1.6rem; border-radius: 50%; padding: 0; margin-left: .1rem;
+  border: 1px solid var(--es-track-edge); background: transparent; color: var(--es-track-muted); display: grid; place-items: center;
+  &:hover { color: var(--es-track-text); border-color: var(--es-track-text-soft); }
+  svg { width: .9rem; height: .9rem; transition: transform .25s ease; }
+}
+.es-track-widget.is-collapsed .es-track-collapse svg { transform: rotate(180deg); }
+.es-track-widget:not(.is-corner) .es-track-collapse { display: none; }
+
+// ---------- placements ----------
+.es-track-widget.is-corner {
+  position: fixed; left: 16px; bottom: 16px; z-index: 700;
+  width: $track-widget-width; border-radius: 14px; border: 1px solid var(--es-track-edge); box-shadow: var(--es-track-shadow);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  transition: opacity .35s ease;
+
+  &.pos-right { left: auto; right: 16px; }
+  .es-track-map { height: $track-widget-map-height; cursor: pointer; }
+  &.over-photo:not(:hover):not(:focus-within) { opacity: .42; }
+  &.is-collapsed .es-track-map { display: none; }
+  &.is-collapsed .es-track-bar { min-height: 2.4rem; }
+}
+
+.es-track-slot {
+  position: relative; height: 62vh; min-height: 320px; margin: 3em auto 0;
+  border-radius: 8px; overflow: hidden; background: var(--es-track-ground-deep, #222);
+}
+.es-track-slot-empty {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  color: #888; font-family: $header-font-family; font-size: .95rem;
+}
+.es-track-widget.is-docked {
+  position: absolute; inset: 0;
+  .es-track-map { flex: 1 1 auto; }
+  .es-track-attr { display: block; }
+  .es-track-attr-btn { display: none; }
+}
+
+.es-track-modal { position: fixed; inset: 0; z-index: 900; background: rgba(0, 0, 0, .62); padding: 4vh 4vw; }
+.es-track-widget.is-expanded {
+  position: relative; height: 100%; border-radius: 14px; border: 1px solid var(--es-track-edge); box-shadow: var(--es-track-shadow);
+  .es-track-map { flex: 1 1 auto; }
+  button.es-track-expand { display: none; }
+  button.es-track-close { display: grid; }
+  .es-track-attr { display: block; }
+  .es-track-attr-btn { display: none; }
+}
+.es-track-widget.is-expanded .es-track-bar, .es-track-widget.is-docked .es-track-bar { font-size: .95rem; padding: .5rem 1rem .75rem; }
+.es-track-widget.is-expanded .es-track-progress .cur, .es-track-widget.is-docked .es-track-progress .cur,
+.es-track-widget.is-expanded .es-track-progress .tot, .es-track-widget.is-docked .es-track-progress .tot { font-size: .74rem; }
+
+// phones: a bottom strip, collapsed to the status line by default
+@media (max-width: 720px) {
+  .es-track-widget.is-corner {
+    left: 0; right: 0; bottom: 0; width: auto; border-radius: 12px 12px 0 0; border-bottom: 0;
+    display: grid; grid-template-columns: 76px 1fr; align-items: stretch;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+
+    &.pos-right { left: 0; right: 0; }
+    .es-track-map { height: 76px; }
+    .es-track-expand, .es-track-attr-btn, .es-track-zoom { display: none; }
+    .es-track-bar { padding: .4rem .9rem .5rem; }
+    &.over-photo:not(:hover) { opacity: 1; }
+    &.is-collapsed { grid-template-columns: 1fr; }
+  }
+  .es-track-modal { padding: 0; }
+  .es-track-widget.is-expanded { border-radius: 0; border: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .es-track-progress .fill, .es-track-progress .cur, .es-track-widget.is-corner { transition: none; }
+}
