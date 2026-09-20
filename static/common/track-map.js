@@ -307,9 +307,10 @@
     if (baseStyle) {
       style = JSON.parse(JSON.stringify(baseStyle));
       style.layers = style.layers.filter(l => keepLayer(l, detail));
-      const water = tok('water');
+      const water = tok('water'), coast = tok('coast');
       style.layers.forEach(l => {
-        if (l.type === 'fill' && /^water/.test(l.id) && !/name/.test(l.id)) l.paint = Object.assign({}, l.paint, { 'fill-color': water, 'fill-opacity': 1 });
+        // solid water with a hairline of very dark blue along the shore
+        if (l.type === 'fill' && /^water/.test(l.id) && !/name/.test(l.id)) l.paint = Object.assign({}, l.paint, { 'fill-color': water, 'fill-opacity': 1, 'fill-antialias': true, 'fill-outline-color': coast });
         if (l.type === 'line' && /waterway/.test(l.id)) l.paint = Object.assign({}, l.paint, { 'line-color': water });
       });
       if (CFG.glyphs) style.glyphs = CFG.glyphs;
