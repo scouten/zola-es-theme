@@ -33,7 +33,8 @@ Keep to these and a new glyph sits beside the others without looking borrowed.
 | `taxi` | `taxi` | The car with a roof sign |
 | `ferry` | `ferry` | Ship in side profile: long hull with a bow, superstructure with windows, funnel, waves |
 | `tram` | `tram` | Rounded body with a pantograph above and a flat rail below |
-| `horse` | `horse` | Chess-knight silhouette on a base: head and neck in profile with mane notches. Full-body drawings were tried and read as camels at 20 px |
+| `horse` | `horse` | Head and neck in side profile, traced from a silhouette: ear, long convex nose, round jowl, throat line. Full-body drawings were tried and read as camels at 20 px |
+| (alternate) | `knight` | Chess-knight silhouette on a base; not mapped to a mode, kept as an alternative for `horse` |
 | `kayak` | `kayak` | Long pointed hull with a paddle across it |
 | `helicopter` | `heli` | Cabin, rotor bar, tail boom to the left, skids; faces right |
 | (unknown) | `route` | Two nodes joined by an S-curve; used for legs without a mode |
