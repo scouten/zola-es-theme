@@ -27,15 +27,15 @@ Keep to these and a new glyph sits beside the others without looking borrowed.
 | `train` | `train` | Rounded body, window line, two lights, splayed rails below |
 | `cable` | `cable` | Cabin hanging from a sloped line |
 | `fly` | `jet` | Airliner from above, nose up, like an airport pictogram |
-| `prop` | `prop` | Light aircraft in side profile: high wing, tail fin, propeller, two wheels |
+| `prop` | `prop` | Light aircraft from above: straight wings, propeller bar and spinner at the nose, tailplane. Side views were tried and read as carts at 20 px |
 | `boat` | `boat` | Sailboat in side profile: hull, mast, sail, waves |
 | `stop` | `pin` | Map pin |
 | `taxi` | `taxi` | The car with a roof sign |
 | `ferry` | `ferry` | Ship in side profile: long hull with a bow, superstructure with windows, funnel, waves |
 | `tram` | `tram` | Rounded body with a pantograph above and a flat rail below |
-| `horse` | `horse` | Whole horse in side profile: body, neck and head, tail, four legs |
+| `horse` | `horse` | Chess-knight silhouette on a base: head and neck in profile with mane notches. Full-body drawings were tried and read as camels at 20 px |
 | `kayak` | `kayak` | Long pointed hull with a paddle across it |
-| `helicopter` | `heli` | Cabin, rotor bar, tail boom, skids |
+| `helicopter` | `heli` | Cabin, rotor bar, tail boom to the left, skids; faces right |
 | (unknown) | `route` | Two nodes joined by an S-curve; used for legs without a mode |
 
 ## Adding a mode

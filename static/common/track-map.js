@@ -46,16 +46,16 @@
     train: '<rect x="5" y="3.5" width="14" height="13.5" rx="3"/><path d="M5 10.5h14"/><circle cx="9" cy="13.8" r="1.1"/><circle cx="15" cy="13.8" r="1.1"/><path d="M8.5 21l1.8-4M15.5 21l-1.8-4"/>',
     cable: '<path d="M2 7l20-4"/><path d="M12 5v4"/><rect x="6.5" y="9" width="11" height="10" rx="2"/><path d="M6.5 13.5h11"/><path d="M12 9v10"/>',
     jet: '<path d="M12 2.5c1 0 1.5 1.5 1.5 3v4.5l7.5 4.5v2l-7.5-2.5v3l2.5 2v1.5L12 19.5 8 21v-1.5l2.5-2v-3L3 17v-2l7.5-4.5V5.5c0-1.5.5-3 1.5-3z"/>',
-    prop: '<path d="M4 12h9c2.5 0 4.5-.5 6-1.5l1-.5v3c-1.5 1-3.5 1.5-7 1.5H6c-1.5 0-2-1-2-2.5z"/><path d="M7 9.5h9"/><path d="M9 9.5l1.5 2.5"/><path d="M5 11.5L4 7.5h2.5L8 11"/><path d="M20.5 9.5v6"/><circle cx="8" cy="17.5" r="1.2"/><circle cx="15" cy="17.5" r="1.2"/>',
+    prop: '<path d="M10.5 20.5h3l.5-6h7.5v-2.5l-7.5-1.5V7.5c0-1.5-1-2.5-2-2.5s-2 1-2 2.5v3L2.5 12v2.5H10l.5 6z"/><path d="M7 3h10"/><path d="M12 3v2"/><path d="M8.5 19h7"/>',
     boat: '<path d="M3 15c1 2 2 3 4 3h9c2 0 3.5-1 5-3H3z"/><path d="M12 4v11"/><path d="M12 4l6 9H12"/><path d="M3 21c1.5 1.2 3.5 1.2 5 0 1.5 1.2 3.5 1.2 5 0 1.5 1.2 3.5 1.2 5 0"/>',
     pin: '<path d="M12 21s-6.5-6.2-6.5-11.2a6.5 6.5 0 0 1 13 0C18.5 14.8 12 21 12 21z"/><circle cx="12" cy="9.8" r="2.3"/>',
     route: '<circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="6" r="2.2"/><path d="M8.2 18H13a3 3 0 0 0 0-6h-2a3 3 0 0 1 0-6h4.8"/>',
     taxi: '<path d="M5 11l1.6-4.2A1.5 1.5 0 0 1 8 6h8a1.5 1.5 0 0 1 1.4.8L19 11"/><path d="M3 17v-4.5A1.5 1.5 0 0 1 4.5 11h15a1.5 1.5 0 0 1 1.5 1.5V17h-2.5M3 17h2.5M9 17h6"/><circle cx="7.5" cy="17" r="1.6"/><circle cx="16.5" cy="17" r="1.6"/><path d="M9.5 6V3.5h5V6"/>',
     ferry: '<path d="M3 13.5h15.5l2.5-2 1 2-2.5 4H5.5z"/><rect x="6" y="8" width="10" height="5.5" rx="1"/><path d="M8.5 10.8h5"/><path d="M13.5 8V5.5h2"/><path d="M3 21c1.5 1.2 3.5 1.2 5 0 1.5 1.2 3.5 1.2 5 0 1.5 1.2 3.5 1.2 5 0"/>',
     tram: '<rect x="5" y="6" width="14" height="12" rx="3"/><path d="M5 12h14"/><circle cx="9" cy="15" r="1.1"/><circle cx="15" cy="15" r="1.1"/><path d="M12 6V3.5M9.5 3.5h5"/><path d="M4 21h16"/>',
-    horse: '<rect x="5" y="10" width="11" height="5" rx="2.5"/><path d="M15.5 10.5L18 6l3-.5-.5 2.5L19 9"/><path d="M5 11l-2.5 2.5"/><path d="M7 15v5M10 15v5M13 15v5M15.5 15v5"/>',
+    horse: '<path d="M5.5 20v-5c0-5 3-8 6-10l1-3 2.5 3 4 1 2.5 5-1.5 2-3.5-.5-2 2.5-.5 5"/><path d="M16.5 10h.01"/><path d="M8.5 8.5l-1.5 1M10 6.5l-1.5.5"/><path d="M4 20h13"/>',
     kayak: '<path d="M2 12c4-3 16-3 20 0-4 3-16 3-20 0z"/><path d="M6.5 17.5l11-11"/><path d="M4.5 19.5l2-2M17.5 6.5l2-2"/>',
-    heli: '<path d="M3 5h18"/><path d="M12 5v3"/><path d="M8 8h5a4 4 0 0 1 4 4v1a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3v-2a3 3 0 0 1 3-3z"/><path d="M17 11h4"/><path d="M19 9v4"/><path d="M7 19h10M9 16v3M15 16v3"/>',
+    heli: '<path d="M3 5h18"/><path d="M12 5v3"/><path d="M16 8h-5a4 4 0 0 0-4 4v1a3 3 0 0 0 3 3h6a3 3 0 0 0 3-3v-2a3 3 0 0 0-3-3z"/><path d="M7 11H3"/><path d="M5 9v4"/><path d="M7 19h10M9 16v3M15 16v3"/>',
   };
   const iconSvg = k => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONS[k] || ICONS.route}</svg>`;
   // exposed for the icon preview page and for tooling; not used by the site itself
