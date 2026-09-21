@@ -75,25 +75,24 @@
     const s = Math.sin(dLat / 2) ** 2 + Math.cos(a[1] * toR) * Math.cos(b[1] * toR) * Math.sin(dLon / 2) ** 2;
     return 2 * R * Math.asin(Math.sqrt(s));
   }
-  function fmtMetric(m) {
-    if (m < 950) return `${Math.round(m / 10) * 10} m`;
-    if (m < 9950) return `${(m / 1000).toFixed(1)} km`;
+  // Distances: the metric side picks the tier, and the imperial side follows it with the same
+  // rounding. Under 950 m: metres and feet, both to the nearest 10 ("920 m / 3020 ft").
+  // Under 9.95 km: one decimal in both ("1.3 km / 0.8 mi"). Otherwise whole units ("167 km / 104 mi").
+  const tierOf = m => m < 950 ? 'm' : m < 9950 ? 'km1' : 'km';
+  function fmtMetricAs(m, tier) {
+    if (tier === 'm') return `${Math.round(m / 10) * 10} m`;
+    if (tier === 'km1') return `${(m / 1000).toFixed(1)} km`;
     return `${Math.round(m / 1000).toLocaleString('en-US')} km`;
   }
-  function fmtImperial(m) {
-    const mi = m / 1609.344;
-    if (mi < 0.5) return `${(Math.round(m * 3.28084 / 10) * 10).toLocaleString('en-US')} ft`;
-    if (mi < 9.95) return `${mi.toFixed(1)} mi`;
-    return `${Math.round(mi).toLocaleString('en-US')} mi`;
+  function fmtImperialAs(m, tier) {
+    if (tier === 'm') return `${Math.round(m * 3.28084 / 10) * 10} ft`;
+    if (tier === 'km1') return `${(m / 1609.344).toFixed(1)} mi`;
+    return `${Math.round(m / 1609.344).toLocaleString('en-US')} mi`;
   }
-  const fmtBoth = m => `${fmtMetric(m)} / ${fmtImperial(m)}`;
-  // Same units and rounding as a reference distance, so "0 km / 0 mi" sits beside "167 km / 104 mi".
-  function fmtLike(m, ref) {
-    const metric = ref < 950 ? `${Math.round(m / 10) * 10} m` : ref < 9950 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m / 1000).toLocaleString('en-US')} km`;
-    const refMi = ref / 1609.344, mi = m / 1609.344;
-    const imperial = refMi < 0.5 ? `${(Math.round(m * 3.28084 / 10) * 10).toLocaleString('en-US')} ft` : refMi < 9.95 ? `${mi.toFixed(1)} mi` : `${Math.round(mi).toLocaleString('en-US')} mi`;
-    return `${metric} / ${imperial}`;
-  }
+  const fmtMetric = m => fmtMetricAs(m, tierOf(m));
+  const fmtBoth = m => `${fmtMetricAs(m, tierOf(m))} / ${fmtImperialAs(m, tierOf(m))}`;
+  // Same tier as a reference distance, so "0 km / 0 mi" sits beside "167 km / 104 mi".
+  const fmtLike = (m, ref) => `${fmtMetricAs(m, tierOf(ref))} / ${fmtImperialAs(m, tierOf(ref))}`;
   function fmtDur(s) {
     const m = Math.round(s / 60), h = Math.floor(m / 60);
     return h ? `${h} h ${String(m % 60).padStart(2, '0')} min` : `${m} min`;
