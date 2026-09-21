@@ -11,6 +11,7 @@ $track-widget-map-height: 270px !default;
 .es-track-widget {
   --es-track-accent: #c9762a;
   --es-track-accent-dim: #dcae82;
+  --es-track-current: #1fa84a;
   --es-track-ahead: #a3a29d;
   --es-track-casing: #f7f6f2;
   --es-track-dot: #ffffff;
@@ -35,6 +36,7 @@ $track-widget-map-height: 270px !default;
 .es-dark-mode .es-track-widget {
   --es-track-accent: #{$track-accent};
   --es-track-accent-dim: #9c6128;
+  --es-track-current: #4ce07a;
   --es-track-ahead: #6b6c75;
   --es-track-casing: #121216;
   --es-track-water: #17285a;

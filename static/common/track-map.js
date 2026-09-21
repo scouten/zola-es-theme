@@ -254,18 +254,22 @@
   function ourLayers() {
     const big = placement !== 'corner';
     const accent = tok('accent');
+    // In the docked and expanded views the current leg is drawn in its own colour on top of
+    // the traveled/ahead lines; in the corner it keeps the amber glow only.
+    const cur = big ? tok('current') : accent;
     const layers = [
       { id: 'es-track-casing', type: 'line', source: 'track', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': tok('casing'), 'line-width': big ? 6 : 4.8 } },
-      { id: 'es-current-halo', type: 'line', source: 'current', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': accent, 'line-width': big ? 16 : 12, 'line-opacity': .22, 'line-blur': 3 } },
+      { id: 'es-current-halo', type: 'line', source: 'current', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': cur, 'line-width': big ? 16 : 12, 'line-opacity': .22, 'line-blur': 3 } },
       { id: 'es-track-ahead', type: 'line', source: 'ahead', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': tok('ahead'), 'line-width': big ? 3.5 : 3 } },
       { id: 'es-track-done', type: 'line', source: 'done', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-width': big ? 3.5 : 3, 'line-gradient': doneGradient(view) } },
     ];
+    if (big) layers.push({ id: 'es-current-line', type: 'line', source: 'current', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': cur, 'line-width': 3.5 } });
     if (CFG.modes) {
       const ov = CFG.isDark ? '#ffffff' : '#000000';
       layers.push({ id: 'es-mode-walk', type: 'line', source: 'modes', filter: ['in', ['get', 'mode'], ['literal', SELF]], layout: { 'line-cap': 'round' }, paint: { 'line-color': ov, 'line-width': 1.3, 'line-opacity': .5, 'line-dasharray': [0.2, 2.2] } });
       layers.push({ id: 'es-mode-ride', type: 'line', source: 'modes', filter: ['in', ['get', 'mode'], ['literal', RIDES]], paint: { 'line-color': ov, 'line-width': 1.3, 'line-opacity': .55, 'line-dasharray': [3, 2.2] } });
     }
-    layers.push({ id: 'es-next-leg', type: 'line', source: 'next', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': accent, 'line-width': big ? 3.5 : 3, 'line-opacity': .85, 'line-dasharray': [1.2, 1.6] } });
+    layers.push({ id: 'es-next-leg', type: 'line', source: 'next', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': big ? tok('casing') : accent, 'line-width': big ? 2 : 3, 'line-opacity': big ? .6 : .85, 'line-dasharray': [1.2, 1.6] } });
     if (CFG.dots) {
       layers.push({ id: 'es-photos', type: 'circle', source: 'photos', paint: { 'circle-radius': big ? 5 : 3, 'circle-color': photoColorExpr(view ? view.photoIdx : -1, view ? view.capSeg : 0), 'circle-stroke-color': tok('ground-deep'), 'circle-stroke-width': 1 } });
       layers.push({ id: 'es-photos-hit', type: 'circle', source: 'photos', paint: { 'circle-radius': big ? 12 : 6, 'circle-opacity': 0 } });
