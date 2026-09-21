@@ -166,6 +166,7 @@ $track-widget-map-height: 270px !default;
   }
   .cur { color: var(--es-track-current); font-weight: 600; }
   .tot { right: 0; color: var(--es-track-muted); }
+  .tot.is-done { color: var(--es-track-current); font-weight: 600; }
 }
 .es-track-caption { display: flex; align-items: center; gap: .55rem; min-height: 2.2rem; }
 // the icon names the current leg, which is drawn in the current-leg colour on the map

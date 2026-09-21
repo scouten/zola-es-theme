@@ -415,6 +415,11 @@
     const band = document.getElementById('es-track-progress'), cur = document.getElementById('es-track-cur'), tot = document.getElementById('es-track-tot');
     cur.textContent = fmtLike(view.m, total);
     tot.textContent = fmtBoth(total);
+    // at the end of the track the two labels would say the same thing: show just the total, in green
+    const atEnd = total > 0 && view.m >= total - 1;
+    tot.classList.toggle('is-done', atEnd);
+    cur.hidden = atEnd;
+    if (atEnd) { tot.hidden = false; return; }
     const W = band.clientWidth; if (!W) return;
     const x = view.frac * W, cw = cur.offsetWidth, tw = tot.offsetWidth;
     let left = Math.max(0, Math.min(W - cw, x - cw / 2));
