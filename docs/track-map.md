@@ -41,7 +41,7 @@ The `distance` and `route` keys still feed the caption under the docked map and 
 
 ## The track JSON
 
-Produced by the CDN toolchain from a GPX that Waysmith has cut into legs. The full format, including the privacy rule (no clock times anywhere) and the photo-anchor scheme, is specified in `prototype/TRACK-FORMAT.md` on the ericscouten.travel repo. In short:
+Produced by the CDN toolchain from a GPX that Waysmith has cut into legs. The full format, including the privacy rule (no clock times anywhere) and the photo-anchor scheme, is specified in `docs/track-format.md`. In short:
 
 ```json
 { "v": 1, "dist_m": 166100, "bbox": [minLon, minLat, maxLon, maxLat],
@@ -79,6 +79,7 @@ Map labels are different: MapLibre draws them from pre-rasterised glyph files (`
 | `sass/_track_map.scss` | Styles; colours as custom properties the script reads |
 | `static/common/track-map.js` | Behaviour |
 | `docs/track-map-icons.md` | Icon style guide |
+| `docs/track-format.md` | The GPX leg convention and the track JSON format |
 
 ## Known follow-ups
 
