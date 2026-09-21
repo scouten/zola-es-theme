@@ -14,7 +14,6 @@ basemap = ""             # "dark" | "positron" | any OpenFreeMap style; default 
 detail = "minimal"       # "terrain" | "minimal" | "standard" in the corner and docked views (expanded is always standard)
 hillshade = true
 photo_dots = true        # a dot on the map for every photo
-mode_dashes = true       # rides (other than driving) carry a dash overlay
 dim_over_photos = true   # fade the corner widget while it overlaps a photo
 mobile_collapsed = true  # phones start with just the status line
 corner = "left"          # or "right"

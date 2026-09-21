@@ -45,5 +45,5 @@ Keep to these and a new glyph sits beside the others without looking borrowed.
 
 1. Draw the glyph to the rules above. Paste it next to the car in a scratch HTML file and adjust until the weights match.
 2. Add it to `ICONS` in `track-map.js`.
-3. Add the mode to `MODES` with a display name and the glyph key. Add the token to `RIDES` if its leg should carry the dash overlay (rides other than driving); add it to `TIMED` only if its caption may show a duration.
+3. Add the mode to `MODES` with a display name and the glyph key. Add it to `TIMED` only if its caption may show a duration.
 4. Add the token to the mode vocabulary in `docs/track-format.md` so the CDN toolchain and Waysmith know it.

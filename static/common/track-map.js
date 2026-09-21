@@ -30,8 +30,6 @@
     helicopter: { name: 'By helicopter', icon: 'heli' },
     stop: { name: 'Stopped', icon: 'pin' },
   };
-  // legs drawn with a dash overlay (rides other than driving); everything else is solid
-  const RIDES = ['cable', 'boat', 'ferry', 'fly', 'prop', 'helicopter', 'train', 'tram', 'bus', 'taxi'];
   // legs whose caption may show a duration (the only time-derived value ever shown)
   const TIMED = ['fly', 'prop', 'boat', 'ferry', 'helicopter'];
   const ICONS = {
@@ -246,7 +244,6 @@
       track: { type: 'geojson', data: lineOrEmpty(pts) },
       done: { type: 'geojson', lineMetrics: true, data: doneData(cur) },
       ahead: { type: 'geojson', data: aheadData(cur) },
-      modes: { type: 'geojson', data: { type: 'FeatureCollection', features: SEGMENTS.filter(s => s.coords.length > 1).map(s => ({ type: 'Feature', properties: { mode: s.mode || '' }, geometry: { type: 'LineString', coordinates: s.coords } })) } },
       current: { type: 'geojson', data: currentLegData(cur) },
       photos: { type: 'geojson', data: { type: 'FeatureCollection', features: photos.map((p, i) => ({ type: 'Feature', properties: { i, seg: p.seg, id: p.id }, geometry: { type: 'Point', coordinates: [p.lon, p.lat] } })) } },
       dot: { type: 'geojson', data: dotData(cur) },
@@ -265,10 +262,6 @@
       { id: 'es-track-done', type: 'line', source: 'done', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-width': big ? 3.5 : 3, 'line-gradient': doneGradient(view) } },
     ];
     if (big) layers.push({ id: 'es-current-line', type: 'line', source: 'current', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': cur, 'line-width': 3.5 } });
-    if (CFG.modes) {
-      const ov = CFG.isDark ? '#ffffff' : '#000000';
-      layers.push({ id: 'es-mode-ride', type: 'line', source: 'modes', filter: ['in', ['get', 'mode'], ['literal', RIDES]], paint: { 'line-color': ov, 'line-width': 1.3, 'line-opacity': .55, 'line-dasharray': [3, 2.2] } });
-    }
     if (CFG.dots) {
       layers.push({ id: 'es-photos', type: 'circle', source: 'photos', paint: { 'circle-radius': big ? 5 : 3, 'circle-color': photoColorExpr(view ? view.photoIdx : -1, view ? view.capSeg : 0), 'circle-stroke-color': tok('ground-deep'), 'circle-stroke-width': 1 } });
       layers.push({ id: 'es-photos-hit', type: 'circle', source: 'photos', paint: { 'circle-radius': big ? 12 : 6, 'circle-opacity': 0 } });
