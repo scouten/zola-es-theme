@@ -13,7 +13,7 @@ The JSON is always regenerable from the GPX plus the photo list. Nothing is hand
 
 ## 0. Privacy rule
 
-Nothing public shows or ships a clock time. The JSON has no start or end instants, no per-point times, and no time zone. The only time-derived value it carries is a **duration**, and only on `fly` and `boat` legs, so a caption can read "Flying · ATL → CPT · 14 h 15 min". Stops and other legs are described by place, mode, and distance only.
+Nothing public shows or ships a clock time. The JSON has no start or end instants, no per-point times, and no time zone. The only time-derived value it carries is a **duration**, and only on flight and boat legs (`fly`, `prop`, `helicopter`, `boat`, `ferry`), so a caption can read "Flying · 13,580 km / 8,439 mi" over "ATL → 14 h 15 min → CPT". Stops and other legs are described by place, mode, and distance only.
 
 The GPX keeps everything (it is what makes editing and re-export possible) and is never uploaded to a public location.
 
@@ -48,20 +48,27 @@ A day is a sequence of **legs**, each written as one `<trk>` in chronological or
 
 ### 1.2 Mode vocabulary
 
-| `<type>` | Meaning | Icon (Font Awesome) |
-|---|---|---|
-| `drive` | Car, taxi, any road vehicle you were riding in | `fa-car` |
-| `walk` | On foot, urban or beach | `fa-person-walking` |
-| `hike` | On foot, trail | `fa-person-hiking` |
-| `bike` | Bicycle | `fa-bicycle` |
-| `bus` | Bus or coach | `fa-bus` |
-| `train` | Rail of any kind, including metro and tram | `fa-train` |
-| `cable` | Cable car, gondola, funicular, chairlift | `fa-cable-car` |
-| `boat` | Ferry, boat, ship | `fa-ship` |
-| `fly` | Aircraft | `fa-plane` |
-| `stop` | Not travelling: a visit, a meal, a viewpoint | `fa-location-dot` |
+| `<type>` | Meaning | Glyph key in the theme | Drawn |
+|---|---|---|---|
+| `drive` | Car or any private road vehicle you were riding in | `car` | dashed |
+| `taxi` | Taxi or rideshare | `taxi` | dashed |
+| `walk` | On foot, urban or beach | `walk` | dotted |
+| `hike` | On foot, trail | `hike` | dotted |
+| `bike` | Bicycle | `bike` | solid |
+| `horse` | On horseback | `horse` | dotted |
+| `bus` | Bus or coach | `bus` | dashed |
+| `train` | Rail: intercity, metro, funicular railway | `train` | dashed |
+| `tram` | Tram or streetcar | `tram` | dashed |
+| `cable` | Cable car, gondola, chairlift | `cable` | dashed |
+| `boat` | Small boat, sailing, cruise | `boat` | dashed, may carry a duration |
+| `ferry` | Scheduled ferry | `ferry` | dashed, may carry a duration |
+| `kayak` | Kayak or canoe | `kayak` | dotted |
+| `fly` | Airliner or jet | `jet` | dashed, may carry a duration |
+| `prop` | Light aircraft, flightseeing | `prop` | dashed, may carry a duration |
+| `helicopter` | Helicopter | `heli` | dashed, may carry a duration |
+| `stop` | Not travelling: a visit, a meal, a viewpoint | `pin` | not drawn; a place |
 
-Unknown tokens are preserved and shown with a generic icon. New tokens are added here and in the theme's icon map.
+Unknown tokens are preserved and shown with a generic route icon and no mode name. "Drawn" is how the leg's line is styled on the map: vehicles dashed, self-powered travel dotted. New tokens are added here and in the theme's mode and icon tables (`docs/track-map-icons.md`).
 
 ### 1.3 Stops
 
@@ -158,7 +165,7 @@ Two version numbers, deliberately separate:
 | `label` | string? | From `<name>`. |
 | `origin` | string? | From §1.4. Absent means `recorded`. |
 | `dist_m` | int | Metres along the (unsimplified) leg. 0 for stops. |
-| `dur_s` | int? | **Only on `fly` and `boat` legs.** Seconds. Omitted everywhere else. |
+| `dur_s` | int? | **Only on `fly`, `prop`, `helicopter`, `boat`, and `ferry` legs.** Seconds. Omitted everywhere else. |
 | `ele` | [min, max]? | Metres. Present when elevation was recorded. Omitted on stops. |
 | `pts` | array of [lon, lat, ele?] | Simplified geometry. `lon`, `lat` to 5 decimals (about 1 m). `ele` is whole metres; omitted when unknown. |
 
@@ -183,7 +190,7 @@ When `photos` is absent, or a photo id is missing from it, the theme falls back 
 |---|---|
 | Moving leg with a label | `Driving · 36 km` over `Cape Town → Muizenberg` |
 | Moving leg without a label | `Driving · 36 km` |
-| `fly` or `boat` leg | `Flying · ATL → CPT · 14 h 15 min` |
+| Flight or boat leg (`fly`, `prop`, `helicopter`, `boat`, `ferry`) | `Flying · 13,580 km / 8,439 mi` over `ATL → 14 h 15 min → CPT`: the duration sits between the endpoints when the name has an arrow, otherwise after the name |
 | Stop | `Cape Point` with the pin icon |
 | Reconstructed leg (`origin` not `recorded`) | Same text; the line is drawn dashed |
 
