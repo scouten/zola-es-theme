@@ -30,9 +30,8 @@
     helicopter: { name: 'By helicopter', icon: 'heli' },
     stop: { name: 'Stopped', icon: 'pin' },
   };
-  // legs drawn dashed (vehicles) vs dotted (self-powered); anything else is solid
+  // legs drawn with a dash overlay (rides other than driving); everything else is solid
   const RIDES = ['cable', 'boat', 'ferry', 'fly', 'prop', 'helicopter', 'train', 'tram', 'bus', 'taxi'];
-  const SELF = ['walk', 'hike', 'horse', 'kayak'];
   // legs whose caption may show a duration (the only time-derived value ever shown)
   const TIMED = ['fly', 'prop', 'boat', 'ferry', 'helicopter'];
   const ICONS = {
@@ -236,7 +235,11 @@
     if (f >= 1 - e) return flat(dim);
     return ['interpolate', ['linear'], ['line-progress'], 0, dim, f - e / 2, dim, f + e / 2, accent, 1, accent];
   }
-  const photoColorExpr = (curIdx, capSeg) => ['case', ['<', ['get', 'seg'], capSeg == null ? 0 : capSeg], tok('accent-dim'), ['<=', ['get', 'i'], curIdx], tok('accent'), tok('ahead')];
+  const photoColorExpr = (curIdx, capSeg) => {
+    const cur = placement !== 'corner' ? tok('current') : tok('accent');
+    const seg = capSeg == null ? 0 : capSeg;
+    return ['case', ['==', ['get', 'seg'], seg], cur, ['<', ['get', 'seg'], seg], tok('accent-dim'), ['<=', ['get', 'i'], curIdx], tok('accent'), tok('ahead')];
+  };
 
   function ourSources() {
     const cur = view;
@@ -266,7 +269,6 @@
     if (big) layers.push({ id: 'es-current-line', type: 'line', source: 'current', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': cur, 'line-width': 3.5 } });
     if (CFG.modes) {
       const ov = CFG.isDark ? '#ffffff' : '#000000';
-      layers.push({ id: 'es-mode-walk', type: 'line', source: 'modes', filter: ['in', ['get', 'mode'], ['literal', SELF]], layout: { 'line-cap': 'round' }, paint: { 'line-color': ov, 'line-width': 1.3, 'line-opacity': .5, 'line-dasharray': [0.2, 2.2] } });
       layers.push({ id: 'es-mode-ride', type: 'line', source: 'modes', filter: ['in', ['get', 'mode'], ['literal', RIDES]], paint: { 'line-color': ov, 'line-width': 1.3, 'line-opacity': .55, 'line-dasharray': [3, 2.2] } });
     }
     layers.push({ id: 'es-next-leg', type: 'line', source: 'next', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': big ? tok('casing') : accent, 'line-width': big ? 2 : 3, 'line-opacity': big ? .6 : .85, 'line-dasharray': [1.2, 1.6] } });

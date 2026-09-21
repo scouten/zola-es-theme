@@ -52,23 +52,23 @@ A day is a sequence of **legs**, each written as one `<trk>` in chronological or
 |---|---|---|---|
 | `drive` | Car or any private road vehicle you were riding in | `car` | dashed |
 | `taxi` | Taxi or rideshare | `taxi` | dashed |
-| `walk` | On foot, urban or beach | `walk` | dotted |
-| `hike` | On foot, trail | `hike` | dotted |
+| `walk` | On foot, urban or beach | `walk` | solid |
+| `hike` | On foot, trail | `hike` | solid |
 | `bike` | Bicycle | `bike` | solid |
-| `horse` | On horseback | `horse` | dotted |
+| `horse` | On horseback | `horse` | solid |
 | `bus` | Bus or coach | `bus` | dashed |
 | `train` | Rail: intercity, metro, funicular railway | `train` | dashed |
 | `tram` | Tram or streetcar | `tram` | dashed |
 | `cable` | Cable car, gondola, chairlift | `cable` | dashed |
 | `boat` | Small boat, sailing, cruise | `boat` | dashed, may carry a duration |
 | `ferry` | Scheduled ferry | `ferry` | dashed, may carry a duration |
-| `kayak` | Kayak or canoe | `kayak` | dotted |
+| `kayak` | Kayak or canoe | `kayak` | solid |
 | `fly` | Airliner or jet | `jet` | dashed, may carry a duration |
 | `prop` | Light aircraft, flightseeing | `prop` | dashed, may carry a duration |
 | `helicopter` | Helicopter | `heli` | dashed, may carry a duration |
 | `stop` | Not travelling: a visit, a meal, a viewpoint | `pin` | not drawn; a place |
 
-Unknown tokens are preserved and shown with a generic route icon and no mode name. "Drawn" is how the leg's line is styled on the map: vehicles dashed, self-powered travel dotted. New tokens are added here and in the theme's mode and icon tables (`docs/track-map-icons.md`).
+Unknown tokens are preserved and shown with a generic route icon and no mode name. "Drawn" is how the leg's line is styled on the map: rides other than driving carry a dash overlay; driving and self-powered travel are solid. New tokens are added here and in the theme's mode and icon tables (`docs/track-map-icons.md`).
 
 ### 1.3 Stops
 
