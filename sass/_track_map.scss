@@ -173,6 +173,10 @@ $track-widget-map-height: 270px !default;
 .es-track-widget:not(.is-corner) .es-track-collapse { display: none; }
 
 // ---------- placements ----------
+// the small map is about the route; roads recede further there than in the big views
+.es-track-widget.is-corner { --es-track-road: #e4e2dc; --es-track-road-major: #d3d1ca; }
+.es-dark-mode .es-track-widget.is-corner { --es-track-road: #2c2d33; --es-track-road-major: #44454d; }
+
 .es-track-widget.is-corner {
   position: fixed; left: 16px; bottom: 16px; z-index: 700;
   width: $track-widget-width; border-radius: 14px; border: 1px solid var(--es-track-edge); box-shadow: var(--es-track-shadow);
