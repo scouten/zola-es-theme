@@ -308,8 +308,21 @@
     if (baseStyle) {
       style = JSON.parse(JSON.stringify(baseStyle));
       style.layers = style.layers.filter(l => keepLayer(l, detail));
-      const water = tok('water'), coast = tok('coast');
+      const water = tok('water'), coast = tok('coast'), road = tok('road'), roadMajor = tok('road-major');
+      // Roads as single simple lines: drop the casing layers the stock style draws under them,
+      // and paint what's left one grey, with major roads a little wider.
+      const isRoad = l => l.type === 'line' && /highway|road|transportation|motorway|trunk|primary|secondary|tertiary|minor|street|path/.test(l.id)
+        && !/casing|label|name|shield|oneway|rail|transit|ferry|aeroway|waterway|boundary/.test(l.id);
+      const isMajor = l => /motorway|trunk|primary|major/.test(l.id);
+      const widen = (w, f) => typeof w === 'number' ? w * f : (Array.isArray(w) ? ['*', f, w] : w);
+      style.layers = style.layers.filter(l => !(l.type === 'line' && /casing/.test(l.id)));
       style.layers.forEach(l => {
+        if (isRoad(l)) {
+          const paint = Object.assign({}, l.paint, { 'line-color': isMajor(l) ? roadMajor : road, 'line-opacity': 1 });
+          if (isMajor(l) && paint['line-width'] != null) paint['line-width'] = widen(paint['line-width'], 1.3);
+          delete paint['line-dasharray'];
+          l.paint = paint;
+        }
         // solid water with a hairline of very dark blue along the shore
         if (l.type === 'fill' && /^water/.test(l.id) && !/name/.test(l.id)) l.paint = Object.assign({}, l.paint, { 'fill-color': water, 'fill-opacity': 1, 'fill-antialias': true, 'fill-outline-color': coast });
         if (l.type === 'line' && /waterway/.test(l.id)) l.paint = Object.assign({}, l.paint, { 'line-color': water });
