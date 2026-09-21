@@ -243,7 +243,7 @@
   const photoColorExpr = (curIdx, capSeg) => {
     const cur = placement !== 'corner' ? tok('current') : tok('accent');
     const seg = capSeg == null ? 0 : capSeg;
-    return ['case', ['==', ['get', 'seg'], seg], cur, ['<', ['get', 'seg'], seg], tok('accent-dim'), ['<=', ['get', 'i'], curIdx], tok('accent'), tok('ahead')];
+    return ['case', ['==', ['get', 'seg'], seg], cur, ['<', ['get', 'seg'], seg], tok('accent-dim'), ['<=', ['get', 'i'], curIdx], tok('accent'), tok('muted')];
   };
 
   function ourSources() {
@@ -354,7 +354,7 @@
       // below the water fill (the tiles carry bathymetry) and below roads and labels
       let at = style.layers.findIndex(l => l.type === 'fill' && /^water/.test(l.id) && !/name/.test(l.id));
       if (at < 0) at = style.layers.findIndex(l => l.type === 'symbol');
-      const hs = { id: 'es-hillshade', type: 'hillshade', source: 'dem', paint: { 'hillshade-exaggeration': CFG.isDark ? .45 : .3, 'hillshade-shadow-color': '#000000', 'hillshade-highlight-color': tok('hillshade-highlight'), 'hillshade-accent-color': '#000000' } };
+      const hs = { id: 'es-hillshade', type: 'hillshade', source: 'dem', paint: { 'hillshade-exaggeration': CFG.isDark ? .5 : .3, 'hillshade-shadow-color': '#000000', 'hillshade-highlight-color': tok('hillshade-highlight'), 'hillshade-accent-color': '#000000' } };
       style.layers.splice(at < 0 ? style.layers.length : at, 0, hs);
     }
     Object.assign(style.sources, ourSources());
