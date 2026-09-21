@@ -436,6 +436,13 @@
     const modeEl = document.createElement('span'); modeEl.className = 'mode'; modeEl.textContent = head; text.appendChild(modeEl);
     if (sub) { const labelEl = document.createElement('span'); labelEl.className = 'label'; labelEl.textContent = sub; text.appendChild(labelEl); }
     document.getElementById('es-track-fill').style.width = (view.frac * 100).toFixed(2) + '%';
+    // current leg's span on the bar: green up to the reader's position, darker green beyond
+    const legA = total ? cum[seg.start] / total : 0, legB = total ? cum[seg.end] / total : 0;
+    const at = Math.min(Math.max(view.frac, legA), legB);
+    const pct = x => (x * 100).toFixed(2) + '%';
+    const done = document.getElementById('es-track-leg-done'), ahead = document.getElementById('es-track-leg-ahead');
+    done.style.left = pct(legA); done.style.width = pct(at - legA);
+    ahead.style.left = pct(at); ahead.style.width = pct(legB - at);
     positionProgressLabels();
     document.getElementById('es-track-step-label').textContent = stepLabel(browseStep == null ? stepIndexFor(view) : browseStep);
     if (!mapReady) return;

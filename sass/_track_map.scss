@@ -12,6 +12,7 @@ $track-widget-map-height: 270px !default;
   --es-track-accent: #c9762a;
   --es-track-accent-dim: #dcae82;
   --es-track-current: #1fa84a;
+  --es-track-current-dim: #9fd9b3;
   --es-track-ahead: #7a7973;
   --es-track-casing: #f7f6f2;
   --es-track-dot: #ffffff;
@@ -37,6 +38,7 @@ $track-widget-map-height: 270px !default;
   --es-track-accent: #{$track-accent};
   --es-track-accent-dim: #9c6128;
   --es-track-current: #4ce07a;
+  --es-track-current-dim: #237a42;
   --es-track-ahead: #a9aab5;
   --es-track-casing: #121216;
   --es-track-water: #17285a;
@@ -146,6 +148,10 @@ $track-widget-map-height: 270px !default;
 
   .line { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--es-track-ahead); }
   .fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--es-track-accent); transition: width .5s ease; }
+  // the current leg's span on the timeline: traveled part bright, the rest darker
+  .leg-done, .leg-ahead { position: absolute; top: 0; bottom: 0; left: 0; width: 0; transition: left .5s ease, width .5s ease; }
+  .leg-done { background: var(--es-track-current); }
+  .leg-ahead { background: var(--es-track-current-dim); }
   .tick { position: absolute; top: -1px; width: 1px; height: 5px; background: var(--es-track-muted); opacity: .7; }
   .cur, .tot {
     position: absolute; top: 0; font-size: .66rem; line-height: 1; white-space: nowrap; font-variant-numeric: tabular-nums;
