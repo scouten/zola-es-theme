@@ -313,7 +313,17 @@
       const isRoad = l => l.type === 'line' && /highway|road|transportation|motorway|trunk|primary|secondary|tertiary|minor|street|path/.test(l.id)
         && !/casing|label|name|shield|oneway|rail|transit|ferry|aeroway|waterway|boundary/.test(l.id);
       const isMajor = l => /motorway|trunk|primary|major/.test(l.id);
-      const widen = (w, f) => typeof w === 'number' ? w * f : (Array.isArray(w) ? ['*', f, w] : w);
+      // Scale a width in place. Zoom-driven widths are ["interpolate", …, ["zoom"], stop, value, …] or
+      // ["step", ["zoom"], value, stop, value, …]; ["zoom"] may only sit at the top level of such an
+      // expression, so the values inside are scaled rather than wrapping the whole thing.
+      function widen(w, f) {
+        if (typeof w === 'number') return w * f;
+        if (w && !Array.isArray(w) && Array.isArray(w.stops)) return Object.assign({}, w, { stops: w.stops.map(([z, v]) => [z, typeof v === 'number' ? v * f : v]) });
+        if (!Array.isArray(w)) return w;
+        if (w[0] === 'interpolate') return w.map((x, i) => (i >= 3 && i % 2 === 0 && typeof x === 'number') ? x * f : x);
+        if (w[0] === 'step') return w.map((x, i) => (i >= 2 && i % 2 === 0 && typeof x === 'number') ? x * f : x);
+        return w;
+      }
       style.layers = style.layers.filter(l => !(l.type === 'line' && /casing/.test(l.id)));
       style.layers.forEach(l => {
         if (isRoad(l)) {
