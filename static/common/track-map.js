@@ -222,7 +222,19 @@
   const linesFC = lists => ({ type: 'FeatureCollection', features: lists.filter(c => c.length > 1).map(c => ({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: c } })) });
   const doneData = v => lineOrEmpty(pts.slice(0, viewIdx(v) + 1));
   const aheadData = v => lineOrEmpty(pts.slice(viewIdx(v)));
-  const currentLegData = v => v ? linesFC(segCoords(v.segs[0], v.segs[1])) : linesFC([]);
+  // the current leg(s), split at the reader's position: `done` is drawn bright, the rest dim
+  const currentLegData = v => {
+    const features = [];
+    if (!v) return { type: 'FeatureCollection', features };
+    const at = viewIdx(v);
+    const add = (coords, done) => { if (coords.length > 1) features.push({ type: 'Feature', properties: { done }, geometry: { type: 'LineString', coordinates: coords } }); };
+    for (let s = v.segs[0]; s <= v.segs[1]; s++) {
+      const { start, end } = SEGMENTS[s];
+      add(pts.slice(start, Math.min(at, end) + 1), true);
+      add(pts.slice(Math.max(at, start), end + 1), false);
+    }
+    return { type: 'FeatureCollection', features };
+  };
   const dotData = v => ({ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: v ? v.dot : pts[0] } });
   // the photo chosen with the arrows, ringed in the current-leg colour
   const selectedData = () => {
@@ -269,7 +281,7 @@
       { id: 'es-track-ahead', type: 'line', source: 'ahead', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': tok('ahead'), 'line-width': big ? 3.5 : 3 } },
       { id: 'es-track-done', type: 'line', source: 'done', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-width': big ? 3.5 : 3, 'line-gradient': doneGradient(view) } },
     ];
-    layers.push({ id: 'es-current-line', type: 'line', source: 'current', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': cur, 'line-width': big ? 3.5 : 3 } });
+    layers.push({ id: 'es-current-line', type: 'line', source: 'current', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': ['case', ['get', 'done'], cur, tok('current-dim')], 'line-width': big ? 3.5 : 3 } });
     if (CFG.dots) {
       layers.push({ id: 'es-photos', type: 'circle', source: 'photos', paint: { 'circle-radius': big ? 5 : 3, 'circle-color': photoColorExpr(view ? view.photoIdx : -1, view ? view.capSeg : 0), 'circle-stroke-color': tok('ground-deep'), 'circle-stroke-width': 1 } });
       layers.push({ id: 'es-photos-hit', type: 'circle', source: 'photos', paint: { 'circle-radius': big ? 12 : 6, 'circle-opacity': 0 } });
