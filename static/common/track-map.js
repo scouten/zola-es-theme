@@ -674,6 +674,7 @@
   collapseBtn.addEventListener('click', e => { e.stopPropagation(); setCollapsed(!collapsed, true); });
   document.getElementById('es-track-zoom-in').addEventListener('click', e => { e.stopPropagation(); if (mapReady) map.zoomIn({ duration: RM ? 0 : 300 }); });
   document.getElementById('es-track-zoom-out').addEventListener('click', e => { e.stopPropagation(); if (mapReady) map.zoomOut({ duration: RM ? 0 : 300 }); });
+  document.getElementById('es-track-fit').addEventListener('click', e => { e.stopPropagation(); fitAll(placement === 'expanded' ? (isPhone() ? 30 : 70) : 40); });
 
   // ------------------------------------------------------------ boot
   async function start(track) {

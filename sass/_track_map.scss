@@ -124,6 +124,7 @@ $track-widget-map-height: 270px !default;
   font-size: .8rem; font-variant-numeric: tabular-nums; white-space: nowrap;
 }
 .es-track-widget .es-track-zoom .es-track-btn { position: static; width: 1.6rem; height: 1.6rem; }
+.es-track-widget.is-corner .es-track-fit { display: none; }  // the corner map follows the reader; fitting the whole track is for the big views
 .es-track-widget .es-track-attr-btn { left: .5rem; bottom: .5rem; width: 1.4rem; height: 1.4rem; font-size: .7rem; font-weight: 600; }
 .es-track-attr {
   position: absolute; left: .5rem; bottom: 2.2rem; z-index: 2; display: none;
