@@ -80,6 +80,7 @@ Map labels are different: MapLibre draws them from pre-rasterised glyph files (`
 | `static/common/track-map.js` | Behaviour |
 | `docs/track-map-icons.md` | Icon style guide |
 | `docs/track-format.md` | The GPX leg convention and the track JSON format |
+| `tools/gpx2track.py` | Reference converter from GPX to track JSON; the CDN toolchain's behaviour is specified by it |
 
 ## Known follow-ups
 

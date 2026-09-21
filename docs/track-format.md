@@ -1,6 +1,6 @@
 # Track legs: GPX authoring convention and the derived track JSON
 
-Status: proposal, v1. Authored in Waysmith; published to the image CDN; consumed by this theme's track map (`docs/track-map.md`). Reference converter: `prototype/gpx2track.py` in the ericscouten.travel repo.
+Status: proposal, v1. Authored in Waysmith; published to the image CDN; consumed by this theme's track map (`docs/track-map.md`). Reference converter: `tools/gpx2track.py` in this repo.
 
 Two representations, one source of truth:
 
@@ -209,7 +209,7 @@ Waysmith does not export JSON. The sanitized GPX it saves is the hand-off to the
 
 ### 3.1a CDN toolchain (publishing)
 
-Today the toolchain converts GPX to KML, strips timestamps, and uploads. It becomes the GPX-to-JSON step instead. Reference implementation: `prototype/gpx2track.py` in the ericscouten.travel repo, whose behaviour is the specification:
+Today the toolchain converts GPX to KML, strips timestamps, and uploads. It becomes the GPX-to-JSON step instead. Reference implementation: `tools/gpx2track.py` in this repo, whose behaviour is the specification:
 
 | Input | Output |
 |---|---|
