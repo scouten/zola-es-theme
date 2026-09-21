@@ -37,12 +37,12 @@ $track-widget-map-height: 270px !default;
   --es-track-accent: #{$track-accent};
   --es-track-accent-dim: #9c6128;
   --es-track-current: #4ce07a;
-  --es-track-ahead: #000000;
-  --es-track-casing: #34353c;
+  --es-track-ahead: #a9aab5;
+  --es-track-casing: #121216;
   --es-track-water: #17285a;
   --es-track-coast: #0a1430;
-  --es-track-road: #3b3c43;
-  --es-track-road-major: #585962;
+  --es-track-road: #000000;
+  --es-track-road-major: #000000;
   --es-track-map-bg: #1b1b20;
   --es-track-ground-deep: #{$scheme-main};
   --es-track-panel: rgba(24, 24, 28, .88);
@@ -175,7 +175,7 @@ $track-widget-map-height: 270px !default;
 // ---------- placements ----------
 // the small map is about the route; roads recede further there than in the big views
 .es-track-widget.is-corner { --es-track-road: #e4e2dc; --es-track-road-major: #d3d1ca; }
-.es-dark-mode .es-track-widget.is-corner { --es-track-road: #2c2d33; --es-track-road-major: #44454d; }
+.es-dark-mode .es-track-widget.is-corner { --es-track-road: #000000; --es-track-road-major: #000000; }
 
 .es-track-widget.is-corner {
   position: fixed; left: 16px; bottom: 16px; z-index: 700;

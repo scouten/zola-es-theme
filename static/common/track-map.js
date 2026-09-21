@@ -243,7 +243,7 @@
   const photoColorExpr = (curIdx, capSeg) => {
     const cur = placement !== 'corner' ? tok('current') : tok('accent');
     const seg = capSeg == null ? 0 : capSeg;
-    return ['case', ['==', ['get', 'seg'], seg], cur, ['<', ['get', 'seg'], seg], tok('accent-dim'), ['<=', ['get', 'i'], curIdx], tok('accent'), tok('muted')];
+    return ['case', ['==', ['get', 'seg'], seg], cur, ['<', ['get', 'seg'], seg], tok('accent-dim'), ['<=', ['get', 'i'], curIdx], tok('accent'), tok('ahead')];
   };
 
   function ourSources() {
