@@ -141,6 +141,12 @@ $track-widget-map-height: 270px !default;
   .es-track-thumb-loc { width: 160px; padding: 4px 2px 1px; font-size: .7rem; line-height: 1.25; color: var(--es-track-muted); white-space: normal; }
   .more { display: block; margin-top: 2px; color: var(--es-track-accent); font-weight: 600; }
 }
+// twice the size in the big views, where there is room for it
+.es-track-widget:not(.is-corner) .es-track-thumb {
+  padding: 4px; border-radius: 8px;
+  img { width: 320px; border-radius: 4px; }
+  .es-track-thumb-loc { width: 320px; padding: 6px 3px 2px; font-size: .8rem; }
+}
 
 // status bar: progress band above, caption row below
 .es-track-bar { display: flex; flex-direction: column; gap: .2rem; padding: .35rem .8rem .55rem; }

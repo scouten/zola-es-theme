@@ -22,7 +22,7 @@
 <script>
 // Shims: an unchanged markers.js yields plain photo records instead of Google markers.
 function addGpxMarker(map, id, lat, lon) { return { id: id, lat: lat, lon: lon, thumb: id + ".jpg" }; }
-function addCdnGpxMarker(map, id, lat, lon, cdnKey) { return { id: id, lat: lat, lon: lon, thumb: {{ cdn | json_encode() | safe }} + "/" + cdnKey + "/" + id + "-400w.jpg" }; }
+function addCdnGpxMarker(map, id, lat, lon, cdnKey) { return { id: id, lat: lat, lon: lon, thumb: {{ cdn | json_encode() | safe }} + "/" + cdnKey + "/" + id + "-400w.jpg", thumbLarge: {{ cdn | json_encode() | safe }} + "/" + cdnKey + "/" + id + "-1000w.jpg" }; }
 function addParkMarker() { return null; }
 </script>
 <script src="{{ page.extra.markers }}"></script>

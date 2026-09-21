@@ -104,7 +104,7 @@
     el = el.closest('.es_image, .es_video') || el;
     const cap = el.querySelector('.caption');
     const loc = cap ? cap.textContent.replace(/\s+/g, ' ').replace(/\s*·\s*by\s.*$/, '').trim() : '';
-    photos.push({ id: m.id, lat: m.lat, lon: m.lon, thumb: m.thumb, loc, el });
+    photos.push({ id: m.id, lat: m.lat, lon: m.lon, thumb: m.thumb, thumbLarge: m.thumbLarge || m.thumb, loc, el });
   });
   const items = photos.map(p => ({ kind: 'photo', el: p.el, photo: p }));
   const content = document.getElementById('es-content');
@@ -556,18 +556,22 @@
       const p = photos[group[0]];
       if (!p) return;
       hoverGroup = group;
-      if (p.thumb) { if (thumbImg.getAttribute('src') !== p.thumb) { thumbImg.style.display = ''; thumbImg.src = p.thumb; } }
+      const src = placement === 'corner' ? p.thumb : p.thumbLarge;
+      if (src) { if (thumbImg.getAttribute('src') !== src) { thumbImg.style.display = ''; thumbImg.src = src; } }
       else { thumbImg.removeAttribute('src'); thumbImg.style.display = 'none'; }
       thumbLoc.textContent = p.loc || '';
       if (group.length > 1) { const more = document.createElement('span'); more.className = 'more'; more.textContent = `+${group.length - 1} more`; thumbLoc.appendChild(more); }
-      // keep the card inside the map: below the dot when there's no room above, clamped sideways
+      thumb.hidden = false;
+      placeCard(p);
+    }
+    // keep the card inside the map: below the dot when there's no room above, clamped sideways
+    function placeCard(p) {
       const pt = map.project([p.lon, p.lat]);
       const box = map.getContainer().getBoundingClientRect();
-      thumb.classList.toggle('is-below', pt.y < 240);
-      const half = 88;
+      const half = thumb.offsetWidth / 2 + 8;
+      thumb.classList.toggle('is-below', pt.y < thumb.offsetHeight + 24);
       thumb.style.left = Math.max(half, Math.min(box.width - half, pt.x)) + 'px';
       thumb.style.top = pt.y + 'px';
-      thumb.hidden = false;
     }
     window.__esTrackCard = { showCard, hideCard };
     function goTo(i) {
@@ -596,6 +600,7 @@
       goTo(clusterAt(e.features[0].properties.i)[0]);
     });
     thumbImg.addEventListener('error', () => { thumbImg.style.display = 'none'; });
+    thumbImg.addEventListener('load', () => { if (hoverGroup && !thumb.hidden) placeCard(photos[hoverGroup[0]]); });  // the card's height changes once the image arrives
   }
 
   // ------------------------------------------------------------ stepping through the day
