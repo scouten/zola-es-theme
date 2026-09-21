@@ -430,10 +430,10 @@
     document.getElementById('es-track-fill').style.width = (view.frac * 100).toFixed(2) + '%';
     positionProgressLabels();
     document.getElementById('es-track-step-label').textContent = stepLabel(browseStep == null ? stepIndexFor(view) : browseStep);
-    if (map.getSource('selected')) map.getSource('selected').setData(selectedData());
     if (!mapReady) return;
     map.getSource('dot').setData(dotData(view));
     map.getSource('current').setData(currentLegData(view));
+    if (map.getSource('selected')) map.getSource('selected').setData(selectedData());
     const gradKey = viewIdx(view) + ':' + view.capSeg;
     if (force || gradKey !== lastGrad) {
       lastGrad = gradKey;
