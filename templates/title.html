@@ -47,7 +47,7 @@
           from <b>{{ page.extra.from }}</b>
         </span>
         {%- endif -%}
-        {%- if page.extra.distance and (page.extra.track or page.extra.track_log_key or page.extra.track_key or page.extra.track_url) -%}
+        {%- if page.extra.distance and (page.extra.track or page.extra.track_log_key or (config.extra.track_map and (page.extra.track_key or page.extra.track_url))) -%}
           • <a href="#map">{{ page.extra.distance }} (map)</a>
         {%- endif -%}
         {%- if config.extra.taxonomies.via.title -%}

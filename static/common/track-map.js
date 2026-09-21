@@ -395,7 +395,11 @@
       const m = sub.match(/^(.*?)\s*(→|->|⟶|–)\s*(.*)$/);
       sub = m ? `${m[1]} ${m[2]} ${fmtDur(seg.dur_s)} ${m[2]} ${m[3]}` : (sub ? `${sub} · ${fmtDur(seg.dur_s)}` : fmtDur(seg.dur_s));
     }
-    document.getElementById('es-track-text').innerHTML = `<span class="mode">${head}</span>${sub ? `<span class="label">${sub}</span>` : ''}`;
+    // Labels come from a fetched document: always text, never markup.
+    const text = document.getElementById('es-track-text');
+    text.replaceChildren();
+    const modeEl = document.createElement('span'); modeEl.className = 'mode'; modeEl.textContent = head; text.appendChild(modeEl);
+    if (sub) { const labelEl = document.createElement('span'); labelEl.className = 'label'; labelEl.textContent = sub; text.appendChild(labelEl); }
     document.getElementById('es-track-fill').style.width = (view.frac * 100).toFixed(2) + '%';
     positionProgressLabels();
     document.getElementById('es-track-step-label').textContent = `${(browseLeg == null ? view.capSeg : browseLeg) + 1} / ${SEGMENTS.length}`;
