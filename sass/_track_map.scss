@@ -208,6 +208,10 @@ $track-widget-map-height: 270px !default;
   .es-track-attr { display: block; }
   .es-track-attr-btn { display: none; }
 }
+// in the big views the credits sit flush in the map's bottom-left corner
+.es-track-widget.is-docked .es-track-attr, .es-track-widget.is-expanded .es-track-attr {
+  left: 0; bottom: 0; border-width: 1px 1px 0 0; border-radius: 0 6px 0 0; padding: .2rem .5rem;
+}
 .es-track-widget.is-expanded .es-track-bar, .es-track-widget.is-docked .es-track-bar { font-size: .95rem; padding: .5rem 1rem .75rem; }
 .es-track-widget.is-expanded .es-track-progress .cur, .es-track-widget.is-docked .es-track-progress .cur,
 .es-track-widget.is-expanded .es-track-progress .tot, .es-track-widget.is-docked .es-track-progress .tot { font-size: .74rem; }
