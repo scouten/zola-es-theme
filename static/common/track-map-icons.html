@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Track map icons</title>
+<!-- The site's own stylesheet supplies the theme's fonts and the widget's tokens and classes. -->
+<link rel="stylesheet" href="/style.css">
+<style>
+  body { margin: 0; padding: 2rem 1rem 4rem; }
+  body.es-dark-mode { background: #212126; color: #e6e5e9; }
+  .icons-page { max-width: 1400px; margin: 0 auto; }
+  .icons-page h1 { margin: 0 0 .25rem; }
+  .icons-page p.note { opacity: .7; font-size: .9rem; margin: 0 0 1.5rem; max-width: 40rem; }
+  .icons-page .toolbar { margin: 0 0 1.5rem; }
+  .icons-page .toolbar button { font: inherit; font-size: .85rem; padding: .35rem .8rem; border-radius: 999px; border: 1px solid currentColor; background: transparent; color: inherit; cursor: pointer; }
+  .icons-page .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem; }
+  /* each card is a real widget so the theme's tokens, fonts, and caption layout apply */
+  .icons-page .es-track-widget { border-radius: 12px; border: 1px solid var(--es-track-edge); padding: .75rem 1rem; display: grid; grid-template-columns: 1fr auto; gap: .5rem 1rem; align-items: center; }
+  .icons-page .big { width: 64px; height: 64px; color: var(--es-track-accent); grid-row: 1 / span 2; }
+  .icons-page .big svg { width: 100%; height: 100%; }
+  .icons-page .token { grid-column: 1; color: var(--es-track-muted); font-size: .75rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .icons-page .token b { color: var(--es-track-text-soft); font-weight: 600; }
+</style>
+</head>
+<body class="es-dark-mode">
+<div class="icons-page">
+  <h1>Track map icons</h1>
+  <p class="note">Every mode glyph in the theme's set, rendered from the live script inside the widget's own caption bar. Left: at caption size. Right: enlarged for inspection. Style rules for adding one are in <code>docs/track-map-icons.md</code>.</p>
+  <div class="toolbar"><button type="button" id="theme-toggle">Switch to light</button></div>
+  <div class="grid" id="grid"></div>
+</div>
+<script src="/common/track-map.js"></script>
+<script>
+(function () {
+  const T = window.esTrackIcons;
+  const grid = document.getElementById('grid');
+  if (!T) { grid.textContent = 'The track-map script did not expose its icons.'; return; }
+  const SAMPLE = {
+    stop: ['Cape Point', ''],
+    fly: ['Flying · 13,580 km / 8,439 mi', 'ATL → 14 h 15 min → CPT'],
+    prop: ['Flying · 180 km / 112 mi', 'Victoria Harbour flightseeing · 55 min'],
+    ferry: ['By ferry · 12 km / 7.5 mi', 'Cape Town → 45 min → Robben Island'],
+  };
+  const used = new Set(Object.values(T.MODES).map(m => m.icon).concat(['route']));
+  const alts = Object.keys(T.ICONS).filter(k => !used.has(k)).map(k => ['(alternate)', { name: '', icon: k }]);
+  const rows = Object.keys(T.MODES).map(k => [k, T.MODES[k]]).concat([['(none)', { name: '', icon: 'route' }]], alts);
+  rows.forEach(([token, m]) => {
+    const card = document.createElement('div'); card.className = 'es-track-widget';
+    const head = SAMPLE[token] ? SAMPLE[token][0] : `${m.name ? m.name + ' · ' : ''}12 km / 7.5 mi`;
+    const sub = SAMPLE[token] ? SAMPLE[token][1] : 'Somewhere → Somewhere else';
+    const caption = document.createElement('div'); caption.className = 'es-track-caption';
+    const ico = document.createElement('span'); ico.className = 'es-track-ico'; ico.innerHTML = T.iconSvg(m.icon);
+    const text = document.createElement('span'); text.className = 'es-track-text';
+    const mode = document.createElement('span'); mode.className = 'mode'; mode.textContent = head; text.appendChild(mode);
+    if (sub) { const label = document.createElement('span'); label.className = 'label'; label.textContent = sub; text.appendChild(label); }
+    caption.append(ico, text);
+    const big = document.createElement('div'); big.className = 'big'; big.innerHTML = T.iconSvg(m.icon);
+    const tok = document.createElement('div'); tok.className = 'token'; tok.innerHTML = `<b>${token}</b> · glyph <b>${m.icon}</b>`;
+    card.append(caption, big, tok);
+    grid.appendChild(card);
+  });
+  const btn = document.getElementById('theme-toggle');
+  btn.addEventListener('click', () => {
+    const dark = document.body.classList.toggle('es-dark-mode');
+    btn.textContent = dark ? 'Switch to light' : 'Switch to dark';
+  });
+})();
+</script>
+</body>
+</html>

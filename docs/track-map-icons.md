@@ -2,6 +2,10 @@
 
 Mode icons in the track map are hand-drawn line glyphs in `static/common/track-map.js` (`ICONS`). They are original drawings and carry no attribution requirement.
 
+## Seeing the set
+
+Every built site serves a preview at `/common/track-map-icons.html`: each glyph inside the widget's real caption bar, using the site's stylesheet and fonts, plus an enlarged copy, with a light/dark toggle. It reads the icon table from the live script, so it is always current. It is not linked from anywhere.
+
 ## Rules
 
 Keep to these and a new glyph sits beside the others without looking borrowed.
