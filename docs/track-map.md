@@ -10,7 +10,6 @@ Add a table to the site's `config.toml`. Its presence turns the feature on; ever
 
 ```toml
 [extra.track_map]
-cdn_url = "https://img.ericscouten.com"   # base for track_key
 basemap = ""             # "dark" | "positron" | any OpenFreeMap style; default follows extra.is_dark
 detail = "minimal"       # "terrain" | "minimal" | "standard" in the corner and docked views (expanded is always standard)
 hillshade = true
@@ -31,7 +30,7 @@ Add one key to the page's front matter. Nothing else changes; `markers.js` is re
 
 ```toml
 [extra]
-track_key = "track/v2/2026/03/2026-03-05.json"   # on the CDN, under cdn_url
+track_key = "track/v2/2026/03/2026-03-05.json"   # on the CDN (img.ericscouten.com), like cover_cdn_key
 # or, for local testing:
 # track_url = "/track/v2/2026/03/2026-03-05.json"
 ```

@@ -6,7 +6,8 @@
   other page.
 -#}
 {%- set tm = config.extra.track_map -%}
-{%- set cdn = tm.cdn_url | default(value="https://img.ericscouten.com") -%}
+{#- The CDN host is fixed across the theme (see es_cdn_image.html); not configurable. -#}
+{%- set cdn = "https://img.ericscouten.com" -%}
 {%- set corner = tm.corner | default(value="left") -%}
 {%- if page.extra.track_url -%}
   {%- set track_url = page.extra.track_url -%}
