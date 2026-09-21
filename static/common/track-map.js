@@ -202,7 +202,8 @@
     for (let k = i - 1; k >= 0; k--) if (items[k].photo) { prev = items[k].photo; break; }
     for (let k = i + 1; k < items.length; k++) if (items[k].photo) { next = items[k].photo; break; }
     const last = SEGMENTS.length - 1;
-    if (!prev) return mk('start', -1, [0, 0], 0, pts[0]);
+    // before the first photo: frame the first leg with the dot at its start
+    if (!prev) return mk('start', -1, [0, 0], 0, pts[0], true);
     const pi = photos.indexOf(prev);
     if (!next) {
       if (prev.seg === last) return mk('photo', pi, [last, last], last, [prev.lon, prev.lat]);
