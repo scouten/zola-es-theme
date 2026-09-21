@@ -223,7 +223,6 @@
   const doneData = v => lineOrEmpty(pts.slice(0, viewIdx(v) + 1));
   const aheadData = v => lineOrEmpty(pts.slice(viewIdx(v)));
   const currentLegData = v => v ? linesFC(segCoords(v.segs[0], v.segs[1])) : linesFC([]);
-  const nextLegData = v => (v && v.transit) ? linesFC(segCoords(v.segs[0], v.segs[1])) : linesFC([]);
   const dotData = v => ({ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: v ? v.dot : pts[0] } });
   function doneGradient(v) {
     const accent = tok('accent'), dim = tok('accent-dim'), e = 0.0004;
@@ -248,7 +247,6 @@
       done: { type: 'geojson', lineMetrics: true, data: doneData(cur) },
       ahead: { type: 'geojson', data: aheadData(cur) },
       modes: { type: 'geojson', data: { type: 'FeatureCollection', features: SEGMENTS.filter(s => s.coords.length > 1).map(s => ({ type: 'Feature', properties: { mode: s.mode || '' }, geometry: { type: 'LineString', coordinates: s.coords } })) } },
-      next: { type: 'geojson', data: nextLegData(cur) },
       current: { type: 'geojson', data: currentLegData(cur) },
       photos: { type: 'geojson', data: { type: 'FeatureCollection', features: photos.map((p, i) => ({ type: 'Feature', properties: { i, seg: p.seg, id: p.id }, geometry: { type: 'Point', coordinates: [p.lon, p.lat] } })) } },
       dot: { type: 'geojson', data: dotData(cur) },
@@ -271,7 +269,6 @@
       const ov = CFG.isDark ? '#ffffff' : '#000000';
       layers.push({ id: 'es-mode-ride', type: 'line', source: 'modes', filter: ['in', ['get', 'mode'], ['literal', RIDES]], paint: { 'line-color': ov, 'line-width': 1.3, 'line-opacity': .55, 'line-dasharray': [3, 2.2] } });
     }
-    layers.push({ id: 'es-next-leg', type: 'line', source: 'next', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': big ? tok('casing') : accent, 'line-width': big ? 2 : 3, 'line-opacity': big ? .6 : .85, 'line-dasharray': [1.2, 1.6] } });
     if (CFG.dots) {
       layers.push({ id: 'es-photos', type: 'circle', source: 'photos', paint: { 'circle-radius': big ? 5 : 3, 'circle-color': photoColorExpr(view ? view.photoIdx : -1, view ? view.capSeg : 0), 'circle-stroke-color': tok('ground-deep'), 'circle-stroke-width': 1 } });
       layers.push({ id: 'es-photos-hit', type: 'circle', source: 'photos', paint: { 'circle-radius': big ? 12 : 6, 'circle-opacity': 0 } });
@@ -433,7 +430,6 @@
     document.getElementById('es-track-step-label').textContent = `${(browseLeg == null ? view.capSeg : browseLeg) + 1} / ${SEGMENTS.length}`;
     if (!mapReady) return;
     map.getSource('dot').setData(dotData(view));
-    map.getSource('next').setData(nextLegData(view));
     map.getSource('current').setData(currentLegData(view));
     const gradKey = viewIdx(view) + ':' + view.capSeg;
     if (force || gradKey !== lastGrad) {
