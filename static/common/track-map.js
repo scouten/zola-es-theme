@@ -129,7 +129,8 @@
   let map = null, mapReady = false, baseStyle = null;
   let placement = 'corner', placedOnce = false, slotVisible = false, expanded = false, collapsed = false;
   let view = null, lastCamKey = null, lastGrad = '', lastPhotoIdx = '';
-  let browseLeg = null;   // leg being stepped through with the arrows, or null to follow the article
+  let browseStep = null;  // index into STEPS while stepping with the arrows, or null to follow the article
+  let STEPS = [];         // the day as a sequence: each leg, then the photos taken on it
 
   // ------------------------------------------------------------ track
   function flatten() {
@@ -222,6 +223,12 @@
   const aheadData = v => lineOrEmpty(pts.slice(viewIdx(v)));
   const currentLegData = v => v ? linesFC(segCoords(v.segs[0], v.segs[1])) : linesFC([]);
   const dotData = v => ({ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: v ? v.dot : pts[0] } });
+  // the photo chosen with the arrows, ringed in the current-leg colour
+  const selectedData = () => {
+    const s = browseStep != null ? STEPS[browseStep] : null;
+    if (!s || s.kind !== 'photos') return { type: 'FeatureCollection', features: [] };
+    return { type: 'FeatureCollection', features: s.group.map(i => ({ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [photos[i].lon, photos[i].lat] } })) };
+  };
   function doneGradient(v) {
     const accent = tok('accent'), dim = tok('accent-dim'), e = 0.0004;
     const flat = c => ['interpolate', ['linear'], ['line-progress'], 0, c, 1, c];
@@ -247,6 +254,7 @@
       current: { type: 'geojson', data: currentLegData(cur) },
       photos: { type: 'geojson', data: { type: 'FeatureCollection', features: photos.map((p, i) => ({ type: 'Feature', properties: { i, seg: p.seg, id: p.id }, geometry: { type: 'Point', coordinates: [p.lon, p.lat] } })) } },
       dot: { type: 'geojson', data: dotData(cur) },
+      selected: { type: 'geojson', data: selectedData() },
     };
   }
   function ourLayers() {
@@ -266,6 +274,7 @@
       layers.push({ id: 'es-photos', type: 'circle', source: 'photos', paint: { 'circle-radius': big ? 5 : 3, 'circle-color': photoColorExpr(view ? view.photoIdx : -1, view ? view.capSeg : 0), 'circle-stroke-color': tok('ground-deep'), 'circle-stroke-width': 1 } });
       layers.push({ id: 'es-photos-hit', type: 'circle', source: 'photos', paint: { 'circle-radius': big ? 12 : 6, 'circle-opacity': 0 } });
     }
+    layers.push({ id: 'es-selected', type: 'circle', source: 'selected', paint: { 'circle-radius': 11, 'circle-color': cur, 'circle-opacity': 0, 'circle-stroke-color': cur, 'circle-stroke-width': 3 } });
     layers.push({ id: 'es-dot-halo', type: 'circle', source: 'dot', paint: { 'circle-radius': big ? 14 : 11, 'circle-color': accent, 'circle-opacity': .3, 'circle-blur': .4 } });
     layers.push({ id: 'es-dot', type: 'circle', source: 'dot', paint: { 'circle-radius': big ? 6 : 5, 'circle-color': tok('dot'), 'circle-stroke-color': accent, 'circle-stroke-width': 2.5 } });
     return layers;
@@ -420,7 +429,8 @@
     if (sub) { const labelEl = document.createElement('span'); labelEl.className = 'label'; labelEl.textContent = sub; text.appendChild(labelEl); }
     document.getElementById('es-track-fill').style.width = (view.frac * 100).toFixed(2) + '%';
     positionProgressLabels();
-    document.getElementById('es-track-step-label').textContent = `${(browseLeg == null ? view.capSeg : browseLeg) + 1} / ${SEGMENTS.length}`;
+    document.getElementById('es-track-step-label').textContent = stepLabel(browseStep == null ? stepIndexFor(view) : browseStep);
+    if (map.getSource('selected')) map.getSource('selected').setData(selectedData());
     if (!mapReady) return;
     map.getSource('dot').setData(dotData(view));
     map.getSource('current').setData(currentLegData(view));
@@ -440,7 +450,7 @@
     if (ticking) return; ticking = true;
     requestAnimationFrame(() => {
       ticking = false;
-      if (browseLeg != null && placement !== 'corner') { updateOverlap(); return; }
+      if (browseStep != null && placement !== 'corner') { updateOverlap(); return; }
       const v = computeView(currentItem());
       if (v && (!view || v.kind !== view.kind || v.photoIdx !== view.photoIdx || v.segs[0] !== view.segs[0] || v.segs[1] !== view.segs[1])) { view = v; applyView(false); }
       updateOverlap();
@@ -465,7 +475,7 @@
     if (placedOnce && target === placement) return;
     placedOnce = true;
     placement = target;
-    if (browseLeg != null) { browseLeg = null; view = computeView(currentItem()) || view; }
+    if (browseStep != null) { browseStep = null; view = computeView(currentItem()) || view; }
     widget.classList.remove('is-corner', 'is-docked', 'is-expanded');
     widget.classList.add('is-' + target);
     (target === 'corner' ? document.body : target === 'docked' ? slot : modal).appendChild(widget);
@@ -514,16 +524,10 @@
       return group.length ? group : [i];
     }
     let hoverGroup = null, hideTimer = null;
-    function goTo(i) {
-      const p = photos[i];
-      if (expanded) { expanded = false; place(); }
-      thumb.hidden = true; hoverGroup = null;
-      if (p) p.el.scrollIntoView({ behavior: RM ? 'auto' : 'smooth', block: 'center' });
-    }
-    map.on('mousemove', 'es-photos-hit', e => {
-      if (placement === 'corner' || !e.features.length) return;
-      clearTimeout(hideTimer);
-      const group = clusterAt(e.features[0].properties.i), p = photos[group[0]];
+    const stepperHoldsCard = () => browseStep != null && STEPS[browseStep] && STEPS[browseStep].kind === 'photos';
+    function hideCard() { thumb.hidden = true; hoverGroup = null; }
+    function showCard(group) {
+      const p = photos[group[0]];
       if (!p) return;
       hoverGroup = group;
       if (p.thumb) { if (thumbImg.getAttribute('src') !== p.thumb) { thumbImg.style.display = ''; thumbImg.src = p.thumb; } }
@@ -538,15 +542,28 @@
       thumb.style.left = Math.max(half, Math.min(box.width - half, pt.x)) + 'px';
       thumb.style.top = pt.y + 'px';
       thumb.hidden = false;
+    }
+    window.__esTrackCard = { showCard, hideCard };
+    function goTo(i) {
+      const p = photos[i];
+      if (expanded) { expanded = false; place(); }
+      thumb.hidden = true; hoverGroup = null;
+      if (p) p.el.scrollIntoView({ behavior: RM ? 'auto' : 'smooth', block: 'center' });
+    }
+    map.on('mousemove', 'es-photos-hit', e => {
+      if (placement === 'corner' || !e.features.length) return;
+      clearTimeout(hideTimer);
+      showCard(clusterAt(e.features[0].properties.i));
       map.getCanvas().style.cursor = 'pointer';
     });
     map.on('mouseleave', 'es-photos-hit', () => {
       map.getCanvas().style.cursor = '';
       clearTimeout(hideTimer);
-      hideTimer = setTimeout(() => { thumb.hidden = true; hoverGroup = null; }, 300);
+      // a card the stepper put up stays until the next step; a hover card goes when the pointer leaves
+      hideTimer = setTimeout(() => { if (stepperHoldsCard()) showCard(STEPS[browseStep].group); else hideCard(); }, 300);
     });
     thumb.addEventListener('mouseenter', () => clearTimeout(hideTimer));
-    thumb.addEventListener('mouseleave', () => { thumb.hidden = true; hoverGroup = null; });
+    thumb.addEventListener('mouseleave', () => { if (stepperHoldsCard()) showCard(STEPS[browseStep].group); else hideCard(); });
     thumb.addEventListener('click', e => { e.stopPropagation(); if (hoverGroup) goTo(hoverGroup[0]); });
     map.on('click', 'es-photos-hit', e => {
       if (placement === 'corner' || !e.features.length) return;
@@ -555,16 +572,54 @@
     thumbImg.addEventListener('error', () => { thumbImg.style.display = 'none'; });
   }
 
-  // ------------------------------------------------------------ stepping through legs
-  function browseTo(i) {
-    if (!mapReady || !SEGMENTS.length || placement === 'corner') return;
-    browseLeg = Math.max(0, Math.min(SEGMENTS.length - 1, i));
-    const s = SEGMENTS[browseLeg];
-    view = { kind: 'browse', photoIdx: -1, idx: s.start, segs: [browseLeg, browseLeg], capSeg: browseLeg, dot: s.coords[0], frac: total ? cum[s.start] / total : 0, m: cum[s.start], transit: true };
-    applyView(true);
-    map.fitBounds(boundsOf([s.coords], [s.coords[0]]), { padding: isPhone() ? 40 : 90, duration: RM ? 0 : 700, maxZoom: 15.5 });
+  // ------------------------------------------------------------ stepping through the day
+  // STEPS interleaves legs and photos in order: a leg, then the photos taken on it. Photos
+  // within 25 m of each other in sequence form one step.
+  function buildSteps() {
+    STEPS = [];
+    SEGMENTS.forEach((s, li) => {
+      STEPS.push({ kind: 'leg', leg: li });
+      let group = null;
+      photos.forEach((p, pi) => {
+        if (p.seg !== li) return;
+        if (group && hav([p.lon, p.lat], [photos[group[0]].lon, photos[group[0]].lat]) <= 25) { group.push(pi); return; }
+        group = [pi];
+        STEPS.push({ kind: 'photos', leg: li, group });
+      });
+    });
   }
-  const stepFrom = () => (browseLeg == null ? (view ? view.capSeg : 0) : browseLeg);
+  function stepIndexFor(v) {
+    if (!v) return 0;
+    if (v.photoIdx >= 0) { const k = STEPS.findIndex(s => s.kind === 'photos' && s.group.includes(v.photoIdx)); if (k >= 0) return k; }
+    const k = STEPS.findIndex(s => s.kind === 'leg' && s.leg === v.capSeg);
+    return k < 0 ? 0 : k;
+  }
+  function stepLabel(k) {
+    const s = STEPS[k];
+    if (!s) return '';
+    if (s.kind === 'leg') return `Leg ${s.leg + 1}/${SEGMENTS.length}`;
+    return `Photo ${s.group[0] + 1}/${photos.length}`;
+  }
+  function browseTo(k) {
+    if (!mapReady || !STEPS.length || placement === 'corner') return;
+    const card = window.__esTrackCard;
+    browseStep = Math.max(0, Math.min(STEPS.length - 1, k));
+    const s = STEPS[browseStep];
+    card.hideCard();
+    if (s.kind === 'leg') {
+      const seg = SEGMENTS[s.leg];
+      view = { kind: 'browse', photoIdx: -1, idx: seg.start, segs: [s.leg, s.leg], capSeg: s.leg, dot: seg.coords[0], frac: total ? cum[seg.start] / total : 0, m: cum[seg.start], transit: true };
+      applyView(true);
+      map.fitBounds(boundsOf([seg.coords], [seg.coords[0]]), { padding: isPhone() ? 40 : 90, duration: RM ? 0 : 700, maxZoom: 15.5 });
+    } else {
+      const p = photos[s.group[0]];
+      view = { kind: 'browse', photoIdx: s.group[0], segs: [s.leg, s.leg], capSeg: s.leg, dot: [p.lon, p.lat], frac: p.frac, m: p.m, transit: false };
+      applyView(true);
+      map.once('moveend', () => { if (browseStep != null && STEPS[browseStep] === s) card.showCard(s.group); });
+      map.easeTo({ center: [p.lon, p.lat], zoom: Math.max(map.getZoom(), 14), duration: RM ? 0 : 600 });
+    }
+  }
+  const stepFrom = () => (browseStep == null ? stepIndexFor(view) : browseStep);
   document.getElementById('es-track-prev').addEventListener('click', e => { e.stopPropagation(); browseTo(stepFrom() - 1); });
   document.getElementById('es-track-next').addEventListener('click', e => { e.stopPropagation(); browseTo(stepFrom() + 1); });
 
@@ -595,6 +650,7 @@
     flatten();
     if (!pts.length) throw new Error('track has no points');
     anchorPhotos(track.photos);
+    buildSteps();
 
     const ticks = document.getElementById('es-track-ticks'), seen = new Set();
     photos.forEach(p => { const k = p.frac.toFixed(3); if (seen.has(k)) return; seen.add(k); const t = document.createElement('span'); t.className = 'tick'; t.style.left = (p.frac * 100) + '%'; ticks.appendChild(t); });
