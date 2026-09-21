@@ -331,6 +331,14 @@
         return w;
       }
       style.layers = style.layers.filter(l => !(l.type === 'line' && /casing/.test(l.id)));
+      // Keep land borders but not the maritime ones (territorial-waters limits drawn offshore).
+      // The stock filters may be legacy or expression syntax, so add the clause in the matching form.
+      style.layers.forEach(l => {
+        if (!/boundary/.test(l.id) || l.type !== 'line') return;
+        const legacy = !l.filter || !JSON.stringify(l.filter).includes('["get"');
+        const clause = legacy ? ['!=', 'maritime', 1] : ['!=', ['get', 'maritime'], 1];
+        l.filter = l.filter ? ['all', l.filter, clause] : clause;
+      });
       style.layers.forEach(l => {
         if (isRoad(l)) {
           const paint = Object.assign({}, l.paint, { 'line-color': isMajor(l) ? roadMajor : road, 'line-opacity': 1 });
