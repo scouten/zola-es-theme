@@ -600,7 +600,7 @@
 
   // ------------------------------------------------------------ stepping through the day
   // STEPS interleaves legs and photos in order: a leg, then the photos taken on it. Photos
-  // within 25 m of each other in sequence form one step.
+  // within 25 m of each other in sequence form one step. A final step is the end of the track.
   function buildSteps() {
     STEPS = [];
     SEGMENTS.forEach((s, li) => {
@@ -613,6 +613,7 @@
         STEPS.push({ kind: 'photos', leg: li, group });
       });
     });
+    if (SEGMENTS.length) STEPS.push({ kind: 'end', leg: SEGMENTS.length - 1 });
   }
   function stepIndexFor(v) {
     if (!v) return 0;
@@ -624,6 +625,7 @@
     const s = STEPS[k];
     if (!s) return '';
     if (s.kind === 'leg') return `Leg ${s.leg + 1}/${SEGMENTS.length}`;
+    if (s.kind === 'end') return 'End';
     return `Photo ${s.group[0] + 1}/${photos.length}`;
   }
   function browseTo(k) {
@@ -637,6 +639,11 @@
       view = { kind: 'browse', photoIdx: -1, idx: seg.start, segs: [s.leg, s.leg], capSeg: s.leg, dot: seg.coords[0], frac: total ? cum[seg.start] / total : 0, m: cum[seg.start], transit: true };
       applyView(true);
       map.fitBounds(boundsOf([seg.coords], [seg.coords[0]]), { padding: isPhone() ? 40 : 90, duration: RM ? 0 : 700, maxZoom: 15.5 });
+    } else if (s.kind === 'end') {
+      const endIdx = pts.length - 1, endPt = pts[endIdx];
+      view = { kind: 'browse', photoIdx: -1, idx: endIdx, segs: [s.leg, s.leg], capSeg: s.leg, dot: endPt, frac: 1, m: total, transit: false };
+      applyView(true);
+      map.easeTo({ center: endPt, zoom: Math.max(map.getZoom(), 14), duration: RM ? 0 : 600 });
     } else {
       const p = photos[s.group[0]];
       view = { kind: 'browse', photoIdx: s.group[0], segs: [s.leg, s.leg], capSeg: s.leg, dot: [p.lon, p.lat], frac: p.frac, m: p.m, transit: false };
