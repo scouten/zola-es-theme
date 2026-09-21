@@ -157,7 +157,7 @@ $track-widget-map-height: 270px !default;
     position: absolute; top: 0; font-size: .66rem; line-height: 1; white-space: nowrap; font-variant-numeric: tabular-nums;
     transition: left .5s ease;
   }
-  .cur { color: var(--es-track-accent); font-weight: 600; }
+  .cur { color: var(--es-track-current); font-weight: 600; }
   .tot { right: 0; color: var(--es-track-muted); }
 }
 .es-track-caption { display: flex; align-items: center; gap: .55rem; min-height: 2.2rem; }
