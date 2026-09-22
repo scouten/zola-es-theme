@@ -142,7 +142,7 @@ $track-widget-map-height: 270px !default;
   position: absolute; z-index: 3; cursor: pointer;  // placed by the script, around the dot and clear of the track
   background: var(--es-track-panel-solid); border: 1px solid var(--es-track-edge-strong); border-radius: 6px; padding: 3px; box-shadow: var(--es-track-shadow);
   img { display: block; width: 160px; height: auto; border-radius: 3px; }
-  .es-track-thumb-loc { width: 160px; padding: 4px 2px 1px; font-size: .7rem; line-height: 1.25; color: var(--es-track-muted); white-space: normal; }
+  .es-track-thumb-loc { width: 160px; padding: 4px 2px 1px; font-size: .7rem; line-height: 1.25; color: var(--es-track-text-soft); white-space: normal; }
   .more { display: block; margin-top: 2px; color: var(--es-track-accent); font-weight: 600; }
 }
 // badge at the position dot when it has no photo (leg start, end of the track): repeats the caption
