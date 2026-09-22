@@ -224,16 +224,17 @@
   const aheadData = v => lineOrEmpty(pts.slice(viewIdx(v)));
   // the current leg(s), split at the reader's position: `done` is drawn bright, the rest dim
   const currentLegData = v => {
-    const features = [];
-    if (!v) return { type: 'FeatureCollection', features };
+    if (!v) return { type: 'FeatureCollection', features: [] };
     const at = viewIdx(v);
-    const add = (coords, done) => { if (coords.length > 1) features.push({ type: 'Feature', properties: { done }, geometry: { type: 'LineString', coordinates: coords } }); };
+    const doneF = [], aheadF = [];
+    const add = (list, coords, done) => { if (coords.length > 1) list.push({ type: 'Feature', properties: { done }, geometry: { type: 'LineString', coordinates: coords } }); };
     for (let s = v.segs[0]; s <= v.segs[1]; s++) {
       const { start, end } = SEGMENTS[s];
-      add(pts.slice(start, Math.min(at, end) + 1), true);
-      add(pts.slice(Math.max(at, start), end + 1), false);
+      add(doneF, pts.slice(start, Math.min(at, end) + 1), true);
+      add(aheadF, pts.slice(Math.max(at, start), end + 1), false);
     }
-    return { type: 'FeatureCollection', features };
+    // features draw in order, so the travelled part goes last and stays on top where the route doubles back
+    return { type: 'FeatureCollection', features: aheadF.concat(doneF) };
   };
   const dotData = v => ({ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: v ? v.dot : pts[0] } });
   // the photo chosen with the arrows, ringed in the current-leg colour
