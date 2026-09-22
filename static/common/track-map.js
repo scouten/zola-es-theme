@@ -573,10 +573,13 @@
     function placeCard(p) {
       const pt = map.project([p.lon, p.lat]);
       const box = map.getContainer().getBoundingClientRect();
-      const half = thumb.offsetWidth / 2 + 8;
-      thumb.classList.toggle('is-below', pt.y < thumb.offsetHeight + 24);
-      thumb.style.left = Math.max(half, Math.min(box.width - half, pt.x)) + 'px';
-      thumb.style.top = pt.y + 'px';
+      const w = thumb.offsetWidth, h = thumb.offsetHeight, gap = 12, edge = 4;
+      // above the dot when it fits, otherwise below; either way kept inside the map, never over the status bar
+      let top = pt.y - gap - h;
+      if (top < edge && pt.y + gap + h <= box.height - edge) top = pt.y + gap;
+      top = Math.max(edge, Math.min(box.height - edge - h, top));
+      thumb.style.left = Math.max(w / 2 + edge, Math.min(box.width - w / 2 - edge, pt.x)) + 'px';
+      thumb.style.top = top + 'px';
     }
     window.__esTrackCard = { showCard, hideCard };
     function goTo(i) {

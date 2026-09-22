@@ -134,8 +134,7 @@ $track-widget-map-height: 270px !default;
 .es-track-attr-btn[aria-expanded="true"] + .es-track-attr { display: block; }
 
 .es-track-thumb {
-  position: absolute; z-index: 3; cursor: pointer; transform: translate(-50%, calc(-100% - 12px));
-  &.is-below { transform: translate(-50%, 14px); }
+  position: absolute; z-index: 3; cursor: pointer; transform: translateX(-50%);  // top edge is set by the script
   background: var(--es-track-panel-solid); border: 1px solid var(--es-track-edge); border-radius: 6px; padding: 3px; box-shadow: var(--es-track-shadow);
   img { display: block; width: 160px; height: auto; border-radius: 3px; }
   .es-track-thumb-loc { width: 160px; padding: 4px 2px 1px; font-size: .7rem; line-height: 1.25; color: var(--es-track-muted); white-space: normal; }
