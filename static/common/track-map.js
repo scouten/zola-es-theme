@@ -698,12 +698,16 @@
     thumb.addEventListener('click', e => { e.stopPropagation(); if (hoverGroup) goTo(hoverGroup[0]); });
     map.on('click', 'es-photos-hit', e => {
       if (placement === 'corner' || !e.features.length) return;
+      // goTo may drop the widget back to the corner; the same DOM click must not then reach the
+      // widget's corner handler, which would expand it again (and fit the track in a corner-sized map)
+      e.originalEvent.stopPropagation();
       goTo(clusterAt(e.features[0].properties.i)[0]);
     });
     // clicking the track itself: nearest track point on screen, then the nearest step to it along the day
     map.on('click', 'es-track-hit', e => {
       if (placement === 'corner') return;
       if (map.queryRenderedFeatures(e.point, { layers: ['es-photos-hit'] }).length) return;  // the photo handler has it
+      e.originalEvent.stopPropagation();
       let bi = 0, bd = Infinity;
       for (let i = 0; i < pts.length; i++) { const q = map.project(pts[i]); const d = (q.x - e.point.x) ** 2 + (q.y - e.point.y) ** 2; if (d < bd) { bd = d; bi = i; } }
       jumpToDistance(cum[bi]);
