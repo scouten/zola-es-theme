@@ -192,9 +192,9 @@ When `photos` is absent, or a photo id is missing from it, the theme falls back 
 | Moving leg without a label | `Driving · 36 km` |
 | Flight or boat leg (`fly`, `prop`, `helicopter`, `boat`, `ferry`) | `Flying · 13,580 km / 8,439 mi` over `ATL → 14 h 15 min → CPT`: the duration sits between the endpoints when the name has an arrow, otherwise after the name |
 | Stop | `Cape Point` with the pin icon |
-| Reconstructed leg (`origin` not `recorded`) | Same text; the line is drawn dashed |
+| Reconstructed leg (`origin` not `recorded`) | Same text; `origin` is kept in the JSON for tooling but the line is drawn the same way |
 
-Progress reads as distance: `36 km of 167 km`.
+Progress reads as distance on the bar: `46 km / 28 mi` at the reader's position, `167 km / 104 mi` at the right.
 
 ### 2.5 Size budget
 
@@ -237,25 +237,25 @@ Rules:
 
 | Page front matter | Map shown |
 |---|---|
-| `track = "track/v2/…json"` | New corner map (this design). |
-| `track_log_key = "kml/v1/…kml"` and no `track` | Existing Google map, exactly as today. |
+| `track_key = "track/v2/…json"` (or `track_url`) | New corner map (this design). |
+| `track_log_key = "kml/v1/…kml"` and no `track_key` | Existing Google map, exactly as today. |
 | `markers` only, no track of either kind | Existing Google map with markers, as today (65 pages). Later: optionally the new map with photo dots and no route. |
 | `lat` / `lon` only | Existing Google map, as today (used by other sites on the theme). |
 
 Concretely:
 
-- The current `map.html` is untouched. A new partial (`map_track.html`) is included by `page.html` only when `page.extra.track` is set; otherwise `map.html` runs as before. No existing page changes behaviour until its front matter changes.
+- The current `map.html` is untouched. A new partial (`track_map.html`) is included by `page.html` only when `page.extra.track_key` or `page.extra.track_url` is set (and the site has enabled `extra.track_map`); otherwise `map.html` runs as before. No existing page changes behaviour until its front matter changes.
 - The new partial reads one track JSON and the page's photo list, renders the corner widget, the docking slot, and the expanded view, and draws legs by mode and origin. It never reads GPX or KML.
-- Icon map for §1.2 tokens, using the Font Awesome kit already loaded.
-- Site-level config: `extra.track_map = true` enables the new partial at all (so 146parks.blog and ericscouten.dev see no change until opted in), plus basemap style choices.
+- Icon map for §1.2 tokens: the theme's own hand-drawn glyph set (`docs/track-map-icons.md`).
+- Site-level config: an `[extra.track_map]` table enables the new partial at all (so 146parks.blog and ericscouten.dev see no change until opted in), plus basemap style choices.
 - The Google API key and the `GOOGLE_API_KEY` environment lookup stay in place until the last page has migrated, at which point removing `map.html` is a separate, deliberate change.
 
 ### 3.3 ericscouten.travel front matter
 
 ```toml
 [extra]
-track = "track/v2/2026/03/2026-03-05.json"   # presence of this key selects the new map
-track_log_key = "kml/v1/2026/03/2026-03-05.kml"  # may stay during transition; ignored once `track` is set
+track_key = "track/v2/2026/03/2026-03-05.json"   # presence of this key selects the new map
+track_log_key = "kml/v1/2026/03/2026-03-05.kml"  # may stay during transition; ignored once `track_key` is set
 distance = "167 km / 104 mi"                  # optional: overrides the JSON's dist_m
 bounds = { … }                                # optional: overrides the JSON's bbox
 markers = "markers.js"                        # unchanged; ids must match photo anchors

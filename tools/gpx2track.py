@@ -25,7 +25,8 @@ Behaviour, as the CDN toolchain should implement it:
   * --photos takes a JSON list of {"id": "...", "time": "<RFC 3339>"} and emits
     photo anchors (leg, point index, fraction of the day's distance).
   * The JSON is published, so by default it carries NO clock times: no
-    start/end, no per-point times, and a duration only on fly and boat legs.
+    start/end, no per-point times, and a duration only on fly, prop,
+    helicopter, boat and ferry legs.
     --times includes them for local inspection only.
 """
 import json
@@ -41,6 +42,7 @@ R = 6371000.0
 MIN_RUN_SECS = {'stop': 180, 'cable': 60, 'fly': 60}
 DEFAULT_MIN_RUN_SECS = 150
 SIMPLIFY_TOL_M = 6.0
+TIMED_MODES = ('fly', 'prop', 'helicopter', 'boat', 'ferry')  # the only legs that carry a duration (see docs/track-format.md §2.2)
 
 
 def hav(a, b):
@@ -231,7 +233,7 @@ def make_leg(pp, mode, label, origin, times):
     if origin and origin != 'recorded':
         leg['origin'] = origin
     leg['dist_m'] = 0 if mode == 'stop' else round(dist)
-    if secs is not None and (times or mode in ('fly', 'boat')):
+    if secs is not None and (times or mode in TIMED_MODES):
         leg['dur_s'] = round(secs)
     if times and timed:
         leg['start'] = pp[0]['t'].isoformat().replace('+00:00', 'Z')
