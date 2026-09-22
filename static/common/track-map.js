@@ -759,8 +759,15 @@
     if (err instanceof SyntaxError) return `the track file at ${CFG.trackUrl} is not valid JSON`;
     return m ? `${m} (${CFG.trackUrl})` : `unknown error (${CFG.trackUrl})`;
   };
-  fetch(CFG.trackUrl, { credentials: 'omit' })
-    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+  const load = url => fetch(url, { credentials: 'omit' }).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
+  load(CFG.trackUrl)
+    .catch(err => {
+      // the CDN only answers cross-origin fetches from the production origins; a deploy preview proxies the
+      // same path through its own origin instead, so retry there when the direct fetch was refused outright
+      if (!CFG.trackFallback || !(err instanceof TypeError)) throw err;
+      console.info('track-map: direct fetch refused, retrying same-origin at ' + CFG.trackFallback);
+      return load(CFG.trackFallback);
+    })
     .then(start)
     .catch(err => {
       const why = explain(err);

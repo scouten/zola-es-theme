@@ -11,8 +11,11 @@
 {%- set corner = tm.corner | default(value="left") -%}
 {%- if page.extra.track_url -%}
   {%- set track_url = page.extra.track_url -%}
+  {%- set track_fallback = "" -%}
 {%- else -%}
   {%- set track_url = cdn ~ "/" ~ page.extra.track_key -%}
+  {#- same path on the page's own origin: used only if the CDN refuses the cross-origin fetch, e.g. on a deploy preview that proxies it -#}
+  {%- set track_fallback = "/" ~ page.extra.track_key -%}
 {%- endif -%}
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.css">
@@ -30,6 +33,7 @@ function addParkMarker() { return null; }
 
 <script type="application/json" id="es-track-config">{
   "trackUrl": {{ track_url | json_encode() | safe }},
+  "trackFallback": {{ track_fallback | json_encode() | safe }},
   "isDark": {{ config.extra.is_dark | default(value=false) | json_encode() }},
   "basemap": {{ tm.basemap | default(value="") | json_encode() | safe }},
   "detail": {{ tm.detail | default(value="minimal") | json_encode() | safe }},
