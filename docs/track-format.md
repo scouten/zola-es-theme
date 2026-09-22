@@ -171,6 +171,8 @@ Two version numbers, deliberately separate:
 
 Simplification is Ramer–Douglas–Peucker with a 6 m cross-track tolerance on moving legs. That keeps a full day under about 1,500 points. A stop is reduced to one point at the centroid of its recorded points.
 
+When photo anchors are produced (§2.3), simplification also keeps two recorded points for each photo: the one nearest in time to it, and the last one at or before it. The leg is split at those points and each stretch is simplified on its own, so the line passes where the photo was taken. Without photos this is plain Ramer–Douglas–Peucker. On the reference day it adds 11 points and brings the median distance from a photo to its anchor point from 21 m to 1 m (worst case 421 m to 39 m).
+
 ### 2.3 Photo anchors
 
 Produced when the exporter knows the photo capture times, which Waysmith does when media were loaded into the document. The times are used at export and never written. Keyed by the same `id` used in `markers.js` and the `es_cdn_image` shortcodes.
@@ -179,7 +181,7 @@ Produced when the exporter knows the photo capture times, which Waysmith does wh
 |---|---|---|
 | `id` | string | Photo or video id. |
 | `leg` | int | Index into `legs`. |
-| `i` | int | Index into that leg's `pts` of the point at or before the photo. |
+| `i` | int | Index into that leg's `pts` of the last point recorded at or before the photo, which simplification always keeps (§2.2). 0 for a photo taken before the leg starts. |
 | `f` | number | Fraction of the day's `dist_m` travelled at the photo, 0 to 1. Drives the progress bar and the traveled-portion gradient. |
 
 When `photos` is absent, or a photo id is missing from it, the theme falls back to the forward-constrained nearest-point rule: snap each photo, in page order, to the nearest track point at or after the previous photo's point. That works without timestamps and handles out-and-back roads.
