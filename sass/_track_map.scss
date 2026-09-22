@@ -13,6 +13,7 @@ $track-widget-map-height: 270px !default;
   --es-track-accent-dim: #dcae82;
   --es-track-current: #1fa84a;
   --es-track-current-dim: #9fd9b3;
+  --es-track-current-halo: #bddac1;  // opaque: the current green at 22% over the light ground, so overlaps do not compound
   --es-track-ahead: #7a7973;
   --es-track-casing: #f7f6f2;
   --es-track-dot: #ffffff;
@@ -40,6 +41,7 @@ $track-widget-map-height: 270px !default;
   --es-track-accent-dim: #9c6128;
   --es-track-current: #4ce07a;
   --es-track-current-dim: #237a42;
+  --es-track-current-halo: #254634;  // opaque: the current green at 22% over the dark ground
   --es-track-ahead: #a9aab5;
   --es-track-casing: #121216;
   --es-track-water: #17285a;
