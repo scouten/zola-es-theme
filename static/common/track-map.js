@@ -488,7 +488,9 @@
     const want = mapReady && placement !== 'corner' && !collapsed && view && view.photoIdx < 0 && thumb.hidden && window.__esTrackCard;
     badge.hidden = !want;
     if (!want) { badgeOff = null; return; }
-    badgeOff = window.__esTrackCard.placeNear(badge, view.dot);
+    // direction of travel at the dot, in screen space, so the badge can sit beside the dot on the side behind it
+    const i = viewIdx(view), a = map.project(pts[Math.max(0, i - 3)]), b = map.project(pts[Math.min(pts.length - 1, i + 3)]);
+    badgeOff = window.__esTrackCard.placeNear(badge, view.dot, { sides: true, travel: { x: b.x - a.x, y: b.y - a.y } });
   }
   function followBadge() {
     if (badge.hidden || !badgeOff || !view) return;
@@ -597,7 +599,10 @@
     // keep the card inside the map: below the dot when there's no room above, clamped sideways
     function placeCard(p) { placeNear(thumb, [p.lon, p.lat]); }
     // returns the chosen offset from the dot so the element can follow it while the map moves
-    function placeNear(el, lonlat) {
+    // opts.sides prefers left/right of the dot over above/below; opts.travel (screen-space direction of
+    // travel) then prefers the side the traveller came from, so the badge does not sit in the way ahead
+    function placeNear(el, lonlat, opts) {
+      opts = opts || {};
       const pt = map.project(lonlat);
       const box = map.getContainer().getBoundingClientRect();
       const w = el.offsetWidth, h = el.offsetHeight, gap = 14, edge = 4;
@@ -617,13 +622,15 @@
       const samples = [];
       for (let i = 0; i < pts.length; i += step) { const q = map.project(pts[i]); if (onScreen(q)) samples.push(q); }
       const dots = photos.map(o => map.project([o.lon, o.lat])).filter(onScreen);
+      const tx = opts.travel ? opts.travel.x : 0;
+      const bias = opts.sides ? [20, 20, tx > 0 ? 12 : 0, tx < 0 ? 12 : 0] : [0, 0, 0, 0];  // above, below, right, left
       let best = cands[0], bestScore = Infinity;
-      for (const r of cands) {
-        let score = inside(r, pt) ? 1000 : 0;
+      cands.forEach((r, k) => {
+        let score = (inside(r, pt) ? 1000 : 0) + bias[k];
         for (const q of samples) if (inside(r, q)) score += 1;
         for (const q of dots) if (inside(r, q)) score += 20;
         if (score < bestScore) { bestScore = score; best = r; }
-      }
+      });
       el.style.left = best.x + 'px';
       el.style.top = best.y + 'px';
       return { dx: best.x - pt.x, dy: best.y - pt.y };

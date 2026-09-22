@@ -60,7 +60,7 @@ $track-widget-map-height: 270px !default;
 }
 
 // ---------- the widget ----------
-.es-track-widget[hidden], .es-track-notice[hidden], .es-track-thumb[hidden], .es-track-modal[hidden] { display: none !important; }
+.es-track-widget[hidden], .es-track-notice[hidden], .es-track-thumb[hidden], .es-track-badge[hidden], .es-track-modal[hidden] { display: none !important; }
 
 .es-track-widget {
   display: flex;
