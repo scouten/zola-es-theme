@@ -599,8 +599,9 @@
     });
     map.on('style.load', () => { if (mapReady) { lastCamKey = null; lastGrad = ''; lastPhotoIdx = ''; applyView(true); } });
     map.on('error', e => { const m = (e && e.error && e.error.message) || ''; if (m) console.warn('track-map:', m); });
+    map.on('movestart', () => widget.classList.add('is-moving'));
     map.on('move', followBadge);
-    map.on('moveend', updateBadge);
+    map.on('moveend', () => { updateBadge(); requestAnimationFrame(() => widget.classList.remove('is-moving')); });  // funnels fade back in once settled
 
     // Photos whose dots overlap the hovered one at the current zoom, in page order.
     function clusterAt(i) {

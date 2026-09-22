@@ -155,7 +155,9 @@ $track-widget-map-height: 270px !default;
   .note { font-size: .72rem; color: var(--es-track-text-soft); margin-top: .12rem; }
 }
 // funnel from the badge's nearest edge to the dot, in the badge's muted grey (the outline alone is too faint)
-.es-track-badge-tail { position: absolute; left: 0; top: 0; z-index: 3; pointer-events: none; overflow: visible; polygon { fill: var(--es-track-muted); } }
+.es-track-badge-tail { position: absolute; left: 0; top: 0; z-index: 3; pointer-events: none; overflow: visible; transition: opacity .3s ease; polygon { fill: var(--es-track-muted); } }
+// while the camera moves the overlays are clamped to the edge and the funnel would stretch across the map: hide it until the move settles
+.es-track-widget.is-moving .es-track-badge-tail { opacity: 0; transition: none; }
 .es-track-widget.is-corner .es-track-badge, .es-track-widget.is-corner .es-track-badge-tail { display: none; }
 // twice the size in the big views, where there is room for it
 .es-track-widget:not(.is-corner) .es-track-thumb {
