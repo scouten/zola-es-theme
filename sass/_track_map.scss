@@ -152,6 +152,7 @@ $track-widget-map-height: 270px !default;
   .es-track-badge-text { display: flex; flex-direction: column; line-height: 1.2; }
   .mode { font-size: .88rem; font-weight: 600; }
   .label { font-size: .77rem; color: var(--es-track-text-soft); }
+  .note { font-size: .72rem; color: var(--es-track-muted); margin-top: .12rem; }
 }
 // funnel from the badge's nearest edge to the dot, in the badge's muted grey (the outline alone is too faint)
 .es-track-badge-tail { position: absolute; left: 0; top: 0; z-index: 3; pointer-events: none; overflow: visible; polygon { fill: var(--es-track-muted); } }

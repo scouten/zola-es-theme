@@ -457,7 +457,11 @@
     const modeEl = document.createElement('span'); modeEl.className = 'mode'; modeEl.textContent = head; text.appendChild(modeEl);
     if (sub) { const labelEl = document.createElement('span'); labelEl.className = 'label'; labelEl.textContent = sub; text.appendChild(labelEl); }
     badge.querySelector('.es-track-ico').innerHTML = iconSvg(md ? md.icon : 'route');
-    badge.querySelector('.es-track-badge-text').replaceChildren(...Array.from(text.children).map(n => n.cloneNode(true)));
+    const badgeText = badge.querySelector('.es-track-badge-text');
+    badgeText.replaceChildren(...Array.from(text.children).map(n => n.cloneNode(true)));
+    // a third line when the dot sits at the very start or end of the day
+    const dotIdx = viewIdx(view), note = dotIdx <= 0 ? 'Start of day' : dotIdx >= pts.length - 1 ? 'End of day' : '';
+    if (note) { const n = document.createElement('span'); n.className = 'note'; n.textContent = note; badgeText.appendChild(n); }
     document.getElementById('es-track-fill').style.width = (view.frac * 100).toFixed(2) + '%';
     // current leg's span on the bar: green up to the reader's position, darker green beyond
     const legA = total ? cum[seg.start] / total : 0, legB = total ? cum[seg.end] / total : 0;
