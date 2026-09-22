@@ -497,13 +497,27 @@
     const want = mapReady && placement !== 'corner' && !collapsed && view && thumb.hidden && !onPhotoStep && window.__esTrackCard;
     badge.hidden = !want;
     if (!want) { badgeOff = null; badgeTail.toggleAttribute('hidden', true); return; }
-    // direction of travel at the dot, in screen space, so the badge can sit beside the dot on the side behind it
-    const i = viewIdx(view), a = map.project(pts[Math.max(0, i - 3)]), b = map.project(pts[Math.min(pts.length - 1, i + 3)]);
-    badgeOff = window.__esTrackCard.placeNear(badge, view.dot, { sides: true, gap: 34, travel: { x: b.x - a.x, y: b.y - a.y } });
+    // direction of travel at the anchor, in screen space, so the badge can sit beside it on the side behind it
+    const i = badgeAnchorIdx(), a = map.project(pts[Math.max(0, i - 3)]), b = map.project(pts[Math.min(pts.length - 1, i + 3)]);
+    badgeAt = pts[i];
+    badgeOff = window.__esTrackCard.placeNear(badge, badgeAt, { sides: true, gap: 34, travel: { x: b.x - a.x, y: b.y - a.y } });
     drawBadgeTail();
   }
+  // Where the badge points. Normally the dot. When stepping onto a leg that has no photos of its own (and is not
+  // the first leg of the day, whose badge marks the start), the badge labels the leg itself from its midpoint.
+  let badgeAt = null;
+  function badgeAnchorIdx() {
+    const s = browseStep != null ? STEPS[browseStep] : null;
+    if (s && s.kind === 'leg' && s.leg > 0 && !photos.some(p => p.seg === s.leg)) {
+      const seg = SEGMENTS[s.leg], mid = (cum[seg.start] + cum[seg.end]) / 2;
+      let k = seg.start;
+      while (k < seg.end && cum[k + 1] <= mid) k++;
+      return k;
+    }
+    return viewIdx(view);
+  }
   // a funnel from the badge's nearest edge to just short of the dot, whatever the offset the clamping left
-  function drawBadgeTail() { drawTail(badgeTail, badge, view && view.dot); }
+  function drawBadgeTail() { drawTail(badgeTail, badge, view && badgeAt); }
   // a funnel from an overlay's nearest edge to just short of the point it belongs to, whatever offset the clamping left
   function drawTail(tail, el, lonlat) {
     // SVG elements have no `hidden` property, so the attribute is toggled directly
@@ -524,7 +538,7 @@
   }
   function followBadge() {
     if (badge.hidden || !badgeOff || !view) return;
-    const pt = map.project(view.dot), box = map.getContainer().getBoundingClientRect(), edge = 4;
+    const pt = map.project(badgeAt || view.dot), box = map.getContainer().getBoundingClientRect(), edge = 4;
     badge.style.left = Math.max(edge, Math.min(box.width - edge - badge.offsetWidth, pt.x + badgeOff.dx)) + 'px';
     badge.style.top = Math.max(edge, Math.min(box.height - edge - badge.offsetHeight, pt.y + badgeOff.dy)) + 'px';
     drawBadgeTail();
