@@ -703,14 +703,15 @@
       e.originalEvent.stopPropagation();
       goTo(clusterAt(e.features[0].properties.i)[0]);
     });
-    // clicking the track itself: nearest track point on screen, then the nearest step to it along the day
+    // clicking the track itself: the leg under the pointer, framed as its leg step
     map.on('click', 'es-track-hit', e => {
       if (placement === 'corner') return;
       if (map.queryRenderedFeatures(e.point, { layers: ['es-photos-hit'] }).length) return;  // the photo handler has it
       e.originalEvent.stopPropagation();
       let bi = 0, bd = Infinity;
       for (let i = 0; i < pts.length; i++) { const q = map.project(pts[i]); const d = (q.x - e.point.x) ** 2 + (q.y - e.point.y) ** 2; if (d < bd) { bd = d; bi = i; } }
-      jumpToDistance(cum[bi]);
+      const k = STEPS.findIndex(st => st.kind === 'leg' && st.leg === segOf[bi]);
+      if (k >= 0) browseTo(k);
     });
     map.on('mouseenter', 'es-track-hit', () => { if (placement !== 'corner') map.getCanvas().style.cursor = 'pointer'; });
     map.on('mouseleave', 'es-track-hit', () => { map.getCanvas().style.cursor = ''; });  // a photo dot under the pointer sets it back
@@ -777,7 +778,7 @@
   document.getElementById('es-track-next').addEventListener('click', e => { e.stopPropagation(); browseTo(stepFrom() + 1); });
 
   // ------------------------------------------------------------ wiring
-  // in the big views, clicking the progress band or the track jumps to the nearest step along the track
+  // in the big views, clicking the progress band jumps to the nearest step along the track
   const stepDist = s => s.kind === 'leg' ? cum[SEGMENTS[s.leg].start] : s.kind === 'end' ? total : photos[s.group[0]].m;
   function jumpToDistance(m) {
     if (placement === 'corner' || !STEPS.length || !total) return;
