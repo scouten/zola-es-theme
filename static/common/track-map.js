@@ -289,6 +289,7 @@
       layers.push({ id: 'es-photos', type: 'circle', source: 'photos', paint: { 'circle-radius': big ? 5 : 3, 'circle-color': photoColorExpr(view ? view.photoIdx : -1, view ? view.capSeg : 0), 'circle-stroke-color': tok('ground-deep'), 'circle-stroke-width': 1 } });
       layers.push({ id: 'es-photos-hit', type: 'circle', source: 'photos', paint: { 'circle-radius': big ? 12 : 6, 'circle-opacity': 0 } });
     }
+    if (big) layers.push({ id: 'es-track-hit', type: 'line', source: 'track', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-width': 18, 'line-opacity': 0 } });
     layers.push({ id: 'es-selected', type: 'circle', source: 'selected', paint: { 'circle-radius': 11, 'circle-color': cur, 'circle-opacity': 0, 'circle-stroke-color': cur, 'circle-stroke-width': 3 } });
     layers.push({ id: 'es-dot-halo', type: 'circle', source: 'dot', paint: { 'circle-radius': big ? 14 : 11, 'circle-color': cur, 'circle-opacity': .3, 'circle-blur': .4 } });
     layers.push({ id: 'es-dot', type: 'circle', source: 'dot', paint: { 'circle-radius': big ? 6 : 5, 'circle-color': tok('dot'), 'circle-stroke-color': cur, 'circle-stroke-width': 2.5 } });
@@ -699,6 +700,16 @@
       if (placement === 'corner' || !e.features.length) return;
       goTo(clusterAt(e.features[0].properties.i)[0]);
     });
+    // clicking the track itself: nearest track point on screen, then the nearest step to it along the day
+    map.on('click', 'es-track-hit', e => {
+      if (placement === 'corner') return;
+      if (map.queryRenderedFeatures(e.point, { layers: ['es-photos-hit'] }).length) return;  // the photo handler has it
+      let bi = 0, bd = Infinity;
+      for (let i = 0; i < pts.length; i++) { const q = map.project(pts[i]); const d = (q.x - e.point.x) ** 2 + (q.y - e.point.y) ** 2; if (d < bd) { bd = d; bi = i; } }
+      jumpToDistance(cum[bi]);
+    });
+    map.on('mouseenter', 'es-track-hit', () => { if (placement !== 'corner') map.getCanvas().style.cursor = 'pointer'; });
+    map.on('mouseleave', 'es-track-hit', () => { map.getCanvas().style.cursor = ''; });  // a photo dot under the pointer sets it back
     thumbImg.addEventListener('error', () => { thumbImg.style.display = 'none'; });
     thumbImg.addEventListener('load', () => { if (hoverGroup && !thumb.hidden) placeCard(photos[hoverGroup[0]]); });  // the card's height changes once the image arrives
   }
@@ -762,16 +773,19 @@
   document.getElementById('es-track-next').addEventListener('click', e => { e.stopPropagation(); browseTo(stepFrom() + 1); });
 
   // ------------------------------------------------------------ wiring
-  // in the big views, clicking the progress band jumps to the nearest step along the track
+  // in the big views, clicking the progress band or the track jumps to the nearest step along the track
   const stepDist = s => s.kind === 'leg' ? cum[SEGMENTS[s.leg].start] : s.kind === 'end' ? total : photos[s.group[0]].m;
-  document.getElementById('es-track-progress').addEventListener('click', e => {
+  function jumpToDistance(m) {
     if (placement === 'corner' || !STEPS.length || !total) return;
-    e.stopPropagation();
-    const r = e.currentTarget.getBoundingClientRect();
-    const m = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * total;
     let best = 0, bd = Infinity;
     STEPS.forEach((s, k) => { const d = Math.abs(stepDist(s) - m); if (d < bd) { bd = d; best = k; } });
     browseTo(best);
+  }
+  document.getElementById('es-track-progress').addEventListener('click', e => {
+    if (placement === 'corner') return;
+    e.stopPropagation();
+    const r = e.currentTarget.getBoundingClientRect();
+    jumpToDistance(Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * total);
   });
   widget.addEventListener('click', e => {
     if (placement !== 'corner') return;
