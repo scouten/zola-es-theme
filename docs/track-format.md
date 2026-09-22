@@ -206,7 +206,7 @@ The reference day (5,964 GPX points, 857 KB) becomes about 1,100 points and 27 K
 
 ### 3.1 Waysmith (authoring)
 
-Waysmith is where legs are made and stays a pure GPX editor. Proposed in `docs/trip-legs.md` on the Waysmith repo, in dependency order:
+Waysmith is where legs are made and stays a pure GPX editor. Specified in `docs/trip-legs.md` on the Waysmith repo and implemented there (issues #63, #64, #65), in dependency order:
 
 1. **Model and GPX round-trip.** `type` and `origin` on `Track`; parse and serialize `<trk><type>` and the `ws:origin` extension; pass `<wpt>` through.
 2. **Leg editing.** Split the current track at the focused point; join with previous; set name and type from the SEGMENTS panel.
