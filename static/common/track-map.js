@@ -304,6 +304,8 @@
     if (big) layers.push({ id: 'es-track-hit', type: 'line', source: 'track', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-width': 18, 'line-opacity': 0 } });
     layers.push({ id: 'es-selected', type: 'circle', source: 'selected', paint: { 'circle-radius': 11, 'circle-color': cur, 'circle-opacity': 0, 'circle-stroke-color': cur, 'circle-stroke-width': 3 } });
     layers.push({ id: 'es-dot-halo', type: 'circle', source: 'dot', paint: { 'circle-radius': big ? 14 : 11, 'circle-color': cur, 'circle-opacity': .3, 'circle-blur': .4 } });
+    // the same outer ring the selected photo gets, so the position dot reads as highlighted the same way
+    layers.push({ id: 'es-dot-ring', type: 'circle', source: 'dot', paint: { 'circle-radius': 11, 'circle-color': cur, 'circle-opacity': 0, 'circle-stroke-color': cur, 'circle-stroke-width': 3 } });
     layers.push({ id: 'es-dot', type: 'circle', source: 'dot', paint: { 'circle-radius': big ? 6 : 5, 'circle-color': tok('dot'), 'circle-stroke-color': cur, 'circle-stroke-width': 2.5 } });
     // a small arrow just ahead of the position dot, pointing the way the traveller went next (none at the end of the day)
     layers.push({ id: 'es-dot-arrow', type: 'symbol', source: 'dot', filter: ['==', ['get', 'arrow'], 1], layout: { 'icon-image': 'es-arrow-current', 'icon-size': big ? 1.1 : .85, 'icon-rotate': ['get', 'bearing'], 'icon-rotation-alignment': 'map', 'icon-offset': [0, big ? -16 : -13], 'icon-allow-overlap': true, 'icon-ignore-placement': true } });
