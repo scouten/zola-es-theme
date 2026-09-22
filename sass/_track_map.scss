@@ -42,6 +42,7 @@ $track-widget-map-height: 270px !default;
   --es-track-current: #4ce07a;
   --es-track-current-dim: #237a42;
   --es-track-current-halo: #254634;  // opaque: the current green at 22% over the dark ground
+  --es-track-label: #c3c3cd;         // basemap place names (dark only; light mode keeps the basemap's own)
   --es-track-ahead: #a9aab5;
   --es-track-casing: #121216;
   --es-track-water: #17285a;

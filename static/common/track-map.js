@@ -388,9 +388,15 @@
         if (l.type === 'line' && /waterway/.test(l.id)) l.paint = Object.assign({}, l.paint, { 'line-color': water });
       });
       if (CFG.glyphs) style.glyphs = CFG.glyphs;
-      if (CFG.labelFont && CFG.labelFont.length) {
-        style.layers.forEach(l => { if (l.type === 'symbol' && l.layout && l.layout['text-field']) l.layout = Object.assign({}, l.layout, { 'text-font': CFG.labelFont }); });
-      }
+      // place names: optional font, names as written (the basemap uppercases towns and regions), and a brighter
+      // colour where the theme defines one (dark mode; in light mode the basemap's own is the better contrast)
+      const labelColor = tok('label');
+      style.layers.forEach(l => {
+        if (l.type !== 'symbol' || !l.layout || !l.layout['text-field']) return;
+        l.layout = Object.assign({}, l.layout, { 'text-transform': 'none' });
+        if (CFG.labelFont && CFG.labelFont.length) l.layout['text-font'] = CFG.labelFont;
+        if (labelColor) l.paint = Object.assign({}, l.paint, { 'text-color': labelColor });
+      });
     } else {
       style = { version: 8, sources: {}, layers: [{ id: 'bg', type: 'background', paint: { 'background-color': tok('map-bg') } }] };
     }
