@@ -121,6 +121,7 @@ $track-widget-map-height: 270px !default;
 // step through the legs: sits in the caption row, only when the map is big enough to be worth it
 .es-track-step { display: none; flex: 0 0 auto; align-items: center; gap: .2rem; margin-left: .5rem; }
 .es-track-widget:not(.is-corner) .es-track-step { display: flex; }
+.es-track-widget:not(.is-corner) .es-track-progress { cursor: pointer; }
 .es-track-step-label {
   min-width: 3.2rem; text-align: center; color: var(--es-track-text-soft);
   font-size: .8rem; font-variant-numeric: tabular-nums; white-space: nowrap;

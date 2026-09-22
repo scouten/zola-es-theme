@@ -762,6 +762,17 @@
   document.getElementById('es-track-next').addEventListener('click', e => { e.stopPropagation(); browseTo(stepFrom() + 1); });
 
   // ------------------------------------------------------------ wiring
+  // in the big views, clicking the progress band jumps to the nearest step along the track
+  const stepDist = s => s.kind === 'leg' ? cum[SEGMENTS[s.leg].start] : s.kind === 'end' ? total : photos[s.group[0]].m;
+  document.getElementById('es-track-progress').addEventListener('click', e => {
+    if (placement === 'corner' || !STEPS.length || !total) return;
+    e.stopPropagation();
+    const r = e.currentTarget.getBoundingClientRect();
+    const m = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * total;
+    let best = 0, bd = Infinity;
+    STEPS.forEach((s, k) => { const d = Math.abs(stepDist(s) - m); if (d < bd) { bd = d; best = k; } });
+    browseTo(best);
+  });
   widget.addEventListener('click', e => {
     if (placement !== 'corner') return;
     if (e.target.closest('.es-track-attr-btn, .es-track-attr, .es-track-collapse, .es-track-zoom')) return;
