@@ -573,13 +573,32 @@
     function placeCard(p) {
       const pt = map.project([p.lon, p.lat]);
       const box = map.getContainer().getBoundingClientRect();
-      const w = thumb.offsetWidth, h = thumb.offsetHeight, gap = 12, edge = 4;
-      // above the dot when it fits, otherwise below; either way kept inside the map, never over the status bar
-      let top = pt.y - gap - h;
-      if (top < edge && pt.y + gap + h <= box.height - edge) top = pt.y + gap;
-      top = Math.max(edge, Math.min(box.height - edge - h, top));
-      thumb.style.left = Math.max(w / 2 + edge, Math.min(box.width - w / 2 - edge, pt.x)) + 'px';
-      thumb.style.top = top + 'px';
+      const w = thumb.offsetWidth, h = thumb.offsetHeight, gap = 14, edge = 4;
+      const clampX = x => Math.max(edge, Math.min(box.width - edge - w, x));
+      const clampY = y => Math.max(edge, Math.min(box.height - edge - h, y));
+      // candidate spots around the dot, each kept inside the map (so never over the status bar)
+      const cands = [
+        [pt.x - w / 2, pt.y - gap - h],  // above
+        [pt.x - w / 2, pt.y + gap],      // below
+        [pt.x + gap, pt.y - h / 2],      // right
+        [pt.x - gap - w, pt.y - h / 2],  // left
+      ].map(([x, y]) => ({ x: clampX(x), y: clampY(y) }));
+      // pick the spot that hides the least of the track and photo dots on screen, and never the dot itself
+      const inside = (r, q) => q.x >= r.x - 6 && q.x <= r.x + w + 6 && q.y >= r.y - 6 && q.y <= r.y + h + 6;
+      const onScreen = q => q.x >= 0 && q.y >= 0 && q.x <= box.width && q.y <= box.height;
+      const step = Math.max(1, Math.floor(pts.length / 1500));
+      const samples = [];
+      for (let i = 0; i < pts.length; i += step) { const q = map.project(pts[i]); if (onScreen(q)) samples.push(q); }
+      const dots = photos.map(o => map.project([o.lon, o.lat])).filter(onScreen);
+      let best = cands[0], bestScore = Infinity;
+      for (const r of cands) {
+        let score = inside(r, pt) ? 1000 : 0;
+        for (const q of samples) if (inside(r, q)) score += 1;
+        for (const q of dots) if (inside(r, q)) score += 20;
+        if (score < bestScore) { bestScore = score; best = r; }
+      }
+      thumb.style.left = best.x + 'px';
+      thumb.style.top = best.y + 'px';
     }
     window.__esTrackCard = { showCard, hideCard };
     function goTo(i) {
@@ -679,9 +698,22 @@
   document.getElementById('es-track-expand').addEventListener('click', e => { e.stopPropagation(); expanded = true; place(); });
   document.getElementById('es-track-close').addEventListener('click', e => { e.stopPropagation(); expanded = false; place(); });
   modal.addEventListener('click', e => { if (e.target === modal) { expanded = false; place(); } });
+  // the arrow keys step through the day when the map is expanded, or docked and filling most of the window
+  const mapDominates = () => {
+    if (expanded) return true;
+    if (placement !== 'docked') return false;
+    const r = widget.getBoundingClientRect();
+    const visible = Math.min(r.bottom, innerHeight) - Math.max(r.top, 0);
+    return visible >= innerHeight * 0.5;
+  };
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && expanded) { expanded = false; place(); }
-    if (expanded && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) { e.preventDefault(); browseTo(stepFrom() + (e.key === 'ArrowLeft' ? -1 : 1)); }
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+    if (e.target.closest && e.target.closest('input, textarea, select, [contenteditable]')) return;
+    if (!mapDominates()) return;
+    e.preventDefault();
+    browseTo(stepFrom() + (e.key === 'ArrowLeft' ? -1 : 1));
   });
   attrBtn.addEventListener('click', e => { e.stopPropagation(); attrBtn.setAttribute('aria-expanded', String(attrBtn.getAttribute('aria-expanded') !== 'true')); });
   collapseBtn.addEventListener('click', e => { e.stopPropagation(); setCollapsed(!collapsed, true); });
