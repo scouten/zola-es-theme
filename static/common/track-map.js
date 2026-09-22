@@ -633,7 +633,7 @@
     // keep the card inside the map: below the dot when there's no room above, clamped sideways
     function placeCard(p) {
       cardAt = [p.lon, p.lat];
-      cardOff = placeNear(thumb, cardAt, { gap: 26 });
+      cardOff = placeNear(thumb, cardAt, { gap: 34 });
       drawTail(thumbTail, thumb, cardAt);
     }
     // returns the chosen offset from the dot so the element can follow it while the map moves
