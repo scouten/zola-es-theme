@@ -120,6 +120,7 @@
   const thumb = document.getElementById('es-track-thumb');
   const badge = document.getElementById('es-track-badge');
   const badgeTail = document.getElementById('es-track-badge-tail');
+  const thumbTail = document.getElementById('es-track-thumb-tail');
   const thumbImg = thumb.querySelector('img');
   const thumbLoc = document.getElementById('es-track-thumb-loc');
   const collapseBtn = document.getElementById('es-track-collapse');
@@ -497,20 +498,22 @@
     drawBadgeTail();
   }
   // a funnel from the badge's nearest edge to just short of the dot, whatever the offset the clamping left
-  function drawBadgeTail() {
-    // note: SVG elements have no `hidden` property, so the attribute is toggled directly
-    if (badge.hidden || !view) { badgeTail.toggleAttribute('hidden', true); return; }
-    const pt = map.project(view.dot), box = map.getContainer().getBoundingClientRect();
-    const rx = badge.offsetLeft, ry = badge.offsetTop, rw = badge.offsetWidth, rh = badge.offsetHeight;
-    const cx = Math.max(rx, Math.min(rx + rw, pt.x)), cy = Math.max(ry, Math.min(ry + rh, pt.y));  // nearest point on the badge to the dot
+  function drawBadgeTail() { drawTail(badgeTail, badge, view && view.dot); }
+  // a funnel from an overlay's nearest edge to just short of the point it belongs to, whatever offset the clamping left
+  function drawTail(tail, el, lonlat) {
+    // SVG elements have no `hidden` property, so the attribute is toggled directly
+    if (el.hidden || !lonlat) { tail.toggleAttribute('hidden', true); return; }
+    const pt = map.project(lonlat), box = map.getContainer().getBoundingClientRect();
+    const rx = el.offsetLeft, ry = el.offsetTop, rw = el.offsetWidth, rh = el.offsetHeight;
+    const cx = Math.max(rx, Math.min(rx + rw, pt.x)), cy = Math.max(ry, Math.min(ry + rh, pt.y));  // nearest point on the overlay to the point
     const dx = pt.x - cx, dy = pt.y - cy, len = Math.hypot(dx, dy);
-    if (len < 18) { badgeTail.toggleAttribute('hidden', true); return; }
-    const ux = dx / len, uy = dy / len, px = -uy, py = ux, half = 5.5, stop = 12, inset = 1;
-    const ax = pt.x - ux * stop, ay = pt.y - uy * stop;            // apex, short of the dot
-    const bx = cx - ux * inset, by = cy - uy * inset;              // base centre, tucked under the badge border
-    badgeTail.setAttribute('width', box.width); badgeTail.setAttribute('height', box.height);
-    badgeTail.querySelector('polygon').setAttribute('points', `${ax},${ay} ${bx + px * half},${by + py * half} ${bx - px * half},${by - py * half}`);
-    badgeTail.toggleAttribute('hidden', false);
+    if (len < 18) { tail.toggleAttribute('hidden', true); return; }
+    const ux = dx / len, uy = dy / len, px = -uy, py = ux, half = 4, stop = 12, inset = 1;
+    const ax = pt.x - ux * stop, ay = pt.y - uy * stop;            // apex, short of the point
+    const bx = cx - ux * inset, by = cy - uy * inset;              // base centre, tucked under the overlay's border
+    tail.setAttribute('width', box.width); tail.setAttribute('height', box.height);
+    tail.querySelector('polygon').setAttribute('points', `${ax},${ay} ${bx + px * half},${by + py * half} ${bx - px * half},${by - py * half}`);
+    tail.toggleAttribute('hidden', false);
   }
   function followBadge() {
     if (badge.hidden || !badgeOff || !view) return;
@@ -603,7 +606,17 @@
     }
     let hoverGroup = null, hideTimer = null;
     const stepperHoldsCard = () => browseStep != null && STEPS[browseStep] && STEPS[browseStep].kind === 'photos';
-    function hideCard() { thumb.hidden = true; hoverGroup = null; updateBadge(); }
+    let cardAt = null, cardOff = null;
+    function hideCard() { thumb.hidden = true; hoverGroup = null; cardAt = null; thumbTail.toggleAttribute('hidden', true); updateBadge(); }
+    // the card keeps its offset from the photo while the map moves, so the funnel stays attached
+    function followCard() {
+      if (thumb.hidden || !cardAt || !cardOff) return;
+      const pt = map.project(cardAt), box = map.getContainer().getBoundingClientRect(), edge = 4;
+      thumb.style.left = Math.max(edge, Math.min(box.width - edge - thumb.offsetWidth, pt.x + cardOff.dx)) + 'px';
+      thumb.style.top = Math.max(edge, Math.min(box.height - edge - thumb.offsetHeight, pt.y + cardOff.dy)) + 'px';
+      drawTail(thumbTail, thumb, cardAt);
+    }
+    map.on('move', followCard);
     function showCard(group) {
       const p = photos[group[0]];
       if (!p) return;
@@ -618,7 +631,11 @@
       updateBadge();
     }
     // keep the card inside the map: below the dot when there's no room above, clamped sideways
-    function placeCard(p) { placeNear(thumb, [p.lon, p.lat]); }
+    function placeCard(p) {
+      cardAt = [p.lon, p.lat];
+      cardOff = placeNear(thumb, cardAt, { gap: 26 });
+      drawTail(thumbTail, thumb, cardAt);
+    }
     // returns the chosen offset from the dot so the element can follow it while the map moves
     // opts.sides prefers left/right of the dot over above/below; opts.travel (screen-space direction of
     // travel) then prefers the side the traveller came from, so the badge does not sit in the way ahead
