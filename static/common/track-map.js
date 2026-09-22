@@ -488,26 +488,27 @@
   function updateBadge() {
     const want = mapReady && placement !== 'corner' && !collapsed && view && view.photoIdx < 0 && thumb.hidden && window.__esTrackCard;
     badge.hidden = !want;
-    if (!want) { badgeOff = null; badgeTail.hidden = true; return; }
+    if (!want) { badgeOff = null; badgeTail.toggleAttribute('hidden', true); return; }
     // direction of travel at the dot, in screen space, so the badge can sit beside the dot on the side behind it
     const i = viewIdx(view), a = map.project(pts[Math.max(0, i - 3)]), b = map.project(pts[Math.min(pts.length - 1, i + 3)]);
-    badgeOff = window.__esTrackCard.placeNear(badge, view.dot, { sides: true, gap: 28, travel: { x: b.x - a.x, y: b.y - a.y } });
+    badgeOff = window.__esTrackCard.placeNear(badge, view.dot, { sides: true, gap: 44, travel: { x: b.x - a.x, y: b.y - a.y } });
     drawBadgeTail();
   }
   // a funnel from the badge's nearest edge to just short of the dot, whatever the offset the clamping left
   function drawBadgeTail() {
-    if (badge.hidden || !view) { badgeTail.hidden = true; return; }
+    // note: SVG elements have no `hidden` property, so the attribute is toggled directly
+    if (badge.hidden || !view) { badgeTail.toggleAttribute('hidden', true); return; }
     const pt = map.project(view.dot), box = map.getContainer().getBoundingClientRect();
     const rx = badge.offsetLeft, ry = badge.offsetTop, rw = badge.offsetWidth, rh = badge.offsetHeight;
     const cx = Math.max(rx, Math.min(rx + rw, pt.x)), cy = Math.max(ry, Math.min(ry + rh, pt.y));  // nearest point on the badge to the dot
     const dx = pt.x - cx, dy = pt.y - cy, len = Math.hypot(dx, dy);
-    if (len < 14) { badgeTail.hidden = true; return; }
-    const ux = dx / len, uy = dy / len, px = -uy, py = ux, half = 7, stop = 10, inset = 1;
+    if (len < 18) { badgeTail.toggleAttribute('hidden', true); return; }
+    const ux = dx / len, uy = dy / len, px = -uy, py = ux, half = 8, stop = 12, inset = 1;
     const ax = pt.x - ux * stop, ay = pt.y - uy * stop;            // apex, short of the dot
     const bx = cx - ux * inset, by = cy - uy * inset;              // base centre, tucked under the badge border
     badgeTail.setAttribute('width', box.width); badgeTail.setAttribute('height', box.height);
     badgeTail.querySelector('polygon').setAttribute('points', `${ax},${ay} ${bx + px * half},${by + py * half} ${bx - px * half},${by - py * half}`);
-    badgeTail.hidden = false;
+    badgeTail.toggleAttribute('hidden', false);
   }
   function followBadge() {
     if (badge.hidden || !badgeOff || !view) return;
