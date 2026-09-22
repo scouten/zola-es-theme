@@ -259,7 +259,9 @@
   const selectedData = () => {
     const s = browseStep != null ? STEPS[browseStep] : null;
     if (!s || s.kind !== 'photos') return { type: 'FeatureCollection', features: [] };
-    return { type: 'FeatureCollection', features: s.group.map(i => ({ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [photos[i].lon, photos[i].lat] } })) };
+    // the photo whose card is up gets the bright ring, drawn last; the rest of its cluster a darker one beneath
+    const ring = (i, primary) => ({ type: 'Feature', properties: { primary }, geometry: { type: 'Point', coordinates: [photos[i].lon, photos[i].lat] } });
+    return { type: 'FeatureCollection', features: s.group.slice(1).map(i => ring(i, 0)).concat([ring(s.group[0], 1)]) };
   };
   function doneGradient(v) {
     const accent = tok('accent'), dim = tok('accent-dim'), e = 0.0004;
@@ -306,7 +308,7 @@
       layers.push({ id: 'es-photos-hit', type: 'circle', source: 'photos', paint: { 'circle-radius': big ? 12 : 6, 'circle-opacity': 0 } });
     }
     if (big) layers.push({ id: 'es-track-hit', type: 'line', source: 'track', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-width': 18, 'line-opacity': 0 } });
-    layers.push({ id: 'es-selected', type: 'circle', source: 'selected', paint: { 'circle-radius': 11, 'circle-color': cur, 'circle-opacity': 0, 'circle-stroke-color': cur, 'circle-stroke-width': 3 } });
+    layers.push({ id: 'es-selected', type: 'circle', source: 'selected', paint: { 'circle-radius': 11, 'circle-color': cur, 'circle-opacity': 0, 'circle-stroke-color': ['case', ['==', ['get', 'primary'], 1], cur, tok('current-dim')], 'circle-stroke-width': 3 } });
     layers.push({ id: 'es-dot-halo', type: 'circle', source: 'dot', paint: { 'circle-radius': big ? 14 : 11, 'circle-color': cur, 'circle-opacity': .3, 'circle-blur': .4 } });
     // the same outer ring the selected photo gets, so the position dot reads as highlighted the same way
     layers.push({ id: 'es-dot-ring', type: 'circle', source: 'dot', paint: { 'circle-radius': 11, 'circle-color': cur, 'circle-opacity': 0, 'circle-stroke-color': cur, 'circle-stroke-width': 3 } });
