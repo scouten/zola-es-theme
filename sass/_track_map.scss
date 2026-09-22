@@ -156,8 +156,10 @@ $track-widget-map-height: 270px !default;
 }
 // funnel from the badge's nearest edge to the dot, in the badge's muted grey (the outline alone is too faint)
 .es-track-badge-tail { position: absolute; left: 0; top: 0; z-index: 3; pointer-events: none; overflow: visible; transition: opacity .3s ease;
-  // shadowed like the badge (a tight halo plus a soft drop), so it stands apart from track and dots beneath it
-  polygon { fill: var(--es-track-muted); filter: drop-shadow(0 0 2.5px rgba(0, 0, 0, .9)) drop-shadow(0 3px 6px rgba(0, 0, 0, .55)); }
+  // shadowed like the badge (a tight halo plus a soft drop), so it stands apart from track and dots beneath it.
+  // The filter goes on the <svg> itself: Safari ignores CSS filters on shapes inside an inline SVG.
+  filter: drop-shadow(0 0 2.5px rgba(0, 0, 0, .9)) drop-shadow(0 3px 6px rgba(0, 0, 0, .55));
+  polygon { fill: var(--es-track-muted); }
 }
 // while the camera moves the overlays are clamped to the edge and the funnel would stretch across the map: hide it until the move settles
 .es-track-widget.is-moving .es-track-badge-tail { opacity: 0; transition: none; }
