@@ -482,16 +482,18 @@
     applyCamera(force);
     updateBadge();
   }
-  // In the big views a position dot with no photo (a leg's start, the end of the track) gets a badge
+  // In the big views the position dot gets a badge
   // repeating the caption, so the dot is not a mystery. Hidden whenever the photo card is up.
   let badgeOff = null;
   function updateBadge() {
-    const want = mapReady && placement !== 'corner' && !collapsed && view && view.photoIdx < 0 && thumb.hidden && window.__esTrackCard;
+    // shown whenever the big map has a dot and no photo card: a photo step is about to show its card, so skip it
+    const onPhotoStep = browseStep != null && STEPS[browseStep] && STEPS[browseStep].kind === 'photos';
+    const want = mapReady && placement !== 'corner' && !collapsed && view && thumb.hidden && !onPhotoStep && window.__esTrackCard;
     badge.hidden = !want;
     if (!want) { badgeOff = null; badgeTail.toggleAttribute('hidden', true); return; }
     // direction of travel at the dot, in screen space, so the badge can sit beside the dot on the side behind it
     const i = viewIdx(view), a = map.project(pts[Math.max(0, i - 3)]), b = map.project(pts[Math.min(pts.length - 1, i + 3)]);
-    badgeOff = window.__esTrackCard.placeNear(badge, view.dot, { sides: true, gap: 44, travel: { x: b.x - a.x, y: b.y - a.y } });
+    badgeOff = window.__esTrackCard.placeNear(badge, view.dot, { sides: true, gap: 34, travel: { x: b.x - a.x, y: b.y - a.y } });
     drawBadgeTail();
   }
   // a funnel from the badge's nearest edge to just short of the dot, whatever the offset the clamping left
@@ -503,7 +505,7 @@
     const cx = Math.max(rx, Math.min(rx + rw, pt.x)), cy = Math.max(ry, Math.min(ry + rh, pt.y));  // nearest point on the badge to the dot
     const dx = pt.x - cx, dy = pt.y - cy, len = Math.hypot(dx, dy);
     if (len < 18) { badgeTail.toggleAttribute('hidden', true); return; }
-    const ux = dx / len, uy = dy / len, px = -uy, py = ux, half = 8, stop = 12, inset = 1;
+    const ux = dx / len, uy = dy / len, px = -uy, py = ux, half = 5.5, stop = 12, inset = 1;
     const ax = pt.x - ux * stop, ay = pt.y - uy * stop;            // apex, short of the dot
     const bx = cx - ux * inset, by = cy - uy * inset;              // base centre, tucked under the badge border
     badgeTail.setAttribute('width', box.width); badgeTail.setAttribute('height', box.height);

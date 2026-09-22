@@ -150,8 +150,8 @@ $track-widget-map-height: 270px !default;
   .mode { font-size: .78rem; font-weight: 600; }
   .label { font-size: .68rem; color: var(--es-track-text-soft); }
 }
-// funnel from the badge's nearest edge to the dot, in the badge's outline colour
-.es-track-badge-tail { position: absolute; left: 0; top: 0; z-index: 3; pointer-events: none; overflow: visible; polygon { fill: var(--es-track-edge); } }
+// funnel from the badge's nearest edge to the dot, in the badge's muted grey (the outline alone is too faint)
+.es-track-badge-tail { position: absolute; left: 0; top: 0; z-index: 3; pointer-events: none; overflow: visible; polygon { fill: var(--es-track-muted); } }
 .es-track-widget.is-corner .es-track-badge, .es-track-widget.is-corner .es-track-badge-tail { display: none; }
 // twice the size in the big views, where there is room for it
 .es-track-widget:not(.is-corner) .es-track-thumb {
