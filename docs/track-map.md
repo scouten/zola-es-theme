@@ -36,6 +36,8 @@ track_key = "track/v2/2026/03/2026-03-05.json"   # on the CDN (img.ericscouten.c
 
 `track_log_key` can stay during the transition; it's ignored once `track_key` is present. Remove the key to revert the page to the old map.
 
+The browser fetches the JSON itself, cross-origin, so the CDN must serve it with `Access-Control-Allow-Origin: *` (or the site's origin). Images and the old KML never needed this: images are not fetched with `fetch()`, and Google fetched the KML server-side. A missing CORS header shows up as "could not be fetched" on the page and a CORS error in the browser console, while the same URL opens fine in a new tab.
+
 The `distance` and `route` keys still feed the caption under the docked map and the "(map)" link in the title.
 
 ## The track JSON

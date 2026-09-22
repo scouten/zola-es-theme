@@ -230,6 +230,7 @@ Rules:
 - **Legs present in the GPX win.** If the file has more than one `<trk>`, or any `<trk><type>`, each track becomes one leg verbatim. Nothing is inferred and nothing is re-split.
 - **Legacy files are inferred.** One untyped track (every existing sanitized file) is split by the heuristic in §3.1 item 3 so an un-retrofitted page still gets legs. The result is a best effort, not authoritative; the page is retrofitted by editing legs in Waysmith and re-running the toolchain.
 - **Never emit clock times** (§0). The GPX is not uploaded; KML is no longer produced.
+- **Serve with CORS.** The theme fetches the JSON from the browser, cross-origin, so the object must be public and sent with `Access-Control-Allow-Origin: *` (the old KML was fetched by Google's servers and never needed this). `Content-Type: application/json`; compression as for other assets.
 - **Photo capture times** come from the toolchain's own EXIF read (it already has the photos). Photos without a usable time are omitted from `photos`; the site falls back to nearest-point snapping for them.
 - **Idempotent.** Re-running on unchanged inputs produces byte-identical JSON.
 

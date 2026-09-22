@@ -751,11 +751,20 @@
     onScroll();
   }
 
+  // say why the map failed, on the page and in the console, so a bad upload is diagnosable from a reload
+  const explain = err => {
+    const m = err && err.message || '';
+    if (/^HTTP /.test(m)) return `the track file returned ${m} from ${CFG.trackUrl}`;
+    if (err instanceof TypeError && /fetch|network|load/i.test(m)) return `the track file could not be fetched from ${CFG.trackUrl} (network error, or the CDN is not sending CORS headers for it)`;
+    if (err instanceof SyntaxError) return `the track file at ${CFG.trackUrl} is not valid JSON`;
+    return m ? `${m} (${CFG.trackUrl})` : `unknown error (${CFG.trackUrl})`;
+  };
   fetch(CFG.trackUrl, { credentials: 'omit' })
     .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
     .then(start)
     .catch(err => {
-      console.warn('track-map: ' + err.message);
-      const empty = slot.querySelector('.es-track-slot-empty'); if (empty) empty.textContent = 'The map for this page could not be loaded.';
+      const why = explain(err);
+      console.warn('track-map: ' + why, err);
+      const empty = slot.querySelector('.es-track-slot-empty'); if (empty) empty.textContent = 'The map for this page could not be loaded: ' + why + '.';
     });
 })();
