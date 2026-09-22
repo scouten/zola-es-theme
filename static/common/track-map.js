@@ -239,11 +239,15 @@
     // features draw in order, so the travelled part goes last and stays on top where the route doubles back
     return { type: 'FeatureCollection', features: aheadF.concat(doneF) };
   };
-  // direction of forward travel at a track point, degrees clockwise from north, or null at the very end
+  // direction of forward travel at a track point, degrees clockwise from north, or null at the very end:
+  // from the point to wherever the track is about 50 m further on, so a jitter or a tight zigzag right
+  // after the point does not swing the arrow
   const bearingAt = i => {
     i = Math.max(0, Math.min(i, pts.length - 1));
     if (i >= pts.length - 1) return null;
-    const a = pts[i], b = pts[Math.min(pts.length - 1, i + 3)];
+    let j = i + 1;
+    while (j < pts.length - 1 && cum[j] - cum[i] < 50) j++;
+    const a = pts[i], b = pts[j];
     const dx = (b[0] - a[0]) * Math.cos(a[1] * Math.PI / 180), dy = b[1] - a[1];
     return (dx === 0 && dy === 0) ? null : Math.atan2(dx, dy) * 180 / Math.PI;
   };
