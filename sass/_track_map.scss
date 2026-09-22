@@ -140,6 +140,17 @@ $track-widget-map-height: 270px !default;
   .es-track-thumb-loc { width: 160px; padding: 4px 2px 1px; font-size: .7rem; line-height: 1.25; color: var(--es-track-muted); white-space: normal; }
   .more { display: block; margin-top: 2px; color: var(--es-track-accent); font-weight: 600; }
 }
+// badge at the position dot when it has no photo (leg start, end of the track): repeats the caption
+.es-track-badge {
+  position: absolute; z-index: 3; pointer-events: none; display: flex; align-items: center; gap: .45rem;
+  padding: .3rem .6rem .3rem .5rem; border-radius: 6px; white-space: nowrap;
+  background: var(--es-track-panel-solid); border: 1px solid var(--es-track-edge); box-shadow: var(--es-track-shadow); color: var(--es-track-text);
+  .es-track-ico { width: 1.15rem; height: 1.15rem; flex: 0 0 auto; color: var(--es-track-current); svg { width: 100%; height: 100%; display: block; } }
+  .es-track-badge-text { display: flex; flex-direction: column; line-height: 1.2; }
+  .mode { font-size: .78rem; font-weight: 600; }
+  .label { font-size: .68rem; color: var(--es-track-text-soft); }
+}
+.es-track-widget.is-corner .es-track-badge { display: none; }
 // twice the size in the big views, where there is room for it
 .es-track-widget:not(.is-corner) .es-track-thumb {
   padding: 4px; border-radius: 8px;

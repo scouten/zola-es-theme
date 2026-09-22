@@ -118,6 +118,7 @@
   const modal = document.getElementById('es-track-modal');
   const notice = document.getElementById('es-track-notice');
   const thumb = document.getElementById('es-track-thumb');
+  const badge = document.getElementById('es-track-badge');
   const thumbImg = thumb.querySelector('img');
   const thumbLoc = document.getElementById('es-track-thumb-loc');
   const collapseBtn = document.getElementById('es-track-collapse');
@@ -452,6 +453,8 @@
     text.replaceChildren();
     const modeEl = document.createElement('span'); modeEl.className = 'mode'; modeEl.textContent = head; text.appendChild(modeEl);
     if (sub) { const labelEl = document.createElement('span'); labelEl.className = 'label'; labelEl.textContent = sub; text.appendChild(labelEl); }
+    badge.querySelector('.es-track-ico').innerHTML = iconSvg(md ? md.icon : 'route');
+    badge.querySelector('.es-track-badge-text').replaceChildren(...Array.from(text.children).map(n => n.cloneNode(true)));
     document.getElementById('es-track-fill').style.width = (view.frac * 100).toFixed(2) + '%';
     // current leg's span on the bar: green up to the reader's position, darker green beyond
     const legA = total ? cum[seg.start] / total : 0, legB = total ? cum[seg.end] / total : 0;
@@ -476,6 +479,22 @@
     const dotKey = view.photoIdx + ':' + view.capSeg;
     if (CFG.dots && map.getLayer('es-photos') && (force || dotKey !== lastPhotoIdx)) { lastPhotoIdx = dotKey; map.setPaintProperty('es-photos', 'circle-color', photoColorExpr(view.photoIdx, view.capSeg)); }
     applyCamera(force);
+    updateBadge();
+  }
+  // In the big views a position dot with no photo (a leg's start, the end of the track) gets a badge
+  // repeating the caption, so the dot is not a mystery. Hidden whenever the photo card is up.
+  let badgeOff = null;
+  function updateBadge() {
+    const want = mapReady && placement !== 'corner' && !collapsed && view && view.photoIdx < 0 && thumb.hidden && window.__esTrackCard;
+    badge.hidden = !want;
+    if (!want) { badgeOff = null; return; }
+    badgeOff = window.__esTrackCard.placeNear(badge, view.dot);
+  }
+  function followBadge() {
+    if (badge.hidden || !badgeOff || !view) return;
+    const pt = map.project(view.dot), box = map.getContainer().getBoundingClientRect(), edge = 4;
+    badge.style.left = Math.max(edge, Math.min(box.width - edge - badge.offsetWidth, pt.x + badgeOff.dx)) + 'px';
+    badge.style.top = Math.max(edge, Math.min(box.height - edge - badge.offsetHeight, pt.y + badgeOff.dy)) + 'px';
   }
   let ticking = false;
   function onScroll() {
@@ -522,6 +541,7 @@
       map.resize();
       if (target === 'corner') { lastCamKey = null; applyCamera(true); }
       else fitAll(target === 'expanded' ? (isPhone() ? 30 : 70) : 40);
+      updateBadge();
     });
     requestAnimationFrame(() => map.resize());
   }
@@ -533,6 +553,7 @@
     if (remember) { try { localStorage.setItem('es-track-collapsed', v ? '1' : '0'); } catch (e) { /* private mode */ } }
     if (!v && mapReady) requestAnimationFrame(() => { map.resize(); lastCamKey = null; applyCamera(true); });
     updateOverlap();
+    updateBadge();
   }
 
   // ------------------------------------------------------------ map init
@@ -547,6 +568,8 @@
     });
     map.on('style.load', () => { if (mapReady) { lastCamKey = null; lastGrad = ''; lastPhotoIdx = ''; applyView(true); } });
     map.on('error', e => { const m = (e && e.error && e.error.message) || ''; if (m) console.warn('track-map:', m); });
+    map.on('move', followBadge);
+    map.on('moveend', updateBadge);
 
     // Photos whose dots overlap the hovered one at the current zoom, in page order.
     function clusterAt(i) {
@@ -557,7 +580,7 @@
     }
     let hoverGroup = null, hideTimer = null;
     const stepperHoldsCard = () => browseStep != null && STEPS[browseStep] && STEPS[browseStep].kind === 'photos';
-    function hideCard() { thumb.hidden = true; hoverGroup = null; }
+    function hideCard() { thumb.hidden = true; hoverGroup = null; updateBadge(); }
     function showCard(group) {
       const p = photos[group[0]];
       if (!p) return;
@@ -569,12 +592,15 @@
       if (group.length > 1) { const more = document.createElement('span'); more.className = 'more'; more.textContent = `+${group.length - 1} more`; thumbLoc.appendChild(more); }
       thumb.hidden = false;
       placeCard(p);
+      updateBadge();
     }
     // keep the card inside the map: below the dot when there's no room above, clamped sideways
-    function placeCard(p) {
-      const pt = map.project([p.lon, p.lat]);
+    function placeCard(p) { placeNear(thumb, [p.lon, p.lat]); }
+    // returns the chosen offset from the dot so the element can follow it while the map moves
+    function placeNear(el, lonlat) {
+      const pt = map.project(lonlat);
       const box = map.getContainer().getBoundingClientRect();
-      const w = thumb.offsetWidth, h = thumb.offsetHeight, gap = 14, edge = 4;
+      const w = el.offsetWidth, h = el.offsetHeight, gap = 14, edge = 4;
       const clampX = x => Math.max(edge, Math.min(box.width - edge - w, x));
       const clampY = y => Math.max(edge, Math.min(box.height - edge - h, y));
       // candidate spots around the dot, each kept inside the map (so never over the status bar)
@@ -598,10 +624,11 @@
         for (const q of dots) if (inside(r, q)) score += 20;
         if (score < bestScore) { bestScore = score; best = r; }
       }
-      thumb.style.left = best.x + 'px';
-      thumb.style.top = best.y + 'px';
+      el.style.left = best.x + 'px';
+      el.style.top = best.y + 'px';
+      return { dx: best.x - pt.x, dy: best.y - pt.y };
     }
-    window.__esTrackCard = { showCard, hideCard };
+    window.__esTrackCard = { showCard, hideCard, placeNear };
     function goTo(i) {
       const p = photos[i];
       if (expanded) { expanded = false; place(); }
