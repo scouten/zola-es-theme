@@ -512,7 +512,9 @@
     const rx = el.offsetLeft, ry = el.offsetTop, rw = el.offsetWidth, rh = el.offsetHeight;
     const cx = Math.max(rx, Math.min(rx + rw, pt.x)), cy = Math.max(ry, Math.min(ry + rh, pt.y));  // nearest point on the overlay to the point
     const dx = pt.x - cx, dy = pt.y - cy, len = Math.hypot(dx, dy);
-    if (len < 18) { tail.toggleAttribute('hidden', true); return; }
+    // too close to draw, or so far (the overlay clamped to the edge while its point is elsewhere) that the funnel
+    // would stretch across the map: skip it
+    if (len < 18 || len > 90) { tail.toggleAttribute('hidden', true); return; }
     const ux = dx / len, uy = dy / len, px = -uy, py = ux, half = 6, stop = 12, inset = 1;
     const ax = pt.x - ux * stop, ay = pt.y - uy * stop;            // apex, short of the point
     const bx = cx - ux * inset, by = cy - uy * inset;              // base centre, tucked under the overlay's border
@@ -601,7 +603,8 @@
     map.on('error', e => { const m = (e && e.error && e.error.message) || ''; if (m) console.warn('track-map:', m); });
     map.on('movestart', () => widget.classList.add('is-moving'));
     map.on('move', followBadge);
-    map.on('moveend', () => { updateBadge(); requestAnimationFrame(() => widget.classList.remove('is-moving')); });  // funnels fade back in once settled
+    // funnels fade back in once settled: a move that starts before the previous one has finished keeps them hidden
+    map.on('moveend', () => { updateBadge(); requestAnimationFrame(() => { if (!map.isMoving()) widget.classList.remove('is-moving'); }); });
 
     // Photos whose dots overlap the hovered one at the current zoom, in page order.
     function clusterAt(i) {
