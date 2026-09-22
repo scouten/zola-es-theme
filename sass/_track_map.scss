@@ -25,6 +25,7 @@ $track-widget-map-height: 270px !default;
   --es-track-panel: rgba(255, 255, 255, .9);
   --es-track-panel-solid: #ffffff;
   --es-track-edge: rgba(0, 0, 0, .12);
+  --es-track-edge-strong: rgba(0, 0, 0, .28);   // card and badge outlines
   --es-track-text: #232227;
   --es-track-text-soft: #3d3c44;
   --es-track-muted: #6b6b76;
@@ -50,6 +51,7 @@ $track-widget-map-height: 270px !default;
   --es-track-panel: rgba(24, 24, 28, .88);
   --es-track-panel-solid: #1c1c21;
   --es-track-edge: rgba(255, 255, 255, .13);
+  --es-track-edge-strong: rgba(255, 255, 255, .3);
   --es-track-text: #e6e5e9;
   --es-track-text-soft: #c9c8cf;
   --es-track-muted: #9b9ba6;
@@ -135,7 +137,7 @@ $track-widget-map-height: 270px !default;
 
 .es-track-thumb {
   position: absolute; z-index: 3; cursor: pointer;  // placed by the script, around the dot and clear of the track
-  background: var(--es-track-panel-solid); border: 1px solid var(--es-track-edge); border-radius: 6px; padding: 3px; box-shadow: var(--es-track-shadow);
+  background: var(--es-track-panel-solid); border: 1px solid var(--es-track-edge-strong); border-radius: 6px; padding: 3px; box-shadow: var(--es-track-shadow);
   img { display: block; width: 160px; height: auto; border-radius: 3px; }
   .es-track-thumb-loc { width: 160px; padding: 4px 2px 1px; font-size: .7rem; line-height: 1.25; color: var(--es-track-muted); white-space: normal; }
   .more { display: block; margin-top: 2px; color: var(--es-track-accent); font-weight: 600; }
@@ -144,7 +146,7 @@ $track-widget-map-height: 270px !default;
 .es-track-badge {
   position: absolute; z-index: 3; pointer-events: none; display: flex; align-items: center; gap: .45rem;
   padding: .3rem .6rem .3rem .5rem; border-radius: 6px; white-space: nowrap;
-  background: var(--es-track-panel-solid); border: 1px solid var(--es-track-edge); box-shadow: var(--es-track-shadow); color: var(--es-track-text);
+  background: var(--es-track-panel-solid); border: 1px solid var(--es-track-edge-strong); box-shadow: var(--es-track-shadow); color: var(--es-track-text);
   .es-track-ico { width: 1.15rem; height: 1.15rem; flex: 0 0 auto; color: var(--es-track-current); svg { width: 100%; height: 100%; display: block; } }
   .es-track-badge-text { display: flex; flex-direction: column; line-height: 1.2; }
   .mode { font-size: .78rem; font-weight: 600; }

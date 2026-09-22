@@ -508,7 +508,7 @@
     const cx = Math.max(rx, Math.min(rx + rw, pt.x)), cy = Math.max(ry, Math.min(ry + rh, pt.y));  // nearest point on the overlay to the point
     const dx = pt.x - cx, dy = pt.y - cy, len = Math.hypot(dx, dy);
     if (len < 18) { tail.toggleAttribute('hidden', true); return; }
-    const ux = dx / len, uy = dy / len, px = -uy, py = ux, half = 4, stop = 12, inset = 1;
+    const ux = dx / len, uy = dy / len, px = -uy, py = ux, half = 6, stop = 12, inset = 1;
     const ax = pt.x - ux * stop, ay = pt.y - uy * stop;            // apex, short of the point
     const bx = cx - ux * inset, by = cy - uy * inset;              // base centre, tucked under the overlay's border
     tail.setAttribute('width', box.width); tail.setAttribute('height', box.height);
