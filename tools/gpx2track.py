@@ -23,7 +23,9 @@ Behaviour, as the CDN toolchain should implement it:
   * Moving legs are simplified with Douglas-Peucker (6 m). A stop becomes its
     centroid.
   * --photos takes a JSON list of {"id": "...", "time": "<RFC 3339>"} and emits
-    photo anchors (leg, point index, fraction of the day's distance).
+    photo anchors (leg, point index, fraction of the day's distance). For each
+    photo, simplification keeps the recorded point nearest in time and the last
+    one at or before it, which is the photo's anchor point.
   * The JSON is published, so by default it carries NO clock times: no
     start/end, no per-point times, and a duration only on fly, prop,
     helicopter, boat and ferry legs.
@@ -188,9 +190,11 @@ def infer_legs(pts):
 # ---------------------------------------------------------------- geometry
 
 def simplify(coords, tol_m):
-    """Douglas-Peucker on [lon, lat, ...] rows using a local equirectangular projection."""
+    """Douglas-Peucker on [lon, lat, ...] rows using a local equirectangular projection.
+
+    Returns the indexes of the rows to keep."""
     if len(coords) < 3:
-        return coords
+        return list(range(len(coords)))
     lat0 = math.radians(coords[0][1])
     kx, ky = 111320.0 * math.cos(lat0), 110540.0
     xy = [(c[0] * kx, c[1] * ky) for c in coords]
@@ -218,10 +222,23 @@ def simplify(coords, tol_m):
         if best > tol_m:
             keep[bi] = True
             stack.append((a, bi)); stack.append((bi, b))
-    return [c for c, k in zip(coords, keep) if k]
+    return [i for i, k in enumerate(keep) if k]
 
 
-def make_leg(pp, mode, label, origin, times):
+def simplify_keeping(coords, tol_m, pinned):
+    """simplify(), but also keeping the rows at the pinned indexes, by simplifying
+    each stretch between them on its own. With nothing pinned, this is simplify()."""
+    last = len(coords) - 1
+    breaks = sorted({k for k in pinned if 0 < k < last})
+    kept, start = [], 0
+    for end in breaks + [last]:
+        piece = simplify(coords[start:end + 1], tol_m)
+        kept.extend(start + i for i in (piece[1:] if kept else piece))
+        start = end
+    return kept
+
+
+def make_leg(pp, mode, label, origin, times, pinned=()):
     dist = sum(p['d'] for p in pp[1:])
     timed = pp[0]['t'] is not None and pp[-1]['t'] is not None
     secs = (pp[-1]['t'] - pp[0]['t']).total_seconds() if timed else None
@@ -240,12 +257,14 @@ def make_leg(pp, mode, label, origin, times):
         leg['end'] = pp[-1]['t'].isoformat().replace('+00:00', 'Z')
     if mode == 'stop':
         leg['pts'] = [[round(sum(p['lon'] for p in pp) / len(pp), 5), round(sum(p['lat'] for p in pp) / len(pp), 5)]]
+        leg['_idx'] = [0]
     else:
         eles = [p['ele'] for p in pp if p['ele'] is not None]
         if eles:
             leg['ele'] = [round(min(eles)), round(max(eles))]
         rows = [[round(p['lon'], 5), round(p['lat'], 5)] + ([round(p['ele'])] if p['ele'] is not None else []) for p in pp]
-        leg['pts'] = simplify(rows, SIMPLIFY_TOL_M)
+        leg['_idx'] = simplify_keeping(rows, SIMPLIFY_TOL_M, pinned)
+        leg['pts'] = [rows[i] for i in leg['_idx']]
     leg['_pp'] = pp
     leg['_secs'] = secs
     return leg
@@ -253,31 +272,57 @@ def make_leg(pp, mode, label, origin, times):
 
 # ---------------------------------------------------------------- photo anchors
 
+def photo_time(ph):
+    try:
+        return parse_time(ph['time'])
+    except (KeyError, ValueError, TypeError):
+        return None
+
+
+def photo_leg(spans, t):
+    """The leg a photo taken at t belongs to: the first whose time span contains it,
+    or else the one whose start or end is nearest in time. spans are (t0, t1) pairs."""
+    best, bd = None, None
+    for li, (t0, t1) in enumerate(spans):
+        if t0 is None or t1 is None:
+            continue
+        if t0 <= t <= t1:
+            return li
+        d = min(abs((t - t0).total_seconds()), abs((t - t1).total_seconds()))
+        if bd is None or d < bd:
+            best, bd = li, d
+    return best
+
+
+def nearest_in_time(pp, t):
+    """Index of the point nearest in time to t (the earlier on a tie)."""
+    timed = [(abs(p['t'] - t), k) for k, p in enumerate(pp) if p['t'] is not None]
+    return min(timed)[1] if timed else None
+
+
+def last_at_or_before(pp, t):
+    """Index of the last point recorded at or before t."""
+    for k in range(len(pp) - 1, -1, -1):
+        if pp[k]['t'] is not None and pp[k]['t'] <= t:
+            return k
+    return None
+
+
 def anchor_photos(legs, photos, total):
-    spans, before = [], 0
-    for li, leg in enumerate(legs):
-        pp = leg['_pp']
-        spans.append((li, pp[0]['t'], pp[-1]['t'], before))
-        before += leg['dist_m']
+    spans = [(l['_pp'][0]['t'], l['_pp'][-1]['t']) for l in legs]
+    before, acc = [], 0
+    for leg in legs:
+        before.append(acc)
+        acc += leg['dist_m']
     out = []
     for ph in photos:
-        try:
-            t = parse_time(ph['time'])
-        except (KeyError, ValueError, TypeError):
+        t = photo_time(ph)
+        if t is None:
             continue
-        best, bd = None, None
-        for li, t0, t1, b in spans:
-            if t0 is None or t1 is None:
-                continue
-            if t0 <= t <= t1:
-                best, bd = (li, b), 0
-                break
-            d = min(abs((t - t0).total_seconds()), abs((t - t1).total_seconds()))
-            if bd is None or d < bd:
-                best, bd = (li, b), d
-        if best is None:
+        li = photo_leg(spans, t)
+        if li is None:
             continue
-        li, b = best
+        b = before[li]
         leg = legs[li]
         pp = leg['_pp']
         along = 0.0
@@ -292,12 +337,10 @@ def anchor_photos(legs, photos, total):
                     along = acc + pp[k]['d'] * frac
                     break
                 acc += pp[k]['d']
-        sp, i, acc = leg['pts'], 0, 0.0
-        for k in range(1, len(sp)):
-            acc += hav((sp[k - 1][1], sp[k - 1][0]), (sp[k][1], sp[k][0]))
-            if acc > along:
-                break
-            i = k
+        # The last point recorded at or before the photo, which simplification kept.
+        k = last_at_or_before(pp, t)
+        k = 0 if k is None else k
+        i = max((n for n, src in enumerate(leg['_idx']) if src <= k), default=0)
         f = (b + (0 if leg.get('mode') == 'stop' else along)) / total if total else 0.0
         out.append({'id': ph['id'], 'leg': li, 'i': i, 'f': round(f, 4)})
     return out
@@ -315,9 +358,20 @@ def build(meta_name, tracks, labels=None, mode_overrides=None, times=False, phot
         runs = [(t['points'], t['type'], t['name'], t['origin']) for t in tracks]
     else:
         runs = [(pp, mode, None, None) for pp, mode in infer_legs(tracks[0]['points'])]
+    # Keep the recorded point nearest in time to each photo, so the simplified track
+    # passes where the photo was taken, and the last one at or before it, which the
+    # photo is anchored to.
+    pinned = [[] for _ in runs]
+    spans = [(r[0][0]['t'], r[0][-1]['t']) for r in runs]
+    for ph in photos or []:
+        t = photo_time(ph)
+        li = photo_leg(spans, t) if t is not None else None
+        if li is not None:
+            pp = runs[li][0]
+            pinned[li] += [k for k in (nearest_in_time(pp, t), last_at_or_before(pp, t)) if k is not None]
     legs = []
     for i, (pp, mode, name, origin) in enumerate(runs):
-        legs.append(make_leg(pp, mode_overrides.get(i, mode), labels.get(i, name), origin, times))
+        legs.append(make_leg(pp, mode_overrides.get(i, mode), labels.get(i, name), origin, times, pinned[i]))
     total = sum(l['dist_m'] for l in legs)
     lons = [c[0] for l in legs for c in l['pts']]
     lats = [c[1] for l in legs for c in l['pts']]
@@ -375,7 +429,7 @@ def main(argv):
         print(f"{i:2d} {l.get('mode') or '—':<5} {fmt_dur(l['_secs']):>10} {l['dist_m'] / 1000:7.1f} km "
               f"ele {ele[0]:>4}-{ele[1]:<4} pts {len(l['pts']):4d}  {l.get('label', '')}", file=sys.stderr)
         n_out += len(l['pts'])
-        del l['_pp'], l['_secs']
+        del l['_pp'], l['_secs'], l['_idx']
     print(f"total {track['dist_m'] / 1000:.1f} km, {sum(len(t['points']) for t in tracks)} -> {n_out} points"
           + (f", {len(track['photos'])} photo anchors" if 'photos' in track else ''), file=sys.stderr)
     js = json.dumps(track, separators=(',', ':'), ensure_ascii=False)
