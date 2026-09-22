@@ -267,11 +267,6 @@
     if (f >= 1 - e) return flat(dim);
     return ['interpolate', ['linear'], ['line-progress'], 0, dim, f - e / 2, dim, f + e / 2, accent, 1, accent];
   }
-  // arrow icons are pre-tinted images named after the colour token they use, chosen with the same rules as the dot colour
-  const arrowImageExpr = (curIdx, capSeg) => {
-    const seg = capSeg == null ? 0 : capSeg;
-    return ['case', ['==', ['get', 'seg'], seg], 'es-arrow-current', ['<', ['get', 'seg'], seg], 'es-arrow-accent-dim', ['<=', ['get', 'i'], curIdx], 'es-arrow-accent', 'es-arrow-ahead'];
-  };
   const photoColorExpr = (curIdx, capSeg) => {
     const cur = tok('current');
     const seg = capSeg == null ? 0 : capSeg;
@@ -285,10 +280,7 @@
       done: { type: 'geojson', lineMetrics: true, data: doneData(cur) },
       ahead: { type: 'geojson', data: aheadData(cur) },
       current: { type: 'geojson', data: currentLegData(cur) },
-      photos: { type: 'geojson', data: { type: 'FeatureCollection', features: photos.map((p, i) => {
-        const b = bearingAt(p.idx), clustered = STEPS.some(s => s.kind === 'photos' && s.group.length > 1 && s.group.includes(i));
-        return { type: 'Feature', properties: { i, seg: p.seg, id: p.id, bearing: b == null ? 0 : b, arrow: (b == null || clustered) ? 0 : 1 }, geometry: { type: 'Point', coordinates: [p.lon, p.lat] } };
-      }) } },
+      photos: { type: 'geojson', data: { type: 'FeatureCollection', features: photos.map((p, i) => ({ type: 'Feature', properties: { i, seg: p.seg, id: p.id }, geometry: { type: 'Point', coordinates: [p.lon, p.lat] } })) } },
       dot: { type: 'geojson', data: dotData(cur) },
       selected: { type: 'geojson', data: selectedData() },
     };
@@ -308,13 +300,12 @@
     if (CFG.dots) {
       layers.push({ id: 'es-photos', type: 'circle', source: 'photos', paint: { 'circle-radius': big ? 5 : 3, 'circle-color': photoColorExpr(view ? view.photoIdx : -1, view ? view.capSeg : 0), 'circle-stroke-color': tok('ground-deep'), 'circle-stroke-width': 1 } });
       layers.push({ id: 'es-photos-hit', type: 'circle', source: 'photos', paint: { 'circle-radius': big ? 12 : 6, 'circle-opacity': 0 } });
-      // a small arrow just ahead of each photo dot, pointing the way the traveller went next (none for clustered photos)
-      layers.push({ id: 'es-photo-arrows', type: 'symbol', source: 'photos', filter: ['==', ['get', 'arrow'], 1], layout: { 'icon-image': arrowImageExpr(view ? view.photoIdx : -1, view ? view.capSeg : 0), 'icon-size': big ? 1 : .75, 'icon-rotate': ['get', 'bearing'], 'icon-rotation-alignment': 'map', 'icon-offset': [0, big ? -13 : -10], 'icon-allow-overlap': true, 'icon-ignore-placement': true } });
     }
     if (big) layers.push({ id: 'es-track-hit', type: 'line', source: 'track', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-width': 18, 'line-opacity': 0 } });
     layers.push({ id: 'es-selected', type: 'circle', source: 'selected', paint: { 'circle-radius': 11, 'circle-color': cur, 'circle-opacity': 0, 'circle-stroke-color': cur, 'circle-stroke-width': 3 } });
     layers.push({ id: 'es-dot-halo', type: 'circle', source: 'dot', paint: { 'circle-radius': big ? 14 : 11, 'circle-color': cur, 'circle-opacity': .3, 'circle-blur': .4 } });
     layers.push({ id: 'es-dot', type: 'circle', source: 'dot', paint: { 'circle-radius': big ? 6 : 5, 'circle-color': tok('dot'), 'circle-stroke-color': cur, 'circle-stroke-width': 2.5 } });
+    // a small arrow just ahead of the position dot, pointing the way the traveller went next (none at the end of the day)
     layers.push({ id: 'es-dot-arrow', type: 'symbol', source: 'dot', filter: ['==', ['get', 'arrow'], 1], layout: { 'icon-image': 'es-arrow-current', 'icon-size': big ? 1.1 : .85, 'icon-rotate': ['get', 'bearing'], 'icon-rotation-alignment': 'map', 'icon-offset': [0, big ? -16 : -13], 'icon-allow-overlap': true, 'icon-ignore-placement': true } });
     return layers;
   }
@@ -510,7 +501,6 @@
     if (CFG.dots && map.getLayer('es-photos') && (force || dotKey !== lastPhotoIdx)) {
       lastPhotoIdx = dotKey;
       map.setPaintProperty('es-photos', 'circle-color', photoColorExpr(view.photoIdx, view.capSeg));
-      if (map.getLayer('es-photo-arrows')) map.setLayoutProperty('es-photo-arrows', 'icon-image', arrowImageExpr(view.photoIdx, view.capSeg));
     }
     applyCamera(force);
     updateBadge();
@@ -642,7 +632,7 @@
     });
     map.on('style.load', () => { if (mapReady) { lastCamKey = null; lastGrad = ''; lastPhotoIdx = ''; applyView(true); } });
     map.on('error', e => { const m = (e && e.error && e.error.message) || ''; if (m) console.warn('track-map:', m); });
-    // arrow images are drawn on demand in the colour their name asks for, so they come back after every style swap
+    // the arrow image is drawn on demand in the colour its name asks for, so it comes back after every style swap
     map.on('styleimagemissing', e => {
       const m = /^es-arrow-(.+)$/.exec(e.id); if (!m || map.hasImage(e.id)) return;
       const size = 28, c = document.createElement('canvas'); c.width = c.height = size; const g = c.getContext('2d');
