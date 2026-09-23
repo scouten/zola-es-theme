@@ -236,7 +236,7 @@ Optional. The boundaries of the parks a page highlights, chosen by hand in its f
 | `name` | string? | Its name in OpenStreetMap. |
 | `polys` | array | GeoJSON MultiPolygon coordinates: each polygon an outline followed by its holes, each ring closed, as `[lon, lat]`. |
 
-The map shades each park an earthy brown and outlines it in a lighter brown, beneath the basemap's labels and the track. Zooming to the whole day takes in the parks as well as the track.
+The map tints each park a subtle greyed sand, with no outline, beneath the basemap's labels and the track. Zooming to the whole day takes in the parks as well as the track.
 
 ---|---|---|
 | `id` | string | Video id, as in `photos` and `markers.js`. |
