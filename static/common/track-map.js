@@ -104,9 +104,11 @@
   markers.forEach(m => {
     let el = document.getElementById(m.id);
     if (!el) return;
-    // A video's marker names no image on the CDN, so its card shows the player's poster.
-    const poster = el.tagName === 'VIDEO' ? el.getAttribute('poster') : '';
     el = el.closest('.es_image, .es_video') || el;
+
+    // A video's marker names no image on the CDN, so its card shows the player's poster. Once Video.js has set up
+    // the player, the id is on its wrapper, not the <video>.
+    const media = el.querySelector('video'), poster = media ? media.getAttribute('poster') : '';
     const cap = el.querySelector('.caption');
     const loc = cap ? cap.textContent.replace(/\s+/g, ' ').replace(/\s*·\s*by\s.*$/, '').trim() : '';
     const thumb = poster || m.thumb;
