@@ -177,6 +177,12 @@
       if (bad) for (let i = k; i < j; i++) eleAt[i] = null;
       k = j;
     }
+
+    // Each leg's lowest believed altitude: its ground or water level, near enough.
+    SEGMENTS.forEach(s => {
+      const eles = eleAt.slice(s.start, s.end + 1).filter(e => e != null);
+      s.groundEle = eles.length ? Math.min(...eles) : null;
+    });
   }
   // Anchor photos to the track: exported anchors when present, otherwise nearest
   // point in page order, never moving backwards unless the forward match is clearly wrong.
@@ -638,10 +644,11 @@
     const modeEl = document.createElement('span'); modeEl.className = 'mode'; modeEl.textContent = head; text.appendChild(modeEl);
     if (sub) { const labelEl = document.createElement('span'); labelEl.className = 'label'; labelEl.textContent = sub; text.appendChild(labelEl); }
 
-    // On a flight leg, a line for the altitude where the photo was taken, where the log's altitude is believed (a
-    // flight video's caption shows its own).
+    // On a flight leg, a line for the altitude where the photo was taken, where the log's altitude is believed and
+    // at least 50 m above the leg's ground level, so not at the gate or on the water (a flight video's caption shows
+    // its own).
     const photoAlt = view.kind !== 'clip' && FLIGHT_RADIUS_M[seg.mode] ? eleAt[viewIdx(view)] : null;
-    if (photoAlt != null && photoAlt >= 1) {
+    if (photoAlt != null && seg.groundEle != null && photoAlt - seg.groundEle >= 50) {
       const altEl = document.createElement('span'); altEl.className = 'label altitude';
       altEl.textContent = `Altitude ${fmtAlt(photoAlt)}`;
       text.appendChild(altEl);
