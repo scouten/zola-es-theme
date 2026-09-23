@@ -331,15 +331,17 @@
     const ring = (i, primary) => ({ type: 'Feature', properties: { primary }, geometry: { type: 'Point', coordinates: [photos[i].lon, photos[i].lat] } });
     return { type: 'FeatureCollection', features: s.group.slice(1).map(i => ring(i, 0)).concat([ring(s.group[0], 1)]) };
   };
-  // In the docked and expanded views, the stretch of track a flight video covers, when the step or item in view is
-  // a video with a clip.
-  const clipData = () => {
-    const none = { type: 'FeatureCollection', features: [] };
-    if (placement === 'corner') return none;
+  // In the docked and expanded views, the flight video whose stretch of track the map and the progress bar highlight:
+  // the step or item in view, if it is a video with a clip.
+  const clipFocus = () => {
+    if (placement === 'corner') return null;
     const s = browseStep != null ? STEPS[browseStep] : null;
     const idxs = s ? (s.kind === 'photos' ? s.group : []) : (view && view.photoIdx >= 0 ? [view.photoIdx] : []);
-    const p = idxs.map(i => photos[i]).find(q => q && q.clip);
-    return p ? lineOrEmpty(clipCoords(p)) : none;
+    return idxs.map(i => photos[i]).find(q => q && q.clip) || null;
+  };
+  const clipData = () => {
+    const p = clipFocus();
+    return p ? lineOrEmpty(clipCoords(p)) : { type: 'FeatureCollection', features: [] };
   };
   // The track under a flight video, from its first frame to its last.
   const clipCoords = p => {
@@ -591,6 +593,9 @@
     const done = document.getElementById('es-track-leg-done'), ahead = document.getElementById('es-track-leg-ahead');
     done.style.left = pct(legA); done.style.width = pct(at - legA);
     ahead.style.left = pct(at); ahead.style.width = pct(legB - at);
+    const clipP = clipFocus(), clipSpan = document.getElementById('es-track-clip');
+    clipSpan.hidden = !clipP;
+    if (clipP) { const f = clipP.clip.f; clipSpan.style.left = pct(f[0]); clipSpan.style.width = pct(f[f.length - 1] - f[0]); }
     positionProgressLabels();
     document.getElementById('es-track-step-label').textContent = stepLabel(browseStep == null ? stepIndexFor(view) : browseStep);
     if (!mapReady) return;
