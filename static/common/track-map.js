@@ -101,10 +101,13 @@
   markers.forEach(m => {
     let el = document.getElementById(m.id);
     if (!el) return;
+    // A video's marker names no image on the CDN, so its card shows the player's poster.
+    const poster = el.tagName === 'VIDEO' ? el.getAttribute('poster') : '';
     el = el.closest('.es_image, .es_video') || el;
     const cap = el.querySelector('.caption');
     const loc = cap ? cap.textContent.replace(/\s+/g, ' ').replace(/\s*·\s*by\s.*$/, '').trim() : '';
-    photos.push({ id: m.id, lat: m.lat, lon: m.lon, thumb: m.thumb, thumbLarge: m.thumbLarge || m.thumb, loc, el });
+    const thumb = poster || m.thumb;
+    photos.push({ id: m.id, lat: m.lat, lon: m.lon, thumb, thumbLarge: poster || m.thumbLarge || thumb, loc, el });
   });
   const items = photos.map(p => ({ kind: 'photo', el: p.el, photo: p }));
   const content = document.getElementById('es-content');
