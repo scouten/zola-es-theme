@@ -380,7 +380,7 @@
       { id: 'es-park-fill', type: 'fill', source: 'parks', paint: { 'fill-color': tok('park-fill') } },
       // A soft glow under the outline.
       { id: 'es-park-glow', type: 'line', source: 'parks', layout: { 'line-join': 'round' }, paint: { 'line-color': tok('park-line'), 'line-width': placement !== 'corner' ? 9 : 6, 'line-blur': placement !== 'corner' ? 6 : 4, 'line-opacity': .45 } },
-      { id: 'es-park-line', type: 'line', source: 'parks', layout: { 'line-join': 'round' }, paint: { 'line-color': tok('park-line'), 'line-width': placement !== 'corner' ? 2 : 1.5 } },
+      { id: 'es-park-line', type: 'line', source: 'parks', layout: { 'line-join': 'round' }, paint: { 'line-color': tok('park-line'), 'line-width': placement !== 'corner' ? 3 : 2 } },
     ];
   }
   function ourSources() {
