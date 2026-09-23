@@ -919,12 +919,13 @@
   // say why the map failed, on the page and in the console, so a bad upload is diagnosable from a reload
   const explain = err => {
     const m = err && err.message || '';
+    if (/^HTTP /.test(m) && err.url === CFG.trackFallback) return `the CDN refused the cross-origin fetch of ${CFG.trackUrl} (no CORS rule for this origin), and the same-origin fallback ${CFG.trackFallback} returned ${m}`;
     if (/^HTTP /.test(m)) return `the track file returned ${m} from ${CFG.trackUrl}`;
     if (err instanceof TypeError && /fetch|network|load/i.test(m)) return `the track file could not be fetched from ${CFG.trackUrl} (network error, or the CDN is not sending CORS headers for it)`;
     if (err instanceof SyntaxError) return `the track file at ${CFG.trackUrl} is not valid JSON`;
     return m ? `${m} (${CFG.trackUrl})` : `unknown error (${CFG.trackUrl})`;
   };
-  const load = url => fetch(url, { credentials: 'omit' }).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
+  const load = url => fetch(url, { credentials: 'omit' }).then(r => { if (!r.ok) throw Object.assign(new Error('HTTP ' + r.status), { url }); return r.json(); });
   load(CFG.trackUrl)
     .catch(err => {
       // the CDN only answers cross-origin fetches from the production origins; a deploy preview proxies the
