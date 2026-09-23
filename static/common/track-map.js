@@ -32,6 +32,10 @@
   };
   // legs whose caption may show a duration (the only time-derived value ever shown)
   const TIMED = ['fly', 'prop', 'boat', 'ferry', 'helicopter'];
+  // On a flight leg the corner map centres on the aircraft and shows roughly what's in view from the window: about
+  // ten times the altitude either side (3–80 km), or else three minutes' travel at the video's speed, or else a
+  // default radius for the mode.
+  const FLIGHT_RADIUS_M = { fly: 50000, prop: 8000, helicopter: 4000 };
   const ICONS = {
     car: '<path d="M5 11l1.6-4.2A1.5 1.5 0 0 1 8 6h8a1.5 1.5 0 0 1 1.4.8L19 11"/><path d="M3 17v-4.5A1.5 1.5 0 0 1 4.5 11h15a1.5 1.5 0 0 1 1.5 1.5V17h-2.5M3 17h2.5M9 17h6"/><circle cx="7.5" cy="17" r="1.6"/><circle cx="16.5" cy="17" r="1.6"/>',
     walk: '<circle cx="13" cy="4" r="1.8"/><path d="M12 7.5l-1.5 6 3.5 3 1 5"/><path d="M10.5 13.5l-3 6.5"/><path d="M12 7.5l3 2.5 2.5 1"/><path d="M12 7.5l-3.5 1.5-1 3.5"/>',
@@ -138,6 +142,7 @@
 
   // ------------------------------------------------------------ state
   let SEGMENTS = [], pts = [], cum = [], segOf = [], total = 0;
+  let eleAt = [];  // each track point's logged altitude in metres, or undefined
   let distM = 0;  // the day's distance as published (dist_m), which the page's front matter also shows
   let tripDays = 1;  // calendar days the log covers (the JSON's `days`): more than one is a trip, not a day
   let PARKS = [];  // the parks the page highlights (the JSON's `parks`), tinted under the track
@@ -149,15 +154,15 @@
 
   // ------------------------------------------------------------ track
   function flatten() {
-    pts = []; cum = []; segOf = [];
+    pts = []; cum = []; segOf = []; eleAt = [];
     SEGMENTS.forEach((s, si) => {
       s.start = pts.length;
-      for (const c of s.coords) {
-        if (pts.length === 0) { pts.push(c); cum.push(0); segOf.push(si); continue; }
+      s.coords.forEach((c, k) => {
+        if (pts.length === 0) { pts.push(c); cum.push(0); segOf.push(si); eleAt.push(s.eles[k]); return; }
         const d = hav(pts[pts.length - 1], c);
-        if (d < 0.5 && pts.length !== s.start) continue;
-        pts.push(c); cum.push(cum[cum.length - 1] + d); segOf.push(si);
-      }
+        if (d < 0.5 && pts.length !== s.start) return;
+        pts.push(c); cum.push(cum[cum.length - 1] + d); segOf.push(si); eleAt.push(s.eles[k]);
+      });
       s.end = pts.length - 1;
     });
     total = cum[cum.length - 1] || 0;
@@ -536,10 +541,32 @@
   }
   // The whole day, and any park the page highlights.
   function fitAll(pad) { if (mapReady) map.fitBounds(boundsOf([pts, ...parkOutlines()]), { padding: pad, duration: RM ? 0 : 900, maxZoom: 15 }); }
+  // How far to show around the aircraft, in metres. A floatplane on the water, or a log whose altitude is nonsense
+  // (negative), falls back to the video's speed or the mode's default.
+  function flightRadius(v) {
+    const clamp = m => Math.min(Math.max(m, 3000), 80000);
+    const alt = v.kind === 'clip' ? v.alt : eleAt[viewIdx(v)];
+    if (typeof alt === 'number' && alt > 0) return clamp(alt * 10);
+    if (v.kind === 'clip' && v.kmh) return clamp(v.kmh / 3.6 * 180);
+    return FLIGHT_RADIUS_M[SEGMENTS[v.capSeg].mode];
+  }
+  let lastFlight = null;  // the centre and radius the flight camera last framed
   function applyCamera(force) {
     if (!mapReady || !view || placement !== 'corner' || collapsed) return;
     let key, bounds;
     const pad = isPhone() ? 14 : 26;
+    if (!view.transit && FLIGHT_RADIUS_M[SEGMENTS[view.capSeg].mode]) {
+      // Re-frame only when the aircraft has moved a third of the radius, or the radius has changed by half, so the
+      // map doesn't swim while a video plays.
+      const r = flightRadius(view), c = view.dot;
+      const same = lastFlight && lastCamKey === 'f' + view.capSeg && hav(lastFlight.c, c) < lastFlight.r / 3 && Math.abs(Math.log(r / lastFlight.r)) < Math.log(1.5);
+      if (!force && same) return;
+      lastFlight = { c, r };
+      lastCamKey = 'f' + view.capSeg;
+      const dLat = r / 111320, dLon = r / (111320 * Math.cos(c[1] * Math.PI / 180));
+      map.fitBounds([[c[0] - dLon, c[1] - dLat], [c[0] + dLon, c[1] + dLat]], { padding: 0, duration: RM ? 0 : 1100, maxZoom: 14.5, essential: true });
+      return;
+    }
     if (!view.transit) {
       key = 'c' + view.capSeg;
       const ps = photos.filter(p => p.seg === view.capSeg).map(p => [p.lon, p.lat]);
@@ -1027,7 +1054,7 @@
   async function start(track) {
     if (!track || !Array.isArray(track.legs) || !track.legs.length) throw new Error('empty track');
     if (track.v && track.v > 1) throw new Error('unsupported track version ' + track.v);
-    SEGMENTS = track.legs.map(l => Object.assign({}, l, { coords: (l.pts || []).map(p => [p[0], p[1]]) })).filter(s => s.coords.length);
+    SEGMENTS = track.legs.map(l => Object.assign({}, l, { coords: (l.pts || []).map(p => [p[0], p[1]]), eles: (l.pts || []).map(p => p[2]) })).filter(s => s.coords.length);
     flatten();
     if (!pts.length) throw new Error('track has no points');
     distM = typeof track.dist_m === 'number' ? track.dist_m : total;
