@@ -15,6 +15,8 @@ $track-widget-map-height: 270px !default;
   --es-track-current-dim: #9fd9b3;
   --es-track-current-halo: #bddac1;  // opaque: the current green at 22% over the light ground, so overlaps do not compound
   --es-track-ahead: #7a7973;
+  --es-track-park-fill: rgba(139, 107, 72, .18);  // a highlighted park: an earthy brown, clear of the amber track and the green leg
+  --es-track-park-line: #8b6b48;
   --es-track-casing: #f7f6f2;
   --es-track-dot: #ffffff;
   --es-track-water: #c9d9ea;
@@ -44,6 +46,8 @@ $track-widget-map-height: 270px !default;
   --es-track-current-halo: #254634;  // opaque: the current green at 22% over the dark ground
   --es-track-label: #c3c3cd;         // basemap place names (dark only; light mode keeps the basemap's own)
   --es-track-ahead: #a9aab5;
+  --es-track-park-fill: rgba(122, 94, 64, .32);
+  --es-track-park-line: #a8875f;
   --es-track-casing: #121216;
   --es-track-water: #17285a;
   --es-track-coast: #0a1430;
