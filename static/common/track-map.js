@@ -585,6 +585,13 @@
     text.replaceChildren();
     const modeEl = document.createElement('span'); modeEl.className = 'mode'; modeEl.textContent = head; text.appendChild(modeEl);
     if (sub) { const labelEl = document.createElement('span'); labelEl.className = 'label'; labelEl.textContent = sub; text.appendChild(labelEl); }
+
+    // On foot, a line for the leg's climb and descent (the JSON's `gain_m` and `loss_m`).
+    if (view.kind !== 'clip' && seg.gain_m != null && seg.loss_m != null) {
+      const climbEl = document.createElement('span'); climbEl.className = 'label climb';
+      climbEl.textContent = `↑ ${fmtAlt(seg.gain_m)} · ↓ ${fmtAlt(seg.loss_m)}`;
+      text.appendChild(climbEl);
+    }
     badge.querySelector('.es-track-ico').innerHTML = iconSvg(md ? md.icon : 'route');
     const badgeText = badge.querySelector('.es-track-badge-text');
     badgeText.replaceChildren(...Array.from(text.children).map(n => n.cloneNode(true)));
