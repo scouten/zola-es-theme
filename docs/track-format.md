@@ -214,7 +214,8 @@ Optional. For each video (by the same `id` as `photos`) taken on a `fly`, `prop`
 
 ```json
 "clips": [ { "id": "es-268-1708", "leg": 0,
-             "f": [0.93805, 0.93868, …], "kmh": [176, 175, …], "alt": [188, 187, …, null, …] } ]
+             "f": [0.93805, 0.93868, …], "kmh": [176, 175, …], "alt": [188, 187, …, null, …],
+             "phase": [[0, "flying"], [6, "landing"], [96, "taxi"]] } ]
 ```
 
 | Field | Type | Notes |
@@ -224,8 +225,9 @@ Optional. For each video (by the same `id` as `photos`) taken on a `fly`, `prop`
 | `f` | number[] | Sample *k* is *k* seconds into the video: the fraction of the day's `dist_m` travelled, as a photo's `f`. |
 | `kmh` | int[] | Ground speed, km/h, measured over 5 s either side of the sample. |
 | `alt` | (int \| null)[]? | Altitude, metres, from the log's elevation. `null` where that is nonsense: the whole of any dip below −5 m that reaches −10 m (nothing here flies below sea level). A reading a metre or two below sea level, as a floatplane on the water logs, is written as 0. Absent when every sample is `null`. |
+| `phase` | [int, string][]? | Where each phase starts, in seconds into the video: `taxi`, `takeoff`, `flying`, or `landing`. Judged from ground speed alone, since the logged altitude is least reliable just after takeoff: below 40 km/h is taxiing, unless the aircraft stays above it for at least a minute, which is a flight, and a flight's first and last 90 s are its takeoff and landing. Only for `fly` and `prop` legs: a helicopter flies slowly or hovers. |
 
-Once the reader starts a clip's video, and while it is the item in view, the map follows it: the dot, the traveled portion, and the progress bar move with the video, and the caption reads "Flying · 198 km/h / 123 mph" over "Altitude 610 m / 2,000 ft" (or the leg's label where the altitude is `null`). A video the reader hasn't started leaves the map where its photo anchor puts it. `tools/gpx2track.py` does not write clips; `nf` does.
+Once the reader starts a clip's video, and while it is the item in view, the map follows it: the dot, the traveled portion, and the progress bar move with the video, and the caption reads "Flying · 198 km/h / 123 mph" over "Altitude 610 m / 2,000 ft". "Flying" becomes "Taxiing", "Taking off", or "Landing" by `phase`. While taxiing, and where the altitude is `null`, the second line is the leg's label instead. A video the reader hasn't started leaves the map where its photo anchor puts it. `tools/gpx2track.py` does not write clips; `nf` does.
 
 ---
 

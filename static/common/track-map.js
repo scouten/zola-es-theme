@@ -246,8 +246,14 @@
     const alt = c.alt && c.alt[k] != null && (u === 0 || c.alt[Math.min(k + 1, n - 1)] != null) ? lerp(c.alt.map(a => a == null ? 0 : a)) : null;
     const frac = lerp(c.f), m = frac * total;
     const { idx, dot } = pointAt(m, c.leg);
-    return { kind: 'clip', photoIdx: pi, segs: [c.leg, c.leg], capSeg: c.leg, dot, frac, m, idx, transit: false, kmh: lerp(c.kmh), alt };
+
+    // The phase whose start is the latest at or before the playhead.
+    let phase = null;
+    for (const [at, ph] of c.phase || []) if (at <= t) phase = ph;
+    return { kind: 'clip', photoIdx: pi, segs: [c.leg, c.leg], capSeg: c.leg, dot, frac, m, idx, transit: false, kmh: lerp(c.kmh), alt, phase };
   }
+  // What a clip's phase is called in the caption; `flying` keeps the leg's mode name.
+  const PHASE_NAMES = { taxi: 'Taxiing', takeoff: 'Taking off', landing: 'Landing' };
   // The position `m` metres along the (thinned) track, within leg `seg`, and the index of the point before it.
   function pointAt(m, seg) {
     const { start, end } = SEGMENTS[seg];
@@ -536,10 +542,13 @@
     const showDur = TIMED.includes(seg.mode) && seg.dur_s;
     let head;
     if (seg.mode === 'stop') head = seg.label || md.name;
-    else if (view.kind === 'clip') head = `${md ? md.name + ' · ' : ''}${fmtSpeed(view.kmh)}`;
+    else if (view.kind === 'clip') {
+      const name = PHASE_NAMES[view.phase] || (md ? md.name : '');
+      head = `${name ? name + ' · ' : ''}${fmtSpeed(view.kmh)}`;
+    }
     else head = `${md ? md.name + ' · ' : ''}${fmtBoth(segDist(seg))}`;
     let sub = seg.mode === 'stop' ? '' : (seg.label || '');
-    if (view.kind === 'clip' && view.alt != null) sub = `Altitude ${fmtAlt(view.alt)}`;
+    if (view.kind === 'clip' && view.alt != null && view.phase !== 'taxi') sub = `Altitude ${fmtAlt(view.alt)}`;
     else if (showDur) {
       const m = sub.match(/^(.*?)\s*(→|->|⟶|–)\s*(.*)$/);
       sub = m ? `${m[1]} ${m[2]} ${fmtDur(seg.dur_s)} ${m[2]} ${m[3]}` : (sub ? `${sub} · ${fmtDur(seg.dur_s)}` : fmtDur(seg.dur_s));
@@ -646,7 +655,7 @@
       ticking = false;
       if (browseStep != null && placement !== 'corner') { updateOverlap(); return; }
       const v = computeView(currentItem());
-      const moved = v && view && v.kind === 'clip' && (v.frac !== view.frac || v.kmh !== view.kmh || v.alt !== view.alt);
+      const moved = v && view && v.kind === 'clip' && (v.frac !== view.frac || v.kmh !== view.kmh || v.alt !== view.alt || v.phase !== view.phase);
       if (v && (!view || moved || v.kind !== view.kind || v.photoIdx !== view.photoIdx || v.segs[0] !== view.segs[0] || v.segs[1] !== view.segs[1])) { view = v; applyView(false); }
       updateOverlap();
     });
