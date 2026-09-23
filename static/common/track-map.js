@@ -90,6 +90,9 @@
   const fmtBoth = m => `${fmtMetricAs(m, tierOf(m))} / ${fmtImperialAs(m, tierOf(m))}`;
   // Same tier as a reference distance, so "0 km / 0 mi" sits beside "167 km / 104 mi".
   const fmtLike = (m, ref) => `${fmtMetricAs(m, tierOf(ref))} / ${fmtImperialAs(m, tierOf(ref))}`;
+  const fmtSpeed = kmh => `${Math.round(kmh).toLocaleString('en-US')} km/h / ${Math.round(kmh / 1.609344).toLocaleString('en-US')} mph`;
+  // Feet to the nearest 10, as in the metres tier of `fmtBoth`.
+  const fmtAlt = m => `${Math.round(m).toLocaleString('en-US')} m / ${(Math.round(m * 3.28084 / 10) * 10).toLocaleString('en-US')} ft`;
   function fmtDur(s) {
     const m = Math.round(s / 60), h = Math.floor(m / 60);
     return h ? `${h} h ${String(m % 60).padStart(2, '0')} min` : `${m} min`;
@@ -204,7 +207,11 @@
       const p = pi >= 0 ? photos[pi] : null;
       return { kind, photoIdx: pi, segs, capSeg, dot, frac: p ? p.frac : 0, m: p ? p.m : 0, transit: !!transit };
     };
-    if (it.photo) { const p = it.photo, pi = photos.indexOf(p); return mk('photo', pi, [p.seg, p.seg], p.seg, [p.lon, p.lat]); }
+    if (it.photo) {
+      const p = it.photo, pi = photos.indexOf(p);
+      if (clipActive(p)) return clipView(p, pi);
+      return mk('photo', pi, [p.seg, p.seg], p.seg, [p.lon, p.lat]);
+    }
     let prev = null, next = null;
     for (let k = i - 1; k >= 0; k--) if (items[k].photo) { prev = items[k].photo; break; }
     for (let k = i + 1; k < items.length; k++) if (items[k].photo) { next = items[k].photo; break; }
@@ -221,6 +228,55 @@
     return mk('transit', pi, [prev.seg + 1, next.seg], headlineSeg(prev.seg + 1, next.seg), [prev.lon, prev.lat], true);
   }
   const viewIdx = v => v ? (v.idx != null ? v.idx : (v.photoIdx >= 0 ? photos[v.photoIdx].idx : 0)) : 0;
+
+  // ------------------------------------------------------------ flight videos
+  // A flight video's clip (docs/track-format.md §2.6) has one sample per second of the video: how far along the
+  // day, how fast, and how high. Once the reader has started the video, and while it is the item in view, the map
+  // follows it, and the caption shows the speed and altitude.
+  const clipActive = p => !!(p.clip && (p.video.played.length || p.video.currentTime > 0));
+  function clipView(p, pi) {
+    const c = p.clip, n = c.f.length;
+    const t = Math.min(Math.max(p.video.currentTime || 0, 0), n - 1), k = Math.min(Math.floor(t), Math.max(n - 2, 0));
+    const u = n > 1 ? t - k : 0;
+    const lerp = a => a[k] + ((k + 1 < n ? a[k + 1] : a[k]) - a[k]) * u;
+
+    // Altitude only between two good samples.
+    const alt = c.alt && c.alt[k] != null && (u === 0 || c.alt[Math.min(k + 1, n - 1)] != null) ? lerp(c.alt.map(a => a == null ? 0 : a)) : null;
+    const frac = lerp(c.f), m = frac * total;
+    const { idx, dot } = pointAt(m, c.leg);
+    return { kind: 'clip', photoIdx: pi, segs: [c.leg, c.leg], capSeg: c.leg, dot, frac, m, idx, transit: false, kmh: lerp(c.kmh), alt };
+  }
+  // The position `m` metres along the (thinned) track, within leg `seg`, and the index of the point before it.
+  function pointAt(m, seg) {
+    const { start, end } = SEGMENTS[seg];
+    let lo = start, hi = end;
+    while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (cum[mid] <= m) lo = mid; else hi = mid - 1; }
+    if (lo >= end) return { idx: end, dot: pts[end] };
+    const a = pts[lo], b = pts[lo + 1], span = cum[lo + 1] - cum[lo], u = span > 0 ? Math.min(Math.max((m - cum[lo]) / span, 0), 1) : 0;
+    return { idx: lo, dot: [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u] };
+  }
+  function attachClips(clips) {
+    (clips || []).forEach(c => {
+      const p = photos.find(q => q.id === c.id), video = p && p.el.querySelector('video');
+      if (!video || !SEGMENTS[c.leg] || !Array.isArray(c.f) || !c.f.length || !Array.isArray(c.kmh)) return;
+      p.clip = c; p.video = video;
+      ['play', 'pause', 'ended', 'seeked', 'timeupdate'].forEach(ev => video.addEventListener(ev, onClipEvent));
+    });
+  }
+  // `timeupdate` fires only a few times a second, so while a clip plays the view is refreshed about ten times a second.
+  let clipLoop = 0;
+  function onClipEvent() {
+    onScroll();
+    const playing = () => photos.some(p => p.video && !p.video.paused && !p.video.ended);
+    if (clipLoop || !playing()) return;
+    let last = 0;
+    const tick = now => {
+      if (!playing()) { clipLoop = 0; onScroll(); return; }
+      if (now - last >= 100) { last = now; onScroll(); }
+      clipLoop = requestAnimationFrame(tick);
+    };
+    clipLoop = requestAnimationFrame(tick);
+  }
 
   // ------------------------------------------------------------ map data
   const lineOrEmpty = coords => coords.length > 1
@@ -478,9 +534,11 @@
     const showDur = TIMED.includes(seg.mode) && seg.dur_s;
     let head;
     if (seg.mode === 'stop') head = seg.label || md.name;
+    else if (view.kind === 'clip') head = `${md ? md.name + ' · ' : ''}${fmtSpeed(view.kmh)}`;
     else head = `${md ? md.name + ' · ' : ''}${fmtBoth(segDist(seg))}`;
     let sub = seg.mode === 'stop' ? '' : (seg.label || '');
-    if (showDur) {
+    if (view.kind === 'clip' && view.alt != null) sub = `Altitude ${fmtAlt(view.alt)}`;
+    else if (showDur) {
       const m = sub.match(/^(.*?)\s*(→|->|⟶|–)\s*(.*)$/);
       sub = m ? `${m[1]} ${m[2]} ${fmtDur(seg.dur_s)} ${m[2]} ${m[3]}` : (sub ? `${sub} · ${fmtDur(seg.dur_s)}` : fmtDur(seg.dur_s));
     }
@@ -586,7 +644,8 @@
       ticking = false;
       if (browseStep != null && placement !== 'corner') { updateOverlap(); return; }
       const v = computeView(currentItem());
-      if (v && (!view || v.kind !== view.kind || v.photoIdx !== view.photoIdx || v.segs[0] !== view.segs[0] || v.segs[1] !== view.segs[1])) { view = v; applyView(false); }
+      const moved = v && view && v.kind === 'clip' && (v.frac !== view.frac || v.kmh !== view.kmh || v.alt !== view.alt);
+      if (v && (!view || moved || v.kind !== view.kind || v.photoIdx !== view.photoIdx || v.segs[0] !== view.segs[0] || v.segs[1] !== view.segs[1])) { view = v; applyView(false); }
       updateOverlap();
     });
   }
@@ -900,6 +959,7 @@
     if (!pts.length) throw new Error('track has no points');
     distM = typeof track.dist_m === 'number' ? track.dist_m : total;
     anchorPhotos(track.photos);
+    attachClips(track.clips);
     buildSteps();
 
     const ticks = document.getElementById('es-track-ticks'), seen = new Set();
