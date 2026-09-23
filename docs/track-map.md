@@ -57,7 +57,7 @@ parks = ["relation/5291525"]  # Guillemot Cove Nature Reserve
 
 To find the reference:
 
-1. Run `nf update-blog-for-track-map` (or add `-n` for a dry run). It lists the named parks and protected areas along the track, each with the value to paste, and marks the ones already listed with `*`.
+1. Run `nf update-blog-for-track-map` (or add `-n` for a dry run; `nf blog` asks the same when creating a post). At "Look for parks to highlight?", type part of the park's name, such as `Inverdoorn` or `Russian`. That searches OpenStreetMap's place names within the track's area, which is quick even for a long track. Or answer `y` to search along the whole track, which can be slow. It lists the parks found, each with the value to paste, and marks the ones already listed with `*`.
 2. If the park isn't listed, open [openstreetmap.org](https://www.openstreetmap.org), right-click inside the park, and choose **Query features**. Under **Enclosing features**, pick the park (a nature reserve, park, or protected area) and copy the `relation/…` or `way/…` from its page's URL. A pasted URL works too.
 
 ## The track JSON
