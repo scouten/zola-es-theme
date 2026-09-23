@@ -15,7 +15,7 @@ The JSON is always regenerable from the GPX plus the photo list. Nothing is hand
 
 Nothing public shows or ships a clock time. The JSON has no start or end instants, no per-point times, and no time zone. It carries two time-derived values:
 
-- A **duration**, only on flight and boat legs (`fly`, `prop`, `helicopter`, `boat`, `ferry`), so a caption can read "Flying · 13,580 km / 8,439 mi" over "ATL → 14 h 15 min → CPT".
+- A **duration**, only on flight and boat legs (`fly`, `prop`, `helicopter`, `boat`, `ferry`), so a caption can read "Flying · 13,580 km / 8,439 mi" over "ATL → 14h 15min → CPT".
 - **Flight-video clips** (§2.6), only for videos on `fly`, `prop`, and `helicopter` legs. A clip samples the track once a second of the video, so it reveals the pace of that stretch of the flight, but its times are seconds into the video, never clock times. This is a deliberate exception for flights.
 
 Stops and other legs are described by place, mode, and distance only.
@@ -159,6 +159,7 @@ Two version numbers, deliberately separate:
 | `name` | string? | From `<metadata><name>`, when it is a real title. |
 | `dist_m` | int | Sum of moving legs, metres. Stops contribute 0. The map shows it as the day's total; the front-matter `distance` should read the same (§3.3). |
 | `bbox` | [minLon, minLat, maxLon, maxLat] | Of all points. Replaces the hand-typed `bounds` in front matter when that is absent. |
+| `days` | int? | How many calendar days the log covers, in the page's time zone. Written only when more than one: the map then calls the ends "Start of trip" and "End of trip" rather than "Start of day" and "End of day". A count of days is not a clock time. |
 | `legs` | array | In chronological order. See §2.2. |
 | `photos` | array? | Optional photo anchors. See §2.3. |
 | `clips` | array? | Optional flight-video clips. See §2.6. |
@@ -198,7 +199,7 @@ When `photos` is absent, or a photo id is missing from it, the theme falls back 
 |---|---|
 | Moving leg with a label | `Driving · 36 km` over `Cape Town → Muizenberg` |
 | Moving leg without a label | `Driving · 36 km` |
-| Flight or boat leg (`fly`, `prop`, `helicopter`, `boat`, `ferry`) | `Flying · 13,580 km / 8,439 mi` over `ATL → 14 h 15 min → CPT`: the duration sits between the endpoints when the name has an arrow, otherwise after the name |
+| Flight or boat leg (`fly`, `prop`, `helicopter`, `boat`, `ferry`) | `Flying · 13,580 km / 8,439 mi` over `ATL → 14h 15min → CPT`: the duration sits between the endpoints when the name has an arrow, otherwise after the name |
 | Stop | `Cape Point` with the pin icon |
 | Reconstructed leg (`origin` not `recorded`) | Same text; `origin` is kept in the JSON for tooling but the line is drawn the same way |
 

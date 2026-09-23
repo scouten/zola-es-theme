@@ -76,7 +76,7 @@ Modes: `drive`, `taxi`, `walk`, `hike`, `bike`, `horse`, `bus`, `train`, `tram`,
 - **Flight videos**: once the reader plays a video from a flight leg that has a clip (`docs/track-format.md` §2.6), the dot, traveled portion, and progress bar follow the video, and the caption shows what the aircraft is doing, its speed, and its altitude ("Flying · 198 km/h / 123 mph" over "Altitude 610 m / 2,000 ft", or "Taxiing", "Taking off", or "Landing"). Pausing holds the map where the video is; scrolling to another item returns it to following the article.
 - **Phones**: a bottom strip, collapsed to the status line by default.
 
-Durations appear only on `fly`, `prop`, `helicopter`, `boat`, and `ferry` legs, on the caption's second line between the leg's endpoints when its name has an arrow ("ATL → 14 h 15 min → CPT"). No clock times are shown or shipped.
+Durations appear only on `fly`, `prop`, `helicopter`, `boat`, and `ferry` legs, on the caption's second line between the leg's endpoints when its name has an arrow ("ATL → 14h 15min → CPT", units against the numbers, unlike distances). No clock times are shown or shipped.
 
 ## Fonts
 
