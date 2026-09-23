@@ -378,10 +378,6 @@
     if (!PARKS.length) return [];
     return [
       { id: 'es-park-fill', type: 'fill', source: 'parks', paint: { 'fill-color': tok('park-fill') } },
-      // A soft shadow under the outline, in a colour of its own. The outline is dashed, as maps draw park
-      // boundaries, which sets it apart from the solid track lines.
-      { id: 'es-park-glow', type: 'line', source: 'parks', layout: { 'line-join': 'round' }, paint: { 'line-color': tok('park-glow'), 'line-width': placement !== 'corner' ? 8 : 5, 'line-blur': placement !== 'corner' ? 4 : 3, 'line-opacity': .7 } },
-      { id: 'es-park-line', type: 'line', source: 'parks', layout: { 'line-join': 'round' }, paint: { 'line-color': tok('park-line'), 'line-width': placement !== 'corner' ? 3 : 2, 'line-dasharray': [3, 2] } },
     ];
   }
   function ourSources() {
