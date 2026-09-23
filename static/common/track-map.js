@@ -140,6 +140,7 @@
   let SEGMENTS = [], pts = [], cum = [], segOf = [], total = 0;
   let distM = 0;  // the day's distance as published (dist_m), which the page's front matter also shows
   let tripDays = 1;  // calendar days the log covers (the JSON's `days`): more than one is a trip, not a day
+  let PARKS = [];  // the parks the page highlights (the JSON's `parks`), tinted under the track
   let map = null, mapReady = false, baseStyle = null;
   let placement = 'corner', placedOnce = false, slotVisible = false, expanded = false, collapsed = false;
   let view = null, lastCamKey = null, lastGrad = '', lastPhotoIdx = '';
@@ -370,6 +371,15 @@
     return ['case', ['==', ['get', 'seg'], seg], cur, ['<', ['get', 'seg'], seg], tok('accent-dim'), ['<=', ['get', 'i'], curIdx], tok('accent'), tok('ahead')];
   };
 
+  const parkOutlines = () => PARKS.flatMap(p => p.polys.map(poly => poly[0]));
+  const parksData = () => ({ type: 'FeatureCollection', features: PARKS.map(p => ({ type: 'Feature', properties: { name: p.name || '' }, geometry: { type: 'MultiPolygon', coordinates: p.polys } })) });
+  // Under the basemap's labels, so place names stay readable over the shading.
+  function parkLayers() {
+    if (!PARKS.length) return [];
+    return [
+      { id: 'es-park-fill', type: 'fill', source: 'parks', paint: { 'fill-color': tok('park-fill') } },
+    ];
+  }
   function ourSources() {
     const cur = view;
     return {
@@ -381,6 +391,7 @@
       dot: { type: 'geojson', data: dotData(cur) },
       selected: { type: 'geojson', data: selectedData() },
       clip: { type: 'geojson', data: clipData() },
+      parks: { type: 'geojson', data: parksData() },
     };
   }
   function ourLayers() {
@@ -504,6 +515,8 @@
       style.layers.splice(at < 0 ? style.layers.length : at, 0, hs);
     }
     Object.assign(style.sources, ourSources());
+    const labels = style.layers.findIndex(l => l.type === 'symbol');
+    style.layers.splice(labels < 0 ? style.layers.length : labels, 0, ...parkLayers());
     style.layers.push(...ourLayers());
     widget.classList.toggle('basemap-muted', detail !== 'standard');
     return style;
@@ -521,7 +534,8 @@
     if (extra) extra.forEach(c => b.extend(c));
     return b;
   }
-  function fitAll(pad) { if (mapReady) map.fitBounds(boundsOf([pts]), { padding: pad, duration: RM ? 0 : 900, maxZoom: 15 }); }
+  // The whole day, and any park the page highlights.
+  function fitAll(pad) { if (mapReady) map.fitBounds(boundsOf([pts, ...parkOutlines()]), { padding: pad, duration: RM ? 0 : 900, maxZoom: 15 }); }
   function applyCamera(force) {
     if (!mapReady || !view || placement !== 'corner' || collapsed) return;
     let key, bounds;
@@ -1018,6 +1032,7 @@
     if (!pts.length) throw new Error('track has no points');
     distM = typeof track.dist_m === 'number' ? track.dist_m : total;
     tripDays = typeof track.days === 'number' ? track.days : 1;
+    PARKS = (Array.isArray(track.parks) ? track.parks : []).filter(p => Array.isArray(p.polys) && p.polys.length);
     anchorPhotos(track.photos);
     attachClips(track.clips);
     buildSteps();
