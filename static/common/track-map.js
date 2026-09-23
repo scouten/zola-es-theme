@@ -291,18 +291,22 @@
     ? { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: coords } }
     : { type: 'FeatureCollection', features: [] };
   const linesFC = lists => ({ type: 'FeatureCollection', features: lists.filter(c => c.length > 1).map(c => ({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: c } })) });
-  const doneData = v => lineOrEmpty(pts.slice(0, viewIdx(v) + 1));
-  const aheadData = v => lineOrEmpty(pts.slice(viewIdx(v)));
+  // During a flight video the dot sits between track points, and the lines split exactly there rather than at the
+  // point before it, so the traveled line keeps up with the video.
+  const splitDot = v => v && v.kind === 'clip' && viewIdx(v) < pts.length - 1 ? v.dot : null;
+  const doneData = v => { const d = splitDot(v), c = pts.slice(0, viewIdx(v) + 1); return lineOrEmpty(d ? c.concat([d]) : c); };
+  const aheadData = v => { const d = splitDot(v), i = viewIdx(v); return lineOrEmpty(d ? [d].concat(pts.slice(i + 1)) : pts.slice(i)); };
   // the current leg(s), split at the reader's position: `done` is drawn bright, the rest dim
   const currentLegData = v => {
     if (!v) return { type: 'FeatureCollection', features: [] };
-    const at = viewIdx(v);
+    const at = viewIdx(v), d = splitDot(v);
     const doneF = [], aheadF = [];
     const add = (list, coords, done) => { if (coords.length > 1) list.push({ type: 'Feature', properties: { done }, geometry: { type: 'LineString', coordinates: coords } }); };
     for (let s = v.segs[0]; s <= v.segs[1]; s++) {
       const { start, end } = SEGMENTS[s];
-      add(doneF, pts.slice(start, Math.min(at, end) + 1), true);
-      add(aheadF, pts.slice(Math.max(at, start), end + 1), false);
+      const mid = d && at >= start && at < end;
+      add(doneF, pts.slice(start, Math.min(at, end) + 1).concat(mid ? [d] : []), true);
+      add(aheadF, mid ? [d].concat(pts.slice(at + 1, end + 1)) : pts.slice(Math.max(at, start), end + 1), false);
     }
     // features draw in order, so the travelled part goes last and stays on top where the route doubles back
     return { type: 'FeatureCollection', features: aheadF.concat(doneF) };
@@ -352,7 +356,7 @@
     const accent = tok('accent'), dim = tok('accent-dim'), e = 0.0004;
     const flat = c => ['interpolate', ['linear'], ['line-progress'], 0, c, 1, c];
     if (!v) return flat(accent);
-    const doneLen = cum[viewIdx(v)], legStart = cum[SEGMENTS[v.capSeg].start];
+    const doneLen = splitDot(v) ? v.m : cum[viewIdx(v)], legStart = cum[SEGMENTS[v.capSeg].start];
     const f = doneLen > 0 ? Math.min(Math.max(legStart / doneLen, 0), 1) : 0;
     if (f <= e) return flat(accent);
     if (f >= 1 - e) return flat(dim);
@@ -603,7 +607,7 @@
     map.getSource('current').setData(currentLegData(view));
     if (map.getSource('selected')) map.getSource('selected').setData(selectedData());
     if (map.getSource('clip')) map.getSource('clip').setData(clipData());
-    const gradKey = viewIdx(view) + ':' + view.capSeg;
+    const gradKey = viewIdx(view) + ':' + view.capSeg + (splitDot(view) ? ':' + view.m : '');
     if (force || gradKey !== lastGrad) {
       lastGrad = gradKey;
       map.getSource('done').setData(doneData(view));
