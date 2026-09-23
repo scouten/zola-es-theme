@@ -379,7 +379,7 @@
     return [
       { id: 'es-park-fill', type: 'fill', source: 'parks', paint: { 'fill-color': tok('park-fill') } },
       // A soft glow under the outline, in a colour of its own.
-      { id: 'es-park-glow', type: 'line', source: 'parks', layout: { 'line-join': 'round' }, paint: { 'line-color': tok('park-glow'), 'line-width': placement !== 'corner' ? 9 : 6, 'line-blur': placement !== 'corner' ? 6 : 4, 'line-opacity': .6 } },
+      { id: 'es-park-glow', type: 'line', source: 'parks', layout: { 'line-join': 'round' }, paint: { 'line-color': tok('park-glow'), 'line-width': placement !== 'corner' ? 9 : 6, 'line-blur': placement !== 'corner' ? 6 : 4, 'line-opacity': .45 } },
       { id: 'es-park-line', type: 'line', source: 'parks', layout: { 'line-join': 'round' }, paint: { 'line-color': tok('park-line'), 'line-width': placement !== 'corner' ? 4 : 2.5 } },
     ];
   }
