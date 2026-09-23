@@ -129,6 +129,7 @@
 
   // ------------------------------------------------------------ state
   let SEGMENTS = [], pts = [], cum = [], segOf = [], total = 0;
+  let distM = 0;  // the day's distance as published (dist_m), which the page's front matter also shows
   let map = null, mapReady = false, baseStyle = null;
   let placement = 'corner', placedOnce = false, slotVisible = false, expanded = false, collapsed = false;
   let view = null, lastCamKey = null, lastGrad = '', lastPhotoIdx = '';
@@ -446,8 +447,9 @@
   function positionProgressLabels() {
     if (!view) return;
     const band = document.getElementById('es-track-progress'), cur = document.getElementById('es-track-cur'), tot = document.getElementById('es-track-tot');
-    cur.textContent = fmtLike(view.m, total);
-    tot.textContent = fmtBoth(total);
+    // label with the published distance, scaled from the thinned points' own measure
+    cur.textContent = fmtLike(total ? view.m * distM / total : view.m, distM);
+    tot.textContent = fmtBoth(distM);
     // at the end of the track the two labels would say the same thing: show just the total, in green
     const atEnd = total > 0 && view.m >= total - 1;
     tot.classList.toggle('is-done', atEnd);
@@ -893,6 +895,7 @@
     SEGMENTS = track.legs.map(l => Object.assign({}, l, { coords: (l.pts || []).map(p => [p[0], p[1]]) })).filter(s => s.coords.length);
     flatten();
     if (!pts.length) throw new Error('track has no points');
+    distM = typeof track.dist_m === 'number' ? track.dist_m : total;
     anchorPhotos(track.photos);
     buildSteps();
 

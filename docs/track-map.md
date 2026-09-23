@@ -46,7 +46,7 @@ The browser fetches the JSON itself, cross-origin, so the CDN must serve it with
 curl -s -D - -o /dev/null -H "Origin: http://127.0.0.1:1111" https://img.ericscouten.com/<track_key> | grep -i allow-origin
 ```
 
-The `distance` and `route` keys still feed the caption under the docked map and the "(map)" link in the title.
+The `distance` and `route` keys still feed the caption under the docked map and the "(map)" link in the title. The map shows the day's total from the track JSON's `dist_m`, so `distance` should read exactly as the map formats that number. `nf blog` and `nf update-blog-for-track-map` both write it that way.
 
 ## The track JSON
 
