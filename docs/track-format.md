@@ -221,7 +221,17 @@ Optional. For each video (by the same `id` as `photos`) taken on a `fly`, `prop`
 ```
 
 | Field | Type | Notes |
-|### 2.7 Parks
+|---|---|---|
+| `id` | string | Video id, as in `photos` and `markers.js`. |
+| `leg` | int | Index into `legs`. |
+| `f` | number[] | Sample *k* is *k* seconds into the video: the fraction of the day's `dist_m` travelled, as a photo's `f`. |
+| `kmh` | int[] | Ground speed, km/h, measured over 5 s either side of the sample. |
+| `alt` | (int \| null)[]? | Altitude, metres, from the log's elevation. `null` where that is nonsense: the whole of any dip below −5 m that reaches −10 m (nothing here flies below sea level). A reading a metre or two below sea level, as a floatplane on the water logs, is written as 0. Absent when every sample is `null`. |
+| `phase` | [int, string][]? | Where each phase starts, in seconds into the video: `taxi`, `takeoff`, `flying`, or `landing`. Judged from ground speed alone, since the logged altitude is least reliable just after takeoff: below 40 km/h is taxiing, unless the aircraft stays above it for at least a minute, which is a flight, and a flight's first and last 90 s are its takeoff and landing. Only for `fly` and `prop` legs: a helicopter flies slowly or hovers. |
+
+Once the reader starts a clip's video, and while it is the item in view, the map follows it: the dot, the traveled portion, and the progress bar move with the video, and the caption reads "Flying · 198 km/h / 123 mph" over "Altitude 610 m / 2,000 ft". "Flying" becomes "Taxiing", "Taking off", or "Landing" by `phase`. While taxiing, and where the altitude is `null`, the second line is the leg's label instead. A video the reader hasn't started leaves the map where its photo anchor puts it. `tools/gpx2track.py` does not write clips; `nf` does.
+
+### 2.7 Parks
 
 Optional. The boundaries of the parks a page highlights, chosen by hand in its front matter (§3.3). The toolchain fetches each from OpenStreetMap, simplifies it to within 5 m, and rounds it to five decimal places.
 
@@ -237,16 +247,6 @@ Optional. The boundaries of the parks a page highlights, chosen by hand in its f
 | `polys` | array | GeoJSON MultiPolygon coordinates: each polygon an outline followed by its holes, each ring closed, as `[lon, lat]`. |
 
 The map tints each park a subtle greyed sand, with no outline, beneath the basemap's labels and the track. Zooming to the whole day takes in the parks as well as the track.
-
----|---|---|
-| `id` | string | Video id, as in `photos` and `markers.js`. |
-| `leg` | int | Index into `legs`. |
-| `f` | number[] | Sample *k* is *k* seconds into the video: the fraction of the day's `dist_m` travelled, as a photo's `f`. |
-| `kmh` | int[] | Ground speed, km/h, measured over 5 s either side of the sample. |
-| `alt` | (int \| null)[]? | Altitude, metres, from the log's elevation. `null` where that is nonsense: the whole of any dip below −5 m that reaches −10 m (nothing here flies below sea level). A reading a metre or two below sea level, as a floatplane on the water logs, is written as 0. Absent when every sample is `null`. |
-| `phase` | [int, string][]? | Where each phase starts, in seconds into the video: `taxi`, `takeoff`, `flying`, or `landing`. Judged from ground speed alone, since the logged altitude is least reliable just after takeoff: below 40 km/h is taxiing, unless the aircraft stays above it for at least a minute, which is a flight, and a flight's first and last 90 s are its takeoff and landing. Only for `fly` and `prop` legs: a helicopter flies slowly or hovers. |
-
-Once the reader starts a clip's video, and while it is the item in view, the map follows it: the dot, the traveled portion, and the progress bar move with the video, and the caption reads "Flying · 198 km/h / 123 mph" over "Altitude 610 m / 2,000 ft". "Flying" becomes "Taxiing", "Taking off", or "Landing" by `phase`. While taxiing, and where the altitude is `null`, the second line is the leg's label instead. A video the reader hasn't started leaves the map where its photo anchor puts it. `tools/gpx2track.py` does not write clips; `nf` does.
 
 ---
 

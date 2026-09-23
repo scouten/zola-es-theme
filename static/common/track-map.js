@@ -139,8 +139,8 @@
   // ------------------------------------------------------------ state
   let SEGMENTS = [], pts = [], cum = [], segOf = [], total = 0;
   let distM = 0;  // the day's distance as published (dist_m), which the page's front matter also shows
-  let tripDays = 1;
-  let PARKS = [];  // the parks the page highlights (the JSON's `parks`): their outlines are shaded under the track  // calendar days the log covers (the JSON's `days`): more than one is a trip, not a day
+  let tripDays = 1;  // calendar days the log covers (the JSON's `days`): more than one is a trip, not a day
+  let PARKS = [];  // the parks the page highlights (the JSON's `parks`), tinted under the track
   let map = null, mapReady = false, baseStyle = null;
   let placement = 'corner', placedOnce = false, slotVisible = false, expanded = false, collapsed = false;
   let view = null, lastCamKey = null, lastGrad = '', lastPhotoIdx = '';
