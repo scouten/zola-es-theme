@@ -48,6 +48,18 @@ curl -s -D - -o /dev/null -H "Origin: http://127.0.0.1:1111" https://img.ericsco
 
 The `distance` and `route` keys still feed the caption under the docked map and the "(map)" link in the title. The map shows the day's total from the track JSON's `dist_m`, so `distance` should read exactly as the map formats that number. `nf blog` and `nf update-blog-for-track-map` both write it that way.
 
+**Highlighting a park.** List the park's OpenStreetMap relation (or way) in the page's front matter, then run `nf update-blog-for-track-map`, which fetches the boundary into the track JSON:
+
+```toml
+[extra]
+parks = ["relation/5291525"]  # Guillemot Cove Nature Reserve
+```
+
+To find the reference:
+
+1. Run `nf update-blog-for-track-map` (or add `-n` for a dry run). It lists the named parks and protected areas along the track, each with the value to paste, and marks the ones already listed with `*`.
+2. If the park isn't listed, open [openstreetmap.org](https://www.openstreetmap.org), right-click inside the park, and choose **Query features**. Under **Enclosing features**, pick the park (a nature reserve, park, or protected area) and copy the `relation/…` or `way/…` from its page's URL. A pasted URL works too.
+
 ## The track JSON
 
 Produced by the CDN toolchain from a GPX that Waysmith has cut into legs. The full format, including the privacy rule (no clock times anywhere) and the photo-anchor scheme, is specified in `docs/track-format.md`. In short:
@@ -74,6 +86,7 @@ Modes: `drive`, `taxi`, `walk`, `hike`, `bike`, `horse`, `bus`, `train`, `tram`,
 - **Badge at the position dot**: in the docked and expanded views, a small badge beside the dot, tied to it by a short funnel (the photo card gets the same funnel), repeats the caption's icon, mode, distance and label. It sits to the side the traveller came from when the track allows, and hides while a photo card is up. On a leg step for a leg with no photos of its own (other than the first leg of the day), the badge labels the leg from its midpoint instead of the dot at its start.
 - **Stepping through the day**: in the docked and expanded views, arrow buttons in the status bar (and the keyboard arrows when the map is expanded, or docked and filling at least half the window) walk through the day as a sequence of legs and photos: each leg, then the photos taken on it. A leg step frames the leg; a photo step centres on the photo and shows its card, with photos taken within 25 m of each other collapsed into one step. The last step is the end of the track, centred on its final point with the progress bar full; its label reads "End". Otherwise the label reads "Leg 9/16" or "Photo 12/35". Scrolling the article or changing views returns the map to following the reader.
 - **Flight videos**: once the reader plays a video from a flight leg that has a clip (`docs/track-format.md` §2.6), the dot, traveled portion, and progress bar follow the video, and the caption shows what the aircraft is doing, its speed, and its altitude ("Flying · 198 km/h / 123 mph" over "Altitude 610 m / 2,000 ft", or "Taxiing", "Taking off", or "Landing"). Pausing holds the map where the video is; scrolling to another item returns it to following the article.
+- **Parks**: a page can highlight parks, shaded brown with a brown outline under the track, and zooming to the whole day takes them in. See *Highlighting a park* below.
 - **Phones**: a bottom strip, collapsed to the status line by default.
 
 Durations appear only on `fly`, `prop`, `helicopter`, `boat`, and `ferry` legs, on the caption's second line between the leg's endpoints when its name has an arrow ("ATL → 14h 15min → CPT", units against the numbers, unlike distances). No clock times are shown or shipped.

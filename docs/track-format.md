@@ -163,6 +163,7 @@ Two version numbers, deliberately separate:
 | `legs` | array | In chronological order. See §2.2. |
 | `photos` | array? | Optional photo anchors. See §2.3. |
 | `clips` | array? | Optional flight-video clips. See §2.6. |
+| `parks` | array? | Optional boundaries of the parks the page highlights. See §2.7. |
 
 ### 2.2 Legs
 
@@ -220,7 +221,24 @@ Optional. For each video (by the same `id` as `photos`) taken on a `fly`, `prop`
 ```
 
 | Field | Type | Notes |
+|### 2.7 Parks
+
+Optional. The boundaries of the parks a page highlights, chosen by hand in its front matter (§3.3). The toolchain fetches each from OpenStreetMap, simplifies it to within 5 m, and rounds it to five decimal places.
+
+```json
+"parks": [ { "osm": "relation/5291525", "name": "Guillemot Cove Nature Reserve",
+             "polys": [ [ [[-122.91793, 47.61397], …] ] ] } ]
+```
+
+| Field | Type | Notes |
 |---|---|---|
+| `osm` | string | The OpenStreetMap relation or way, as `relation/<id>` or `way/<id>`. |
+| `name` | string? | Its name in OpenStreetMap. |
+| `polys` | array | GeoJSON MultiPolygon coordinates: each polygon an outline followed by its holes, each ring closed, as `[lon, lat]`. |
+
+The map shades each park an earthy brown and outlines it in a lighter brown, beneath the basemap's labels and the track. Zooming to the whole day takes in the parks as well as the track.
+
+---|---|---|
 | `id` | string | Video id, as in `photos` and `markers.js`. |
 | `leg` | int | Index into `legs`. |
 | `f` | number[] | Sample *k* is *k* seconds into the video: the fraction of the day's `dist_m` travelled, as a photo's `f`. |
@@ -289,6 +307,7 @@ track_key = "track/v2/2026/03/2026-03-05.json"   # presence of this key selects 
 distance = "166 km / 103 mi"                  # the JSON's dist_m (166100) as the map writes it
 bounds = { … }                                # optional: overrides the JSON's bbox
 markers = "markers.js"                        # unchanged; ids must match photo anchors
+parks = ["relation/5291525"]                  # optional: parks to highlight (§2.7), by OpenStreetMap relation or way
 ```
 
 Migrating a page is a front-matter edit after the JSON is on the CDN. `nf update-blog-for-track-map` sets `track_key` and `distance` and removes `track_log_key`, so a search for `track_log_key` finds the pages still to migrate. Reverting a page is deleting `track_key` and restoring `track_log_key`. Pages are migrated in whatever order and at whatever pace suits; nothing forces a bulk change.
