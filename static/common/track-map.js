@@ -142,7 +142,7 @@
 
   // ------------------------------------------------------------ state
   let SEGMENTS = [], pts = [], cum = [], segOf = [], total = 0;
-  let eleAt = [];  // each track point's logged altitude in metres, or undefined
+  let eleAt = [];  // each track point's logged altitude in metres, or null where it's missing or nonsense (see flatten)
   let distM = 0;  // the day's distance as published (dist_m), which the page's front matter also shows
   let tripDays = 1;  // calendar days the log covers (the JSON's `days`): more than one is a trip, not a day
   let PARKS = [];  // the parks the page highlights (the JSON's `parks`), tinted under the track
@@ -166,6 +166,17 @@
       s.end = pts.length - 1;
     });
     total = cum[cum.length - 1] || 0;
+
+    // As nf does for flight videos: nothing here flies below sea level, so a dip in the logged altitude below -5 m
+    // that reaches -10 m is nonsense, and the whole dip is dropped.
+    eleAt = eleAt.map(e => typeof e === 'number' ? e : null);
+    for (let k = 0; k < eleAt.length;) {
+      if (!(eleAt[k] < -5)) { k++; continue; }
+      let j = k, bad = false;
+      while (j < eleAt.length && eleAt[j] < -5) { if (eleAt[j] < -10) bad = true; j++; }
+      if (bad) for (let i = k; i < j; i++) eleAt[i] = null;
+      k = j;
+    }
   }
   // Anchor photos to the track: exported anchors when present, otherwise nearest
   // point in page order, never moving backwards unless the forward match is clearly wrong.
@@ -546,7 +557,7 @@
   function flightRadius(v) {
     const clamp = m => Math.min(Math.max(m, 3000), 80000);
     const alt = v.kind === 'clip' ? v.alt : eleAt[viewIdx(v)];
-    if (typeof alt === 'number' && alt > 0) return clamp(alt * 10);
+    if (alt != null && alt > 0) return clamp(alt * 10);
     if (v.kind === 'clip' && v.kmh) return clamp(v.kmh / 3.6 * 180);
     return FLIGHT_RADIUS_M[SEGMENTS[v.capSeg].mode];
   }
@@ -626,6 +637,15 @@
     text.replaceChildren();
     const modeEl = document.createElement('span'); modeEl.className = 'mode'; modeEl.textContent = head; text.appendChild(modeEl);
     if (sub) { const labelEl = document.createElement('span'); labelEl.className = 'label'; labelEl.textContent = sub; text.appendChild(labelEl); }
+
+    // On a flight leg, a line for the altitude where the photo was taken, where the log's altitude is believed (a
+    // flight video's caption shows its own).
+    const photoAlt = view.kind !== 'clip' && FLIGHT_RADIUS_M[seg.mode] ? eleAt[viewIdx(view)] : null;
+    if (photoAlt != null && photoAlt >= 1) {
+      const altEl = document.createElement('span'); altEl.className = 'label altitude';
+      altEl.textContent = `Altitude ${fmtAlt(photoAlt)}`;
+      text.appendChild(altEl);
+    }
 
     // On foot, a line for the leg's climb and descent (the JSON's `gain_m` and `loss_m`): the main direction, and
     // the other only when it is at least 10 m.
