@@ -40,6 +40,12 @@ The browser fetches the JSON itself, cross-origin, so the CDN must serve it with
 
 **Deploy previews.** If the CDN's CORS rule lists exact origins (Tigris does not match wildcard subdomains), previews on `*.netlify.app` are refused. The page then retries the same key on its own origin, `/track/…`, so a preview build can proxy that path to the CDN with a Netlify rewrite. On ericscouten.travel this is done in the deploy-preview build command in `netlify.toml`, which appends `/track/* https://img.ericscouten.com/track/:splat 200` to `public/_redirects`. Production never proxies: the direct fetch succeeds and the fallback is not used. A page that uses `track_url` has no fallback.
 
+**Local preview.** `zola serve` can't proxy, so on a local preview a refused fetch falls through to a same-origin 404, and the page reports that the CDN refused the cross-origin fetch. To see the map locally, add the preview's exact origin to the CDN's CORS rule. Include the port: the browser sends `http://127.0.0.1:1111`, and a bare `http://127.0.0.1` does not match it. Put it in the same rule as the production origins. On Tigris, an origin in a second rule was allowed on the preflight but not on the plain `GET` that the map sends. The CDN doesn't send `Vary: Origin`, so do a hard reload after changing the rule. To check the rule from a terminal:
+
+```
+curl -s -D - -o /dev/null -H "Origin: http://127.0.0.1:1111" https://img.ericscouten.com/<track_key> | grep -i allow-origin
+```
+
 The `distance` and `route` keys still feed the caption under the docked map and the "(map)" link in the title.
 
 ## The track JSON
