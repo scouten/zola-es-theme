@@ -13,7 +13,12 @@ The JSON is always regenerable from the GPX plus the photo list. Nothing is hand
 
 ## 0. Privacy rule
 
-Nothing public shows or ships a clock time. The JSON has no start or end instants, no per-point times, and no time zone. The only time-derived value it carries is a **duration**, and only on flight and boat legs (`fly`, `prop`, `helicopter`, `boat`, `ferry`), so a caption can read "Flying · 13,580 km / 8,439 mi" over "ATL → 14 h 15 min → CPT". Stops and other legs are described by place, mode, and distance only.
+Nothing public shows or ships a clock time. The JSON has no start or end instants, no per-point times, and no time zone. It carries two time-derived values:
+
+- A **duration**, only on flight and boat legs (`fly`, `prop`, `helicopter`, `boat`, `ferry`), so a caption can read "Flying · 13,580 km / 8,439 mi" over "ATL → 14 h 15 min → CPT".
+- **Flight-video clips** (§2.6), only for videos on `fly`, `prop`, and `helicopter` legs. A clip samples the track once a second of the video, so it reveals the pace of that stretch of the flight, but its times are seconds into the video, never clock times. This is a deliberate exception for flights.
+
+Stops and other legs are described by place, mode, and distance only.
 
 The GPX keeps everything (it is what makes editing and re-export possible) and is never uploaded to a public location.
 
@@ -156,6 +161,7 @@ Two version numbers, deliberately separate:
 | `bbox` | [minLon, minLat, maxLon, maxLat] | Of all points. Replaces the hand-typed `bounds` in front matter when that is absent. |
 | `legs` | array | In chronological order. See §2.2. |
 | `photos` | array? | Optional photo anchors. See §2.3. |
+| `clips` | array? | Optional flight-video clips. See §2.6. |
 
 ### 2.2 Legs
 
@@ -200,7 +206,26 @@ Progress reads as distance on the bar: `46 km / 28 mi` at the reader's position,
 
 ### 2.5 Size budget
 
-The reference day (5,964 GPX points, 857 KB) becomes about 1,100 points and 27 KB before gzip. A page should stay under 100 KB of track JSON; a multi-day flight track that exceeds it should use a larger simplification tolerance for the flight legs.
+The reference day (5,964 GPX points, 857 KB) becomes about 1,100 points and 27 KB before gzip. Flight-video clips add about 15 bytes a second of video. A page should stay under 100 KB of track JSON; a multi-day flight track that exceeds it should use a larger simplification tolerance for the flight legs.
+
+### 2.6 Flight-video clips
+
+Optional. For each video (by the same `id` as `photos`) taken on a `fly`, `prop`, or `helicopter` leg, the track under the rendered video, sampled once a second from its first frame. The toolchain places the rendered video in time from its capture time plus its in-point (the rendered file's XMP `xmpDM:startTimecode`, which is 00:00:00:00 at the start of the capture) and takes its length from `xmpDM:duration`. A video not wholly within one flight leg gets no clip.
+
+```json
+"clips": [ { "id": "es-268-1708", "leg": 0,
+             "f": [0.93805, 0.93868, …], "kmh": [176, 175, …], "alt": [188, 187, …, null, …] } ]
+```
+
+| Field | Type | Notes |
+|---|---|---|
+| `id` | string | Video id, as in `photos` and `markers.js`. |
+| `leg` | int | Index into `legs`. |
+| `f` | number[] | Sample *k* is *k* seconds into the video: the fraction of the day's `dist_m` travelled, as a photo's `f`. |
+| `kmh` | int[] | Ground speed, km/h, measured over 5 s either side of the sample. |
+| `alt` | (int \| null)[]? | Altitude, metres, from the log's elevation. `null` where that is nonsense: the whole of any dip below −5 m that reaches −10 m (nothing here flies below sea level). A reading a metre or two below sea level, as a floatplane on the water logs, is written as 0. Absent when every sample is `null`. |
+
+Once the reader starts a clip's video, and while it is the item in view, the map follows it: the dot, the traveled portion, and the progress bar move with the video, and the caption reads "Flying · 198 km/h / 123 mph" over "Altitude 610 m / 2,000 ft" (or the leg's label where the altitude is `null`). A video the reader hasn't started leaves the map where its photo anchor puts it. `tools/gpx2track.py` does not write clips; `nf` does.
 
 ---
 
