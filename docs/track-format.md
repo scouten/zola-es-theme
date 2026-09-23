@@ -173,6 +173,7 @@ Two version numbers, deliberately separate:
 | `label` | string? | From `<name>`. |
 | `origin` | string? | From §1.4. Absent means `recorded`. |
 | `dist_m` | int | Metres along the (unsimplified) leg. 0 for stops. |
+| `gain_m`, `loss_m` | int? | On `hike` and `walk` legs: metres climbed and descended, counting only changes of at least 5 m from the last altitude counted, since GPS altitude wobbles by a few metres. The caption shows them on a line of their own, the leg's main direction always and the other only from 10 m: "↑ 120 m / 390 ft", or "↑ 120 m / 390 ft · ↓ 15 m / 50 ft". |
 | `dur_s` | int? | **Only on `fly`, `prop`, `helicopter`, `boat`, and `ferry` legs.** Seconds. Omitted everywhere else. |
 | `ele` | [min, max]? | Metres. Present when elevation was recorded. Omitted on stops. |
 | `pts` | array of [lon, lat, ele?] | Simplified geometry. `lon`, `lat` to 5 decimals (about 1 m). `ele` is whole metres; omitted when unknown. |
