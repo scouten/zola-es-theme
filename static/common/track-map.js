@@ -585,6 +585,18 @@
     text.replaceChildren();
     const modeEl = document.createElement('span'); modeEl.className = 'mode'; modeEl.textContent = head; text.appendChild(modeEl);
     if (sub) { const labelEl = document.createElement('span'); labelEl.className = 'label'; labelEl.textContent = sub; text.appendChild(labelEl); }
+
+    // On foot, a line for the leg's climb and descent (the JSON's `gain_m` and `loss_m`): the main direction, and
+    // the other only when it is at least 10 m.
+    if (view.kind !== 'clip' && seg.gain_m != null && seg.loss_m != null && (seg.gain_m || seg.loss_m)) {
+      const up = seg.gain_m >= seg.loss_m;
+      const parts = [];
+      if (up || seg.gain_m >= 10) parts.push(`↑ ${fmtAlt(seg.gain_m)}`);
+      if (!up || seg.loss_m >= 10) parts.push(`↓ ${fmtAlt(seg.loss_m)}`);
+      const climbEl = document.createElement('span'); climbEl.className = 'label climb';
+      climbEl.textContent = parts.join(' · ');
+      text.appendChild(climbEl);
+    }
     badge.querySelector('.es-track-ico').innerHTML = iconSvg(md ? md.icon : 'route');
     const badgeText = badge.querySelector('.es-track-badge-text');
     badgeText.replaceChildren(...Array.from(text.children).map(n => n.cloneNode(true)));
