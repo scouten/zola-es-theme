@@ -331,6 +331,18 @@
     const ring = (i, primary) => ({ type: 'Feature', properties: { primary }, geometry: { type: 'Point', coordinates: [photos[i].lon, photos[i].lat] } });
     return { type: 'FeatureCollection', features: s.group.slice(1).map(i => ring(i, 0)).concat([ring(s.group[0], 1)]) };
   };
+  // In the docked and expanded views, the stretch of track a flight video covers, when the step or item in view is
+  // a video with a clip.
+  const clipData = () => {
+    const none = { type: 'FeatureCollection', features: [] };
+    if (placement === 'corner') return none;
+    const s = browseStep != null ? STEPS[browseStep] : null;
+    const idxs = s ? (s.kind === 'photos' ? s.group : []) : (view && view.photoIdx >= 0 ? [view.photoIdx] : []);
+    const p = idxs.map(i => photos[i]).find(q => q && q.clip);
+    if (!p) return none;
+    const c = p.clip, a = pointAt(c.f[0] * total, c.leg), b = pointAt(c.f[c.f.length - 1] * total, c.leg);
+    return lineOrEmpty([a.dot, ...pts.slice(a.idx + 1, b.idx + 1), b.dot]);
+  };
   function doneGradient(v) {
     const accent = tok('accent'), dim = tok('accent-dim'), e = 0.0004;
     const flat = c => ['interpolate', ['linear'], ['line-progress'], 0, c, 1, c];
@@ -357,6 +369,7 @@
       photos: { type: 'geojson', data: { type: 'FeatureCollection', features: photos.map((p, i) => ({ type: 'Feature', properties: { i, seg: p.seg, id: p.id }, geometry: { type: 'Point', coordinates: [p.lon, p.lat] } })) } },
       dot: { type: 'geojson', data: dotData(cur) },
       selected: { type: 'geojson', data: selectedData() },
+      clip: { type: 'geojson', data: clipData() },
     };
   }
   function ourLayers() {
@@ -371,6 +384,9 @@
       { id: 'es-track-done', type: 'line', source: 'done', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-width': big ? 3.5 : 3, 'line-gradient': doneGradient(view) } },
     ];
     layers.push({ id: 'es-current-line', type: 'line', source: 'current', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': ['case', ['get', 'done'], cur, tok('current-dim')], 'line-width': big ? 3.5 : 3 } });
+
+    // The stretch a flight video covers, over the track and under the dots.
+    layers.push({ id: 'es-clip-line', type: 'line', source: 'clip', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': tok('dot'), 'line-width': 4 } });
     if (CFG.dots) {
       layers.push({ id: 'es-photos', type: 'circle', source: 'photos', paint: { 'circle-radius': big ? 5 : 3, 'circle-color': photoColorExpr(view ? view.photoIdx : -1, view ? view.capSeg : 0), 'circle-stroke-color': tok('ground-deep'), 'circle-stroke-width': 1 } });
       layers.push({ id: 'es-photos-hit', type: 'circle', source: 'photos', paint: { 'circle-radius': big ? 12 : 6, 'circle-opacity': 0 } });
@@ -578,6 +594,7 @@
     map.getSource('dot').setData(dotData(view));
     map.getSource('current').setData(currentLegData(view));
     if (map.getSource('selected')) map.getSource('selected').setData(selectedData());
+    if (map.getSource('clip')) map.getSource('clip').setData(clipData());
     const gradKey = viewIdx(view) + ':' + view.capSeg;
     if (force || gradKey !== lastGrad) {
       lastGrad = gradKey;
