@@ -90,6 +90,9 @@
   const fmtBoth = m => `${fmtMetricAs(m, tierOf(m))} / ${fmtImperialAs(m, tierOf(m))}`;
   // Same tier as a reference distance, so "0 km / 0 mi" sits beside "167 km / 104 mi".
   const fmtLike = (m, ref) => `${fmtMetricAs(m, tierOf(ref))} / ${fmtImperialAs(m, tierOf(ref))}`;
+  const fmtSpeed = kmh => `${Math.round(kmh).toLocaleString('en-US')} km/h / ${Math.round(kmh / 1.609344).toLocaleString('en-US')} mph`;
+  // Feet to the nearest 10, as in the metres tier of `fmtBoth`.
+  const fmtAlt = m => `${Math.round(m).toLocaleString('en-US')} m / ${(Math.round(m * 3.28084 / 10) * 10).toLocaleString('en-US')} ft`;
   function fmtDur(s) {
     const m = Math.round(s / 60), h = Math.floor(m / 60);
     return h ? `${h} h ${String(m % 60).padStart(2, '0')} min` : `${m} min`;
@@ -101,9 +104,11 @@
   markers.forEach(m => {
     let el = document.getElementById(m.id);
     if (!el) return;
-    // A video's marker names no image on the CDN, so its card shows the player's poster.
-    const poster = el.tagName === 'VIDEO' ? el.getAttribute('poster') : '';
     el = el.closest('.es_image, .es_video') || el;
+
+    // A video's marker names no image on the CDN, so its card shows the player's poster. Once Video.js has set up
+    // the player, the id is on its wrapper, not the <video>.
+    const media = el.querySelector('video'), poster = media ? media.getAttribute('poster') : '';
     const cap = el.querySelector('.caption');
     const loc = cap ? cap.textContent.replace(/\s+/g, ' ').replace(/\s*·\s*by\s.*$/, '').trim() : '';
     const thumb = poster || m.thumb;
@@ -204,7 +209,11 @@
       const p = pi >= 0 ? photos[pi] : null;
       return { kind, photoIdx: pi, segs, capSeg, dot, frac: p ? p.frac : 0, m: p ? p.m : 0, transit: !!transit };
     };
-    if (it.photo) { const p = it.photo, pi = photos.indexOf(p); return mk('photo', pi, [p.seg, p.seg], p.seg, [p.lon, p.lat]); }
+    if (it.photo) {
+      const p = it.photo, pi = photos.indexOf(p);
+      if (clipActive(p)) return clipView(p, pi);
+      return mk('photo', pi, [p.seg, p.seg], p.seg, [p.lon, p.lat]);
+    }
     let prev = null, next = null;
     for (let k = i - 1; k >= 0; k--) if (items[k].photo) { prev = items[k].photo; break; }
     for (let k = i + 1; k < items.length; k++) if (items[k].photo) { next = items[k].photo; break; }
@@ -222,23 +231,82 @@
   }
   const viewIdx = v => v ? (v.idx != null ? v.idx : (v.photoIdx >= 0 ? photos[v.photoIdx].idx : 0)) : 0;
 
+  // ------------------------------------------------------------ flight videos
+  // A flight video's clip (docs/track-format.md §2.6) has one sample per second of the video: how far along the
+  // day, how fast, and how high. Once the reader has started the video, and while it is the item in view, the map
+  // follows it, and the caption shows the speed and altitude.
+  const clipActive = p => !!(p.clip && (p.video.played.length || p.video.currentTime > 0));
+  function clipView(p, pi) {
+    const c = p.clip, n = c.f.length;
+    const t = Math.min(Math.max(p.video.currentTime || 0, 0), n - 1), k = Math.min(Math.floor(t), Math.max(n - 2, 0));
+    const u = n > 1 ? t - k : 0;
+    const lerp = a => a[k] + ((k + 1 < n ? a[k + 1] : a[k]) - a[k]) * u;
+
+    // Altitude only between two good samples.
+    const alt = c.alt && c.alt[k] != null && (u === 0 || c.alt[Math.min(k + 1, n - 1)] != null) ? lerp(c.alt.map(a => a == null ? 0 : a)) : null;
+    const frac = lerp(c.f), m = frac * total;
+    const { idx, dot } = pointAt(m, c.leg);
+
+    // The phase whose start is the latest at or before the playhead.
+    let phase = null;
+    for (const [at, ph] of c.phase || []) if (at <= t) phase = ph;
+    return { kind: 'clip', photoIdx: pi, segs: [c.leg, c.leg], capSeg: c.leg, dot, frac, m, idx, transit: false, kmh: lerp(c.kmh), alt, phase };
+  }
+  // What a clip's phase is called in the caption; `flying` keeps the leg's mode name.
+  const PHASE_NAMES = { taxi: 'Taxiing', takeoff: 'Taking off', landing: 'Landing' };
+  // The position `m` metres along the (thinned) track, within leg `seg`, and the index of the point before it.
+  function pointAt(m, seg) {
+    const { start, end } = SEGMENTS[seg];
+    let lo = start, hi = end;
+    while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (cum[mid] <= m) lo = mid; else hi = mid - 1; }
+    if (lo >= end) return { idx: end, dot: pts[end] };
+    const a = pts[lo], b = pts[lo + 1], span = cum[lo + 1] - cum[lo], u = span > 0 ? Math.min(Math.max((m - cum[lo]) / span, 0), 1) : 0;
+    return { idx: lo, dot: [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u] };
+  }
+  function attachClips(clips) {
+    (clips || []).forEach(c => {
+      const p = photos.find(q => q.id === c.id), video = p && p.el.querySelector('video');
+      if (!video || !SEGMENTS[c.leg] || !Array.isArray(c.f) || !c.f.length || !Array.isArray(c.kmh)) return;
+      p.clip = c; p.video = video;
+      ['play', 'pause', 'ended', 'seeked', 'timeupdate'].forEach(ev => video.addEventListener(ev, onClipEvent));
+    });
+  }
+  // `timeupdate` fires only a few times a second, so while a clip plays the view is refreshed about ten times a second.
+  let clipLoop = 0;
+  function onClipEvent() {
+    onScroll();
+    const playing = () => photos.some(p => p.video && !p.video.paused && !p.video.ended);
+    if (clipLoop || !playing()) return;
+    let last = 0;
+    const tick = now => {
+      if (!playing()) { clipLoop = 0; onScroll(); return; }
+      if (now - last >= 100) { last = now; onScroll(); }
+      clipLoop = requestAnimationFrame(tick);
+    };
+    clipLoop = requestAnimationFrame(tick);
+  }
+
   // ------------------------------------------------------------ map data
   const lineOrEmpty = coords => coords.length > 1
     ? { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: coords } }
     : { type: 'FeatureCollection', features: [] };
   const linesFC = lists => ({ type: 'FeatureCollection', features: lists.filter(c => c.length > 1).map(c => ({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: c } })) });
-  const doneData = v => lineOrEmpty(pts.slice(0, viewIdx(v) + 1));
-  const aheadData = v => lineOrEmpty(pts.slice(viewIdx(v)));
+  // During a flight video the dot sits between track points, and the lines split exactly there rather than at the
+  // point before it, so the traveled line keeps up with the video.
+  const splitDot = v => v && v.kind === 'clip' && viewIdx(v) < pts.length - 1 ? v.dot : null;
+  const doneData = v => { const d = splitDot(v), c = pts.slice(0, viewIdx(v) + 1); return lineOrEmpty(d ? c.concat([d]) : c); };
+  const aheadData = v => { const d = splitDot(v), i = viewIdx(v); return lineOrEmpty(d ? [d].concat(pts.slice(i + 1)) : pts.slice(i)); };
   // the current leg(s), split at the reader's position: `done` is drawn bright, the rest dim
   const currentLegData = v => {
     if (!v) return { type: 'FeatureCollection', features: [] };
-    const at = viewIdx(v);
+    const at = viewIdx(v), d = splitDot(v);
     const doneF = [], aheadF = [];
     const add = (list, coords, done) => { if (coords.length > 1) list.push({ type: 'Feature', properties: { done }, geometry: { type: 'LineString', coordinates: coords } }); };
     for (let s = v.segs[0]; s <= v.segs[1]; s++) {
       const { start, end } = SEGMENTS[s];
-      add(doneF, pts.slice(start, Math.min(at, end) + 1), true);
-      add(aheadF, pts.slice(Math.max(at, start), end + 1), false);
+      const mid = d && at >= start && at < end;
+      add(doneF, pts.slice(start, Math.min(at, end) + 1).concat(mid ? [d] : []), true);
+      add(aheadF, mid ? [d].concat(pts.slice(at + 1, end + 1)) : pts.slice(Math.max(at, start), end + 1), false);
     }
     // features draw in order, so the travelled part goes last and stays on top where the route doubles back
     return { type: 'FeatureCollection', features: aheadF.concat(doneF) };
@@ -267,11 +335,28 @@
     const ring = (i, primary) => ({ type: 'Feature', properties: { primary }, geometry: { type: 'Point', coordinates: [photos[i].lon, photos[i].lat] } });
     return { type: 'FeatureCollection', features: s.group.slice(1).map(i => ring(i, 0)).concat([ring(s.group[0], 1)]) };
   };
+  // In the docked and expanded views, the flight video whose stretch of track the map and the progress bar highlight:
+  // the step or item in view, if it is a video with a clip.
+  const clipFocus = () => {
+    if (placement === 'corner') return null;
+    const s = browseStep != null ? STEPS[browseStep] : null;
+    const idxs = s ? (s.kind === 'photos' ? s.group : []) : (view && view.photoIdx >= 0 ? [view.photoIdx] : []);
+    return idxs.map(i => photos[i]).find(q => q && q.clip) || null;
+  };
+  const clipData = () => {
+    const p = clipFocus();
+    return p ? lineOrEmpty(clipCoords(p)) : { type: 'FeatureCollection', features: [] };
+  };
+  // The track under a flight video, from its first frame to its last.
+  const clipCoords = p => {
+    const c = p.clip, a = pointAt(c.f[0] * total, c.leg), b = pointAt(c.f[c.f.length - 1] * total, c.leg);
+    return [a.dot, ...pts.slice(a.idx + 1, b.idx + 1), b.dot];
+  };
   function doneGradient(v) {
     const accent = tok('accent'), dim = tok('accent-dim'), e = 0.0004;
     const flat = c => ['interpolate', ['linear'], ['line-progress'], 0, c, 1, c];
     if (!v) return flat(accent);
-    const doneLen = cum[viewIdx(v)], legStart = cum[SEGMENTS[v.capSeg].start];
+    const doneLen = splitDot(v) ? v.m : cum[viewIdx(v)], legStart = cum[SEGMENTS[v.capSeg].start];
     const f = doneLen > 0 ? Math.min(Math.max(legStart / doneLen, 0), 1) : 0;
     if (f <= e) return flat(accent);
     if (f >= 1 - e) return flat(dim);
@@ -293,6 +378,7 @@
       photos: { type: 'geojson', data: { type: 'FeatureCollection', features: photos.map((p, i) => ({ type: 'Feature', properties: { i, seg: p.seg, id: p.id }, geometry: { type: 'Point', coordinates: [p.lon, p.lat] } })) } },
       dot: { type: 'geojson', data: dotData(cur) },
       selected: { type: 'geojson', data: selectedData() },
+      clip: { type: 'geojson', data: clipData() },
     };
   }
   function ourLayers() {
@@ -307,6 +393,9 @@
       { id: 'es-track-done', type: 'line', source: 'done', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-width': big ? 3.5 : 3, 'line-gradient': doneGradient(view) } },
     ];
     layers.push({ id: 'es-current-line', type: 'line', source: 'current', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': ['case', ['get', 'done'], cur, tok('current-dim')], 'line-width': big ? 3.5 : 3 } });
+
+    // The stretch a flight video covers, over the track and under the dots.
+    layers.push({ id: 'es-clip-line', type: 'line', source: 'clip', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': tok('dot'), 'line-width': 4 } });
     if (CFG.dots) {
       layers.push({ id: 'es-photos', type: 'circle', source: 'photos', paint: { 'circle-radius': big ? 5 : 3, 'circle-color': photoColorExpr(view ? view.photoIdx : -1, view ? view.capSeg : 0), 'circle-stroke-color': tok('ground-deep'), 'circle-stroke-width': 1 } });
       layers.push({ id: 'es-photos-hit', type: 'circle', source: 'photos', paint: { 'circle-radius': big ? 12 : 6, 'circle-opacity': 0 } });
@@ -478,9 +567,14 @@
     const showDur = TIMED.includes(seg.mode) && seg.dur_s;
     let head;
     if (seg.mode === 'stop') head = seg.label || md.name;
+    else if (view.kind === 'clip') {
+      const name = PHASE_NAMES[view.phase] || (md ? md.name : '');
+      head = `${name ? name + ' · ' : ''}${fmtSpeed(view.kmh)}`;
+    }
     else head = `${md ? md.name + ' · ' : ''}${fmtBoth(segDist(seg))}`;
     let sub = seg.mode === 'stop' ? '' : (seg.label || '');
-    if (showDur) {
+    if (view.kind === 'clip' && view.alt != null && view.phase !== 'taxi') sub = `Altitude ${fmtAlt(view.alt)}`;
+    else if (showDur) {
       const m = sub.match(/^(.*?)\s*(→|->|⟶|–)\s*(.*)$/);
       sub = m ? `${m[1]} ${m[2]} ${fmtDur(seg.dur_s)} ${m[2]} ${m[3]}` : (sub ? `${sub} · ${fmtDur(seg.dur_s)}` : fmtDur(seg.dur_s));
     }
@@ -503,13 +597,17 @@
     const done = document.getElementById('es-track-leg-done'), ahead = document.getElementById('es-track-leg-ahead');
     done.style.left = pct(legA); done.style.width = pct(at - legA);
     ahead.style.left = pct(at); ahead.style.width = pct(legB - at);
+    const clipP = clipFocus(), clipSpan = document.getElementById('es-track-clip');
+    clipSpan.hidden = !clipP;
+    if (clipP) { const f = clipP.clip.f; clipSpan.style.left = pct(f[0]); clipSpan.style.width = pct(f[f.length - 1] - f[0]); }
     positionProgressLabels();
     document.getElementById('es-track-step-label').textContent = stepLabel(browseStep == null ? stepIndexFor(view) : browseStep);
     if (!mapReady) return;
     map.getSource('dot').setData(dotData(view));
     map.getSource('current').setData(currentLegData(view));
     if (map.getSource('selected')) map.getSource('selected').setData(selectedData());
-    const gradKey = viewIdx(view) + ':' + view.capSeg;
+    if (map.getSource('clip')) map.getSource('clip').setData(clipData());
+    const gradKey = viewIdx(view) + ':' + view.capSeg + (splitDot(view) ? ':' + view.m : '');
     if (force || gradKey !== lastGrad) {
       lastGrad = gradKey;
       map.getSource('done').setData(doneData(view));
@@ -586,7 +684,8 @@
       ticking = false;
       if (browseStep != null && placement !== 'corner') { updateOverlap(); return; }
       const v = computeView(currentItem());
-      if (v && (!view || v.kind !== view.kind || v.photoIdx !== view.photoIdx || v.segs[0] !== view.segs[0] || v.segs[1] !== view.segs[1])) { view = v; applyView(false); }
+      const moved = v && view && v.kind === 'clip' && (v.frac !== view.frac || v.kmh !== view.kmh || v.alt !== view.alt || v.phase !== view.phase);
+      if (v && (!view || moved || v.kind !== view.kind || v.photoIdx !== view.photoIdx || v.segs[0] !== view.segs[0] || v.segs[1] !== view.segs[1])) { view = v; applyView(false); }
       updateOverlap();
     });
   }
@@ -837,7 +936,11 @@
       view = { kind: 'browse', photoIdx: s.group[0], segs: [s.leg, s.leg], capSeg: s.leg, dot: [p.lon, p.lat], frac: p.frac, m: p.m, transit: false };
       applyView(true);
       map.once('moveend', () => { if (browseStep != null && STEPS[browseStep] === s) card.showCard(s.group); });
-      map.easeTo({ center: [p.lon, p.lat], zoom: Math.max(map.getZoom(), 14), duration: RM ? 0 : 600 });
+
+      // A flight video's step frames the whole stretch it covers, which the photo card then sits over.
+      const clip = s.group.map(i => photos[i]).find(q => q.clip);
+      if (clip) map.fitBounds(boundsOf([clipCoords(clip)], [[p.lon, p.lat]]), { padding: isPhone() ? 40 : 90, duration: RM ? 0 : 700, maxZoom: 15.5 });
+      else map.easeTo({ center: [p.lon, p.lat], zoom: Math.max(map.getZoom(), 14), duration: RM ? 0 : 600 });
     }
   }
   const stepFrom = () => (browseStep == null ? stepIndexFor(view) : browseStep);
@@ -900,6 +1003,7 @@
     if (!pts.length) throw new Error('track has no points');
     distM = typeof track.dist_m === 'number' ? track.dist_m : total;
     anchorPhotos(track.photos);
+    attachClips(track.clips);
     buildSteps();
 
     const ticks = document.getElementById('es-track-ticks'), seen = new Set();

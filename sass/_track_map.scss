@@ -185,6 +185,8 @@ $track-widget-map-height: 270px !default;
   .leg-done, .leg-ahead { position: absolute; top: 0; bottom: 0; left: 0; width: 0; transition: left .5s ease, width .5s ease; }
   .leg-done { background: var(--es-track-current); }
   .leg-ahead { background: var(--es-track-current-dim); }
+  // The stretch a flight video covers, as on the map.
+  .clip { position: absolute; top: -1px; bottom: -1px; min-width: 2px; background: var(--es-track-dot); border-radius: 1px; }
   .tick { position: absolute; top: -1px; width: 1px; height: 5px; background: var(--es-track-muted); opacity: .7; }
   .cur, .tot {
     position: absolute; top: 0; font-size: .66rem; line-height: 1; white-space: nowrap; font-variant-numeric: tabular-nums;
