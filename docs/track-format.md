@@ -152,7 +152,7 @@ Two version numbers, deliberately separate:
 |---|---|---|
 | `v` | int | Format version. Consumers refuse files with a major version they don't know. |
 | `name` | string? | From `<metadata><name>`, when it is a real title. |
-| `dist_m` | int | Sum of moving legs, metres. Stops contribute 0. Replaces the hand-typed `distance` in front matter when that is absent. |
+| `dist_m` | int | Sum of moving legs, metres. Stops contribute 0. The map shows it as the day's total; the front-matter `distance` should read the same (§3.3). |
 | `bbox` | [minLon, minLat, maxLon, maxLat] | Of all points. Replaces the hand-typed `bounds` in front matter when that is absent. |
 | `legs` | array | In chronological order. See §2.2. |
 | `photos` | array? | Optional photo anchors. See §2.3. |
@@ -196,7 +196,7 @@ When `photos` is absent, or a photo id is missing from it, the theme falls back 
 | Stop | `Cape Point` with the pin icon |
 | Reconstructed leg (`origin` not `recorded`) | Same text; `origin` is kept in the JSON for tooling but the line is drawn the same way |
 
-Progress reads as distance on the bar: `46 km / 28 mi` at the reader's position, `167 km / 104 mi` at the right.
+Progress reads as distance on the bar: `46 km / 28 mi` at the reader's position, `166 km / 103 mi` (the day's `dist_m`) at the right.
 
 ### 2.5 Size budget
 
@@ -258,13 +258,12 @@ Concretely:
 ```toml
 [extra]
 track_key = "track/v2/2026/03/2026-03-05.json"   # presence of this key selects the new map
-track_log_key = "kml/v1/2026/03/2026-03-05.kml"  # may stay during transition; ignored once `track_key` is set
-distance = "167 km / 104 mi"                  # optional: overrides the JSON's dist_m
+distance = "166 km / 103 mi"                  # the JSON's dist_m (166100) as the map writes it
 bounds = { … }                                # optional: overrides the JSON's bbox
 markers = "markers.js"                        # unchanged; ids must match photo anchors
 ```
 
-Migrating a page is one front-matter edit after the JSON is on the CDN. Reverting a page is deleting that one line. Pages are migrated in whatever order and at whatever pace suits; nothing forces a bulk change.
+Migrating a page is a front-matter edit after the JSON is on the CDN. `nf update-blog-for-track-map` sets `track_key` and `distance` and removes `track_log_key`, so a search for `track_log_key` finds the pages still to migrate. Reverting a page is deleting `track_key` and restoring `track_log_key`. Pages are migrated in whatever order and at whatever pace suits; nothing forces a bulk change.
 
 Per-page leg overrides are deliberately **not** in front matter. Legs are edited in Waysmith and saved in the GPX, so the GPX stays the single place where a day's structure lives.
 

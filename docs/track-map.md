@@ -34,7 +34,7 @@ track_key = "track/v2/2026/03/2026-03-05.json"   # on the CDN (img.ericscouten.c
 # track_url = "/track/v2/2026/03/2026-03-05.json"
 ```
 
-`track_log_key` can stay during the transition; it's ignored once `track_key` is present. Remove the key to revert the page to the old map.
+`track_log_key` is ignored once `track_key` is present. `nf update-blog-for-track-map` removes it, so a search for `track_log_key` finds the pages still to migrate. To revert a page to the old map, remove `track_key` and restore `track_log_key`.
 
 The browser fetches the JSON itself, cross-origin, so the CDN must serve it with an `Access-Control-Allow-Origin` header for the site's origin. Images and the old KML never needed this: images are not fetched with `fetch()`, and Google fetched the KML server-side. A missing CORS header shows up as "could not be fetched" on the page and a CORS error in the browser console, while the same URL opens fine in a new tab.
 
