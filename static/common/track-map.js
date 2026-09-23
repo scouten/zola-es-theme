@@ -93,9 +93,10 @@
   const fmtSpeed = kmh => `${Math.round(kmh).toLocaleString('en-US')} km/h / ${Math.round(kmh / 1.609344).toLocaleString('en-US')} mph`;
   // Feet to the nearest 10, as in the metres tier of `fmtBoth`.
   const fmtAlt = m => `${Math.round(m).toLocaleString('en-US')} m / ${(Math.round(m * 3.28084 / 10) * 10).toLocaleString('en-US')} ft`;
+  // Units run against the numbers, unlike distances: "1h 0min", "14h 15min", "45min".
   function fmtDur(s) {
     const m = Math.round(s / 60), h = Math.floor(m / 60);
-    return h ? `${h} h ${String(m % 60).padStart(2, '0')} min` : `${m} min`;
+    return h ? `${h}h ${m % 60}min` : `${m}min`;
   }
 
   // ------------------------------------------------------------ page content
@@ -138,6 +139,7 @@
   // ------------------------------------------------------------ state
   let SEGMENTS = [], pts = [], cum = [], segOf = [], total = 0;
   let distM = 0;  // the day's distance as published (dist_m), which the page's front matter also shows
+  let tripDays = 1;  // calendar days the log covers (the JSON's `days`): more than one is a trip, not a day
   let map = null, mapReady = false, baseStyle = null;
   let placement = 'corner', placedOnce = false, slotVisible = false, expanded = false, collapsed = false;
   let view = null, lastCamKey = null, lastGrad = '', lastPhotoIdx = '';
@@ -563,7 +565,7 @@
     const seg = SEGMENTS[view.capSeg], md = MODES[seg.mode];
     document.getElementById('es-track-ico').innerHTML = iconSvg(md ? md.icon : 'route');
     // No clock times in public. A duration appears only on flights and boat rides, on the
-    // second line between the endpoints: "ATL → 14 h 15 min → CPT".
+    // second line between the endpoints: "ATL → 14h 15min → CPT".
     const showDur = TIMED.includes(seg.mode) && seg.dur_s;
     let head;
     if (seg.mode === 'stop') head = seg.label || md.name;
@@ -586,8 +588,9 @@
     badge.querySelector('.es-track-ico').innerHTML = iconSvg(md ? md.icon : 'route');
     const badgeText = badge.querySelector('.es-track-badge-text');
     badgeText.replaceChildren(...Array.from(text.children).map(n => n.cloneNode(true)));
-    // a third line when the dot sits at the very start or end of the day
-    const dotIdx = viewIdx(view), note = dotIdx <= 0 ? 'Start of day' : dotIdx >= pts.length - 1 ? 'End of day' : '';
+    // A third line when the dot sits at the very start or end of the day, or of a multi-day trip.
+    const span = tripDays > 1 ? 'trip' : 'day';
+    const dotIdx = viewIdx(view), note = dotIdx <= 0 ? `Start of ${span}` : dotIdx >= pts.length - 1 ? `End of ${span}` : '';
     if (note) { const n = document.createElement('span'); n.className = 'note'; n.textContent = note; badgeText.appendChild(n); }
     document.getElementById('es-track-fill').style.width = (view.frac * 100).toFixed(2) + '%';
     // current leg's span on the bar: green up to the reader's position, darker green beyond
@@ -1002,6 +1005,7 @@
     flatten();
     if (!pts.length) throw new Error('track has no points');
     distM = typeof track.dist_m === 'number' ? track.dist_m : total;
+    tripDays = typeof track.days === 'number' ? track.days : 1;
     anchorPhotos(track.photos);
     attachClips(track.clips);
     buildSteps();
