@@ -339,9 +339,12 @@
     const s = browseStep != null ? STEPS[browseStep] : null;
     const idxs = s ? (s.kind === 'photos' ? s.group : []) : (view && view.photoIdx >= 0 ? [view.photoIdx] : []);
     const p = idxs.map(i => photos[i]).find(q => q && q.clip);
-    if (!p) return none;
+    return p ? lineOrEmpty(clipCoords(p)) : none;
+  };
+  // The track under a flight video, from its first frame to its last.
+  const clipCoords = p => {
     const c = p.clip, a = pointAt(c.f[0] * total, c.leg), b = pointAt(c.f[c.f.length - 1] * total, c.leg);
-    return lineOrEmpty([a.dot, ...pts.slice(a.idx + 1, b.idx + 1), b.dot]);
+    return [a.dot, ...pts.slice(a.idx + 1, b.idx + 1), b.dot];
   };
   function doneGradient(v) {
     const accent = tok('accent'), dim = tok('accent-dim'), e = 0.0004;
@@ -924,7 +927,11 @@
       view = { kind: 'browse', photoIdx: s.group[0], segs: [s.leg, s.leg], capSeg: s.leg, dot: [p.lon, p.lat], frac: p.frac, m: p.m, transit: false };
       applyView(true);
       map.once('moveend', () => { if (browseStep != null && STEPS[browseStep] === s) card.showCard(s.group); });
-      map.easeTo({ center: [p.lon, p.lat], zoom: Math.max(map.getZoom(), 14), duration: RM ? 0 : 600 });
+
+      // A flight video's step frames the whole stretch it covers, which the photo card then sits over.
+      const clip = s.group.map(i => photos[i]).find(q => q.clip);
+      if (clip) map.fitBounds(boundsOf([clipCoords(clip)], [[p.lon, p.lat]]), { padding: isPhone() ? 40 : 90, duration: RM ? 0 : 700, maxZoom: 15.5 });
+      else map.easeTo({ center: [p.lon, p.lat], zoom: Math.max(map.getZoom(), 14), duration: RM ? 0 : 600 });
     }
   }
   const stepFrom = () => (browseStep == null ? stepIndexFor(view) : browseStep);
