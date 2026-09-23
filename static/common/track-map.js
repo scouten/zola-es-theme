@@ -567,6 +567,11 @@
     if (v.kind === 'clip' && v.kmh) return clamp(v.kmh / 3.6 * 180);
     return FLIGHT_RADIUS_M[SEGMENTS[v.capSeg].mode];
   }
+  // Bounds reaching `r` metres from `c` ([lon, lat]) each way.
+  const aroundBounds = (c, r) => {
+    const dLat = r / 111320, dLon = r / (111320 * Math.cos(c[1] * Math.PI / 180));
+    return [[c[0] - dLon, c[1] - dLat], [c[0] + dLon, c[1] + dLat]];
+  };
   let lastFlight = null;  // the centre and radius the flight camera last framed
   function applyCamera(force) {
     if (!mapReady || !view || placement !== 'corner' || collapsed) return;
@@ -580,8 +585,7 @@
       if (!force && same) return;
       lastFlight = { c, r };
       lastCamKey = 'f' + view.capSeg;
-      const dLat = r / 111320, dLon = r / (111320 * Math.cos(c[1] * Math.PI / 180));
-      map.fitBounds([[c[0] - dLon, c[1] - dLat], [c[0] + dLon, c[1] + dLat]], { padding: 0, duration: RM ? 0 : 1100, maxZoom: 14.5, essential: true });
+      map.fitBounds(aroundBounds(c, r), { padding: 0, duration: RM ? 0 : 1100, maxZoom: 14.5, essential: true });
       return;
     }
     if (!view.transit) {
@@ -1023,6 +1027,8 @@
       // A flight video's step frames the whole stretch it covers, which the photo card then sits over.
       const clip = s.group.map(i => photos[i]).find(q => q.clip);
       if (clip) map.fitBounds(boundsOf([clipCoords(clip)], [[p.lon, p.lat]]), { padding: isPhone() ? 40 : 90, duration: RM ? 0 : 700, maxZoom: 15.5 });
+      // A photo from the air shows what's in view from the aircraft, as the corner map does.
+      else if (FLIGHT_RADIUS_M[SEGMENTS[s.leg].mode]) map.fitBounds(aroundBounds([p.lon, p.lat], flightRadius(view)), { padding: 0, duration: RM ? 0 : 700, maxZoom: 14 });
       else map.easeTo({ center: [p.lon, p.lat], zoom: Math.max(map.getZoom(), 14), duration: RM ? 0 : 600 });
     }
   }
