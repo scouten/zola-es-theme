@@ -823,12 +823,19 @@
     if (!mapReady) return;
     setInteractive(target !== 'corner');
     map.setStyle(buildStyle());
-    map.once('style.load', () => {
+    // When MapLibre can apply the new style as a diff, 'style.load' never fires, so frame the view on whichever of
+    // that or the next idle comes first.
+    let framed = false;
+    const frame = () => {
+      if (framed || placement !== target) return;
+      framed = true;
       map.resize();
       if (target === 'corner') { lastCamKey = null; applyCamera(true); }
       else fitOpening(target === 'expanded' ? (isPhone() ? 30 : 70) : 40);
       updateBadge();
-    });
+    };
+    map.once('style.load', frame);
+    map.once('idle', frame);
     requestAnimationFrame(() => map.resize());
   }
   function setCollapsed(v, remember) {
