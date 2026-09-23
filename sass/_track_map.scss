@@ -17,7 +17,7 @@ $track-widget-map-height: 270px !default;
   --es-track-ahead: #7a7973;
   --es-track-park-fill: rgba(128, 114, 92, .1);  // a highlighted park: a greyed sand, clear of the amber traveled track and the green leg
   --es-track-park-line: #8f8168;
-  --es-track-park-glow: #b3a68d;
+  --es-track-park-glow: #5e5444;
   --es-track-casing: #f7f6f2;
   --es-track-dot: #ffffff;
   --es-track-water: #c9d9ea;
@@ -48,8 +48,8 @@ $track-widget-map-height: 270px !default;
   --es-track-label: #c3c3cd;         // basemap place names (dark only; light mode keeps the basemap's own)
   --es-track-ahead: #a9aab5;
   --es-track-park-fill: rgba(140, 126, 104, .14);
-  --es-track-park-line: #2e2519;
-  --es-track-park-glow: #c4b69a;  // a light rim behind the dark outline, so it stands off the terrain
+  --es-track-park-line: #c4b69a;
+  --es-track-park-glow: #2e2519;  // a dark shadow around the outline, so it stands off the terrain
   --es-track-casing: #121216;
   --es-track-water: #17285a;
   --es-track-coast: #0a1430;
