@@ -558,6 +558,23 @@
   }
   // The whole day, and any park the page highlights.
   function fitAll(pad) { if (mapReady) map.fitBounds(boundsOf([pts, ...parkOutlines()]), { padding: pad, duration: RM ? 0 : 900, maxZoom: 15 }); }
+  // Whether `p` ([lon, lat]) lies inside `ring`, by ray casting.
+  function inRing(ring, p) {
+    let inside = false;
+    for (let k = 1; k < ring.length; k++) {
+      const [x0, y0] = ring[k - 1], [x1, y1] = ring[k];
+      if ((y0 > p[1]) !== (y1 > p[1]) && p[0] < x0 + (p[1] - y0) / (y1 - y0) * (x1 - x0)) inside = !inside;
+    }
+    return inside;
+  }
+  // The highlighted park the day starts in, if any: inside an outline and not in one of its holes.
+  const startPark = () => pts.length ? PARKS.find(p => p.polys.some(poly => inRing(poly[0], pts[0]) && !poly.slice(1).some(h => inRing(h, pts[0])))) : null;
+  // The expanded map opens on the park the day starts in, if it does; otherwise, and when docked, on the whole day.
+  function fitOpening(pad) {
+    const park = placement === 'expanded' ? startPark() : null;
+    if (!park) return fitAll(pad);
+    if (mapReady) map.fitBounds(boundsOf(park.polys.map(poly => poly[0]), [pts[0]]), { padding: pad, duration: RM ? 0 : 900, maxZoom: 15 });
+  }
   // How far to show around the aircraft, in metres. A floatplane on the water, or a log whose altitude is nonsense
   // (negative), falls back to the video's speed or the mode's default.
   function flightRadius(v) {
@@ -809,7 +826,7 @@
     map.once('style.load', () => {
       map.resize();
       if (target === 'corner') { lastCamKey = null; applyCamera(true); }
-      else fitAll(target === 'expanded' ? (isPhone() ? 30 : 70) : 40);
+      else fitOpening(target === 'expanded' ? (isPhone() ? 30 : 70) : 40);
       updateBadge();
     });
     requestAnimationFrame(() => map.resize());
@@ -833,7 +850,7 @@
       mapReady = true; lastCamKey = null; lastGrad = ''; lastPhotoIdx = '';
       setInteractive(placement !== 'corner');
       applyView(true);
-      if (placement !== 'corner') fitAll(placement === 'expanded' ? 70 : 40);
+      if (placement !== 'corner') fitOpening(placement === 'expanded' ? 70 : 40);
     });
     map.on('style.load', () => { if (mapReady) { lastCamKey = null; lastGrad = ''; lastPhotoIdx = ''; applyView(true); } });
     map.on('error', e => { const m = (e && e.error && e.error.message) || ''; if (m) console.warn('track-map:', m); });
