@@ -450,6 +450,9 @@
     return ['case', ['==', ['get', 'seg'], seg], cur, ['<', ['get', 'seg'], seg], tok('accent-dim'), ['<=', ['get', 'i'], curIdx], tok('accent'), tok('ahead')];
   };
 
+  // The whole-day view has the whole day current, so every photo is too.
+  const photoColorFor = v => v && v.kind === 'start' ? tok('current') : photoColorExpr(v ? v.photoIdx : -1, v ? v.capSeg : 0);
+
   const parkOutlines = () => PARKS.flatMap(p => p.polys.map(poly => poly[0]));
   const parksData = () => ({ type: 'FeatureCollection', features: PARKS.map(p => ({ type: 'Feature', properties: { name: p.name || '' }, geometry: { type: 'MultiPolygon', coordinates: p.polys } })) });
   // Under the basemap's labels, so place names stay readable over the shading.
@@ -489,7 +492,7 @@
     // The stretch a flight video covers, over the track and under the dots.
     layers.push({ id: 'es-clip-line', type: 'line', source: 'clip', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': tok('dot'), 'line-width': 4 } });
     if (CFG.dots) {
-      layers.push({ id: 'es-photos', type: 'circle', source: 'photos', paint: { 'circle-radius': big ? 5 : 3, 'circle-color': photoColorExpr(view ? view.photoIdx : -1, view ? view.capSeg : 0), 'circle-stroke-color': tok('ground-deep'), 'circle-stroke-width': 1 } });
+      layers.push({ id: 'es-photos', type: 'circle', source: 'photos', paint: { 'circle-radius': big ? 5 : 3, 'circle-color': photoColorFor(view), 'circle-stroke-color': tok('ground-deep'), 'circle-stroke-width': 1 } });
       layers.push({ id: 'es-photos-hit', type: 'circle', source: 'photos', paint: { 'circle-radius': big ? 12 : 6, 'circle-opacity': 0 } });
     }
     if (big) layers.push({ id: 'es-track-hit', type: 'line', source: 'track', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-width': 18, 'line-opacity': 0 } });
@@ -796,10 +799,10 @@
       map.getSource('ahead').setData(aheadData(view));
       map.setPaintProperty('es-track-done', 'line-gradient', doneGradient(view));
     }
-    const dotKey = view.photoIdx + ':' + view.capSeg;
+    const dotKey = view.kind === 'start' ? 'day' : view.photoIdx + ':' + view.capSeg;
     if (CFG.dots && map.getLayer('es-photos') && (force || dotKey !== lastPhotoIdx)) {
       lastPhotoIdx = dotKey;
-      map.setPaintProperty('es-photos', 'circle-color', photoColorExpr(view.photoIdx, view.capSeg));
+      map.setPaintProperty('es-photos', 'circle-color', photoColorFor(view));
     }
     applyCamera(force);
     updateBadge();
@@ -1099,13 +1102,16 @@
     });
     if (SEGMENTS.length) STEPS.push({ kind: 'end', leg: SEGMENTS.length - 1 });
   }
+  // The step the view is on. The whole-day view comes before the first, at -1, so the next arrow goes to leg 1.
   function stepIndexFor(v) {
     if (!v) return 0;
+    if (v.kind === 'start') return -1;
     if (v.photoIdx >= 0) { const k = STEPS.findIndex(s => s.kind === 'photos' && s.group.includes(v.photoIdx)); if (k >= 0) return k; }
     const k = STEPS.findIndex(s => s.kind === 'leg' && s.leg === v.capSeg);
     return k < 0 ? 0 : k;
   }
   function stepLabel(k) {
+    if (k < 0) return 'Whole day';
     const s = STEPS[k];
     if (!s) return '';
     if (s.kind === 'leg') return `Leg ${s.leg + 1}/${SEGMENTS.length}`;
@@ -1115,7 +1121,17 @@
   function browseTo(k) {
     if (!mapReady || !STEPS.length || placement === 'corner') return;
     const card = window.__esTrackCard;
-    browseStep = Math.max(0, Math.min(STEPS.length - 1, k));
+    if (k < 0) {
+      // Back past the first step: the whole-day view.
+      browseStep = null;
+      card.hideCard();
+      view = dayStartView();
+      applyView(true);
+      fitAll(placement === 'expanded' ? (isPhone() ? 30 : 70) : 40);
+      return;
+    }
+
+    browseStep = Math.min(STEPS.length - 1, k);
     const s = STEPS[browseStep];
     card.hideCard();
     if (s.kind === 'leg') {
