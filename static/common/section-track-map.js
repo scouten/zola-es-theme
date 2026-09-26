@@ -41,12 +41,13 @@
     permalink: el.dataset.permalink || '',
     route: el.dataset.route || '',
     distance: el.dataset.distance || '',
+    state: el.dataset.trackUrl ? 'loading' : 'none',  // Then 'ok' or 'failed'.
     coords: null,
     legs: [],
     distM: 0,
   }));
 
-  let map = null, mapReady = false, baseStyle = null;
+  let map = null, mapReady = false, baseStyle = null, baseTried = false, noLibrary = false;
   let focus = null, collapsed = false;
 
   // ------------------------------------------------------------ tracks
@@ -85,7 +86,8 @@
   const load = url => fetch(url, { credentials: 'omit' }).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status + ' from ' + url); return r.json(); });
 
   // The CDN only answers cross-origin fetches from the production origins; a deploy preview proxies the same path
-  // through its own origin instead, so retry there when the direct fetch was refused outright.
+  // through its own origin instead, so retry there when the direct fetch was refused outright. Each day is drawn as
+  // soon as its track arrives, so one slow track doesn't hold up the rest.
   function loadCard(c) {
     return load(c.url)
       .catch(err => {
@@ -93,11 +95,18 @@
         return load(c.fallback);
       })
       .then(track => {
-        c.coords = trackCoords(track);
+        const coords = trackCoords(track);
+        if (coords.length < 2) throw new Error('track has no line');
+        c.coords = coords;
         c.legs = legsOf(track);
         c.distM = typeof track.dist_m === 'number' ? track.dist_m : 0;
+        c.state = 'ok';
       })
-      .catch(err => { console.warn('section-track-map: could not load ' + c.url, err); });
+      .catch(err => {
+        c.state = 'failed';
+        console.warn('section-track-map: could not load ' + c.url, err);
+      })
+      .then(() => dayLoaded(c));
   }
 
   // Each day moved by whole turns to start near where the day before ended, so the trip stays on one world copy.
@@ -112,12 +121,12 @@
     });
   }
 
-  const tracked = () => cards.filter(c => c.coords && c.coords.length);
+  const tracked = () => cards.filter(c => c.state === 'ok');
 
   // ------------------------------------------------------------ map
   const tripData = () => ({
     type: 'FeatureCollection',
-    features: cards.map((c, i) => ({ c, i })).filter(({ c }) => c.coords && c.coords.length > 1)
+    features: cards.map((c, i) => ({ c, i })).filter(({ c }) => c.state === 'ok')
       .map(({ c, i }) => ({ type: 'Feature', properties: { i }, geometry: { type: 'LineString', coordinates: c.coords } })),
   });
 
@@ -127,7 +136,7 @@
   // day never hides an earlier one where they share a road. The whole-trip view draws every day as traveled.
   const at = () => focus == null ? -2 : focus;
   function prevDay() {
-    for (let i = at() - 1; i >= 0; i--) if (cards[i].coords && cards[i].coords.length > 1) return i;
+    for (let i = at() - 1; i >= 0; i--) if (cards[i].state === 'ok') return i;
     return -2;
   }
   const FILTERS = {
@@ -173,31 +182,36 @@
   function frame(instant) {
     if (!mapReady || collapsed) return;
     const c = focus >= 0 ? cards[focus] : null;
-    const days = c && c.coords && c.coords.length ? [c] : tracked();
+    const days = c && c.state === 'ok' ? [c] : tracked();
     if (!days.length) return;
     map.fitBounds(boundsOf(days), { padding: isPhone() ? 14 : 26, maxZoom: 15, duration: instant || RM ? 0 : 1100, essential: true });
   }
 
   // ------------------------------------------------------------ caption
   // Three lines, as the page's map sums up its day: the day's title (cut to one line), its route, and its main ways
-  // of travel with its distance, under the icon of the main one. The whole-trip view gives the trip's title, its
-  // number of days, and its total distance, without naming ways of travel.
+  // of travel with its distance, under the icon of the main one. A day without a map says why in place of its
+  // route. The whole-trip view gives the trip's title, its number of days, and its total distance, without naming
+  // ways of travel; the distance only once every day's track has loaded, since a partial sum would understate it.
+  const DAY_STATUS = { loading: 'Loading map …', failed: 'The map for this day could not be loaded', none: 'No map for this day' };
+
   function caption() {
     const c = focus >= 0 ? cards[focus] : null;
-    const hasMap = !!(c && c.coords && c.coords.length);
-    const days = c ? [c] : tracked();
-    const sum = c ? modeSummary(c.legs) : null;
-    const total = days.reduce((s, d) => s + d.distM, 0);
-    const dist = c ? (c.distance || (c.distM ? fmtBoth(c.distM) : '')) : (total ? fmtBoth(total) : '');
+    const hasMap = !!(c && c.state === 'ok');
+    const sum = hasMap ? modeSummary(c.legs) : null;
+    let second, third;
+    if (c) {
+      second = hasMap ? c.route : DAY_STATUS[c.state];
+      third = hasMap ? [sum ? sum.ways : '', c.distance || (c.distM ? fmtBoth(c.distM) : '')].filter(Boolean).join(' · ') : '';
+    } else {
+      const total = cards.reduce((s, d) => s + d.distM, 0);
+      second = cards.length === 1 ? '1 day' : `${cards.length} days`;
+      third = total && cards.every(d => d.state === 'ok') ? fmtBoth(total) : '';
+    }
     const md = sum ? MODES[sum.mode] : null;
     ico.innerHTML = iconSvg(md ? md.icon : 'route');
 
     // Titles and routes come from the site, but are set as text all the same.
-    const lines = [
-      ['mode', c ? c.title : CFG.title],
-      ['label', c ? (hasMap ? c.route : 'No map for this day') : (days.length === 1 ? '1 day' : `${days.length} days`)],
-      ['label', !c || hasMap ? [sum ? sum.ways : '', dist].filter(Boolean).join(' · ') : ''],
-    ];
+    const lines = [['mode', c ? c.title : CFG.title], ['label', second], ['label', third]];
     text.replaceChildren(...lines.filter(([, t]) => t).map(([cls, t]) => {
       const el = document.createElement('span');
       el.className = cls;
@@ -205,6 +219,26 @@
       return el;
     }));
     widget.title = hasMap ? `Open the map for ${c.title}` : '';
+  }
+
+  // Over the map: if the map library is missing, that; while no track has arrived, that it is loading; if none
+  // could be loaded, that the map failed; otherwise, if the basemap failed, that the routes are shown alone.
+  function updateNotice() {
+    if (noLibrary) showNotice('The map library could not be loaded.');
+    else if (tracked().length) showNotice(baseTried && !baseStyle ? 'Map tiles unavailable. Showing the route alone.' : '');
+    else if (cards.some(c => c.state === 'loading')) showNotice('Loading map …');
+    else showNotice('The map for this trip could not be loaded.');
+  }
+
+  // A day's track has arrived or failed: redraw the trip, and reframe if the view depends on that day.
+  function dayLoaded(c) {
+    if (c.state === 'ok') joinDays();
+    if (mapReady) map.getSource('trip').setData(tripData());
+    caption();
+    applyFilters();
+    updateNotice();
+    const f = focus >= 0 ? cards[focus] : null;
+    if (!f || f === c || f.state !== 'ok') frame(false);
   }
 
   // ------------------------------------------------------------ following the reader
@@ -278,7 +312,7 @@
     if (e.target.closest('.es-track-attr-btn, .es-track-attr, .es-track-collapse')) return;
     if (collapsed) { setCollapsed(false, true); return; }
     const c = focus >= 0 ? cards[focus] : null;
-    if (c && c.permalink && c.coords && c.coords.length) location.href = c.permalink + '#map';
+    if (c && c.permalink && c.state === 'ok') location.href = c.permalink + '#map';
   });
   attrBtn.addEventListener('click', e => { e.stopPropagation(); attrBtn.setAttribute('aria-expanded', String(attrBtn.getAttribute('aria-expanded') !== 'true')); });
   collapseBtn.addEventListener('click', e => { e.stopPropagation(); setCollapsed(!collapsed, true); });
@@ -287,28 +321,37 @@
   async function start() {
     const withTracks = cards.filter(c => c.url);
     if (!withTracks.length) return;
-    const [base] = await Promise.all([window.esTrack.loadBasemap(CFG, tok), ...withTracks.map(loadCard)]);
-    baseStyle = base;
-    if (!tracked().length) return;
-    joinDays();
 
+    // The widget appears at once, saying the map is loading, and each day is drawn as its track arrives.
     widget.hidden = false;
     try { const v = localStorage.getItem('es-track-collapsed'); collapsed = v === null ? (isPhone() && CFG.mobileCollapsed) : v === '1'; }
     catch (e) { collapsed = isPhone() && CFG.mobileCollapsed; }
     setCollapsed(collapsed, false);
-    if (!baseStyle) showNotice('Map tiles unavailable. Showing the route alone.');
     focus = focusIndex();
     caption();
-    if (!window.maplibregl) { showNotice('The map library could not be loaded.'); return; }
+    showNotice('Loading map …');
+    addEventListener('scroll', onScroll, { passive: true });
+    addEventListener('resize', () => { onScroll(); if (mapReady) { map.resize(); frame(true); } });
+    withTracks.forEach(loadCard);
+
+    baseStyle = await window.esTrack.loadBasemap(CFG, tok);
+    baseTried = true;
+    noLibrary = !window.maplibregl;
+    updateNotice();
+    if (noLibrary) return;
 
     // A trip with long flights can span most of the globe, which only fits the corner widget below zoom 1.
     map = new maplibregl.Map({ container: 'es-track-canvas', style: buildStyle(), interactive: false, attributionControl: false, fadeDuration: 0, maxZoom: 17, minZoom: 0 });
 
-    // The reader may have scrolled on while the map loaded.
-    map.on('load', () => { mapReady = true; applyFilters(); frame(true); });
+    // Tracks may have arrived, and the reader scrolled on, while the map loaded.
+    map.on('load', () => {
+      mapReady = true;
+      map.getSource('trip').setData(tripData());
+      applyFilters();
+      frame(true);
+    });
+
     map.on('error', e => { const m = (e && e.error && e.error.message) || ''; if (m) console.warn('section-track-map:', m); });
-    addEventListener('scroll', onScroll, { passive: true });
-    addEventListener('resize', () => { onScroll(); if (mapReady) { map.resize(); frame(true); } });
     onScroll();
   }
 
