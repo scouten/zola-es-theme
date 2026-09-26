@@ -2,9 +2,12 @@
  *
  * Used by templates/section_track_map.html. Draws every day's track from the cards' data-track-url attributes,
  * highlights the day whose card is in view and frames its whole track. Before the first card reaches the reading
- * line the map shows the whole trip. Reads:
- *   - #es-section-track-config  JSON written by the template (trip title, basemap options)
- *   - .pages > .card            data-track-url, data-track-fallback, data-title, data-permalink, data-route, data-distance
+ * line the map shows the whole trip. In listing mode (year pages and the home page, where a trip is one card), it
+ * shows only the card in view, loads each card's tracks as the card comes near, and fades away over a card without
+ * a track. Reads:
+ *   - #es-section-track-config  JSON written by the template (trip title, listing mode, basemap options)
+ *   - .pages > .card            data-track-url and data-track-fallback (space-separated, paired by position, "-" for
+ *                               no fallback), data-title, data-permalink, data-route, data-distance, data-days
  *   - CSS custom properties on the widget (--es-track-*) for every colour
  * The modes, distance formatting, day summary, and basemap come from track-common.js.
  */
@@ -33,19 +36,33 @@
   const attrBtn = document.getElementById('es-track-attr-btn');
   const showNotice = msg => { notice.textContent = msg || ''; notice.hidden = !msg; };
 
-  const cards = Array.from(document.querySelectorAll('.pages > .card')).map(el => ({
-    el,
-    url: el.dataset.trackUrl || '',
-    fallback: el.dataset.trackFallback || '',
-    title: el.dataset.title || '',
-    permalink: el.dataset.permalink || '',
-    route: el.dataset.route || '',
-    distance: el.dataset.distance || '',
-    state: el.dataset.trackUrl ? 'loading' : 'none',  // Then 'ok' or 'failed'.
-    coords: null,
-    legs: [],
-    distM: 0,
-  }));
+  const LISTING = !!CFG.listing;
+
+  // A card has one track per day: one on a trip's day card, one per day on a trip's card in a listing.
+  const cards = Array.from(document.querySelectorAll('.pages > .card')).map(el => {
+    const urls = (el.dataset.trackUrl || '').split(' ').filter(Boolean);
+    const fallbacks = (el.dataset.trackFallback || '').split(' ');
+    return {
+      el,
+      tracks: urls.map((url, k) => ({
+        url,
+        fallback: fallbacks[k] && fallbacks[k] !== '-' ? fallbacks[k] : '',
+        state: 'waiting',  // Then 'loading', then 'ok' or 'failed'.
+        coords: null,
+        legs: [],
+        distM: 0,
+      })),
+      title: el.dataset.title || '',
+      permalink: el.dataset.permalink || '',
+      route: el.dataset.route || '',
+      distance: el.dataset.distance || '',
+      days: +el.dataset.days || 0,
+      state: urls.length ? 'loading' : 'none',  // Then 'ok' (once any track has arrived) or 'failed'.
+      requested: false,
+      legs: [],
+      distM: 0,
+    };
+  });
 
   let map = null, mapReady = false, baseStyle = null, baseTried = false, noLibrary = false;
   let focus = null, collapsed = false;
@@ -88,37 +105,58 @@
   // The CDN only answers cross-origin fetches from the production origins; a deploy preview proxies the same path
   // through its own origin instead, so retry there when the direct fetch was refused outright. Each day is drawn as
   // soon as its track arrives, so one slow track doesn't hold up the rest.
-  function loadCard(c) {
-    return load(c.url)
+  function loadTrack(c, t) {
+    t.state = 'loading';
+    return load(t.url)
       .catch(err => {
-        if (!c.fallback || !(err instanceof TypeError)) throw err;
-        return load(c.fallback);
+        if (!t.fallback || !(err instanceof TypeError)) throw err;
+        return load(t.fallback);
       })
       .then(track => {
         const coords = trackCoords(track);
         if (coords.length < 2) throw new Error('track has no line');
-        c.coords = coords;
-        c.legs = legsOf(track);
-        c.distM = typeof track.dist_m === 'number' ? track.dist_m : 0;
-        c.state = 'ok';
+        t.coords = coords;
+        t.legs = legsOf(track);
+        t.distM = typeof track.dist_m === 'number' ? track.dist_m : 0;
+        t.state = 'ok';
       })
       .catch(err => {
-        c.state = 'failed';
-        console.warn('section-track-map: could not load ' + c.url, err);
+        t.state = 'failed';
+        console.warn('section-track-map: could not load ' + t.url, err);
       })
-      .then(() => dayLoaded(c));
+      .then(() => {
+        const ok = c.tracks.filter(k => k.state === 'ok');
+        c.state = ok.length ? 'ok' : c.tracks.some(k => k.state !== 'failed') ? 'loading' : 'failed';
+        c.legs = ok.flatMap(k => k.legs);
+        c.distM = ok.reduce((m, k) => m + k.distM, 0);
+        dayLoaded(c);
+      });
   }
 
-  // Each day moved by whole turns to start near where the day before ended, so the trip stays on one world copy.
+  function loadCard(c) {
+    if (c.requested) return;
+    c.requested = true;
+    c.tracks.forEach(t => loadTrack(c, t));
+  }
+
+  const allLoaded = c => c.tracks.every(t => t.state === 'ok');
+
+  // Each day moved by whole turns to start near where the day before ended, so the trip stays on one world copy. In
+  // a listing, the cards' trips are unrelated, so each card's days are joined on their own.
   function joinDays() {
-    let prev = null;
-    tracked().forEach(c => {
-      if (prev != null) {
-        const shift = nearLon(c.coords[0][0], prev) - c.coords[0][0];
-        if (shift) c.coords.forEach(p => { p[0] += shift; });
-      }
-      prev = c.coords[c.coords.length - 1][0];
-    });
+    const join = tracks => {
+      let prev = null;
+      tracks.forEach(t => {
+        if (prev != null) {
+          const shift = nearLon(t.coords[0][0], prev) - t.coords[0][0];
+          if (shift) t.coords.forEach(p => { p[0] += shift; });
+        }
+        prev = t.coords[t.coords.length - 1][0];
+      });
+    };
+    const okTracks = c => c.tracks.filter(t => t.state === 'ok');
+    if (LISTING) tracked().forEach(c => join(okTracks(c)));
+    else join(tracked().flatMap(okTracks));
   }
 
   const tracked = () => cards.filter(c => c.state === 'ok');
@@ -126,8 +164,8 @@
   // ------------------------------------------------------------ map
   const tripData = () => ({
     type: 'FeatureCollection',
-    features: cards.map((c, i) => ({ c, i })).filter(({ c }) => c.state === 'ok')
-      .map(({ c, i }) => ({ type: 'Feature', properties: { i }, geometry: { type: 'LineString', coordinates: c.coords } })),
+    features: cards.flatMap((c, i) => c.tracks.filter(t => t.state === 'ok')
+      .map(t => ({ type: 'Feature', properties: { i }, geometry: { type: 'LineString', coordinates: t.coords } }))),
   });
 
   // As on the page's map: the day in view is current (green, with a soft glow beneath), the most recent day before
@@ -139,11 +177,15 @@
     for (let i = at() - 1; i >= 0; i--) if (cards[i].state === 'ok') return i;
     return -2;
   }
+
+  // In a listing, the cards are unrelated, so only the card in view is drawn.
+  const NONE = ['==', ['get', 'i'], -2];
   const FILTERS = {
-    'es-trip-ahead': () => focus === -1 ? ['<', ['get', 'i'], 0] : ['>', ['get', 'i'], at()],
-    'es-trip-finished': () => ['<', ['get', 'i'], focus === -1 ? 0 : prevDay()],
+    'es-trip-casing': () => LISTING ? ['==', ['get', 'i'], at()] : ['>=', ['get', 'i'], 0],
+    'es-trip-ahead': () => LISTING ? NONE : focus === -1 ? ['<', ['get', 'i'], 0] : ['>', ['get', 'i'], at()],
+    'es-trip-finished': () => LISTING ? NONE : ['<', ['get', 'i'], focus === -1 ? 0 : prevDay()],
     'es-trip-current-halo': () => ['==', ['get', 'i'], at()],
-    'es-trip-done': () => focus === -1 ? ['>=', ['get', 'i'], 0] : ['==', ['get', 'i'], prevDay()],
+    'es-trip-done': () => LISTING ? NONE : focus === -1 ? ['>=', ['get', 'i'], 0] : ['==', ['get', 'i'], prevDay()],
     'es-trip-current': () => ['==', ['get', 'i'], at()],
   };
 
@@ -153,7 +195,7 @@
     const line = { 'line-cap': 'round', 'line-join': 'round' };
     const day = (id, paint) => ({ id, type: 'line', source: 'trip', filter: FILTERS[id](), layout: line, paint });
     style.layers.push(
-      { id: 'es-trip-casing', type: 'line', source: 'trip', layout: line, paint: { 'line-color': tok('casing'), 'line-width': 4.8 } },
+      day('es-trip-casing', { 'line-color': tok('casing'), 'line-width': 4.8 }),
       day('es-trip-ahead', { 'line-color': tok('ahead-dim'), 'line-width': 3 }),
       day('es-trip-finished', { 'line-color': tok('accent-dim'), 'line-width': 3 }),
       day('es-trip-current-halo', { 'line-color': tok('current-halo'), 'line-width': 12, 'line-blur': 1.5 }),
@@ -173,7 +215,7 @@
   // The given days' tracks, widened about their centre to at least DAY_MIN_SPAN_M across.
   function boundsOf(days) {
     const b = new maplibregl.LngLatBounds();
-    days.forEach(c => c.coords.forEach(p => b.extend(p)));
+    days.forEach(c => c.tracks.forEach(t => { if (t.state === 'ok') t.coords.forEach(p => b.extend(p)); }));
     const mid = b.getCenter();
     aroundBounds([mid.lng, mid.lat], DAY_MIN_SPAN_M / 2).forEach(p => b.extend(p));
     return b;
@@ -182,7 +224,7 @@
   function frame(instant) {
     if (!mapReady || collapsed) return;
     const c = focus >= 0 ? cards[focus] : null;
-    const days = c && c.state === 'ok' ? [c] : tracked();
+    const days = c && c.state === 'ok' ? [c] : LISTING ? [] : tracked();
     if (!days.length) return;
     map.fitBounds(boundsOf(days), { padding: isPhone() ? 14 : 26, maxZoom: 15, duration: instant || RM ? 0 : 1100, essential: true });
   }
@@ -192,6 +234,8 @@
   // of travel with its distance, under the icon of the main one. A day without a map says why in place of its
   // route. The whole-trip view gives the trip's title, its number of days, and its total distance, without naming
   // ways of travel; the distance only once every day's track has loaded, since a partial sum would understate it.
+  // A trip's card in a listing gives its number of days in place of a route, and its ways of travel and distance
+  // across every day.
   const DAY_STATUS = { loading: 'Loading map …', failed: 'The map for this day could not be loaded', none: 'No map for this day' };
 
   function caption() {
@@ -200,8 +244,10 @@
     const sum = hasMap ? modeSummary(c.legs) : null;
     let second, third;
     if (c) {
-      second = hasMap ? c.route : DAY_STATUS[c.state];
-      third = hasMap ? [sum ? sum.ways : '', c.distance || (c.distM ? fmtBoth(c.distM) : '')].filter(Boolean).join(' · ') : '';
+      const days = c.days ? (c.days === 1 ? '1 day' : `${c.days} days`) : '';
+      const dist = c.distance || (c.distM && allLoaded(c) ? fmtBoth(c.distM) : '');
+      second = hasMap ? c.route || days : DAY_STATUS[c.state];
+      third = hasMap ? [sum ? sum.ways : '', dist].filter(Boolean).join(' · ') : '';
     } else {
       const total = cards.reduce((s, d) => s + d.distM, 0);
       second = cards.length === 1 ? '1 day' : `${cards.length} days`;
@@ -224,6 +270,14 @@
   // Over the map: if the map library is missing, that; while no track has arrived, that it is loading; if none
   // could be loaded, that the map failed; otherwise, if the basemap failed, that the routes are shown alone.
   function updateNotice() {
+    if (LISTING) {
+      const c = focus >= 0 ? cards[focus] : null;
+      if (noLibrary) showNotice('The map library could not be loaded.');
+      else if (c && c.state === 'loading') showNotice('Loading map …');
+      else if (c && c.state === 'ok' && baseTried && !baseStyle) showNotice('Map tiles unavailable. Showing the route alone.');
+      else showNotice('');
+      return;
+    }
     if (noLibrary) showNotice('The map library could not be loaded.');
     else if (tracked().length) showNotice(baseTried && !baseStyle ? 'Map tiles unavailable. Showing the route alone.' : '');
     else if (cards.some(c => c.state === 'loading')) showNotice('Loading map …');
@@ -263,9 +317,18 @@
     if (mapReady) Object.keys(FILTERS).forEach(id => map.setFilter(id, FILTERS[id]()));
   }
 
+  // In a listing, the widget fades away while the card in view has no track, or before the first card.
+  function updateIdle() {
+    if (!LISTING) return;
+    const c = focus >= 0 ? cards[focus] : null;
+    widget.classList.toggle('is-idle', !c || c.state === 'none');
+  }
+
   function setFocus(i, instant) {
     if (i === focus) return;
     focus = i;
+    updateIdle();
+    updateNotice();
     caption();
     applyFilters();
     frame(instant);
@@ -312,14 +375,16 @@
     if (e.target.closest('.es-track-attr-btn, .es-track-attr, .es-track-collapse')) return;
     if (collapsed) { setCollapsed(false, true); return; }
     const c = focus >= 0 ? cards[focus] : null;
-    if (c && c.permalink && c.state === 'ok') location.href = c.permalink + '#map';
+
+    // A trip's section page has no map anchor; its own corner map shows the whole trip at the top.
+    if (c && c.permalink && c.state === 'ok') location.href = c.permalink + (c.days ? '' : '#map');
   });
   attrBtn.addEventListener('click', e => { e.stopPropagation(); attrBtn.setAttribute('aria-expanded', String(attrBtn.getAttribute('aria-expanded') !== 'true')); });
   collapseBtn.addEventListener('click', e => { e.stopPropagation(); setCollapsed(!collapsed, true); });
 
   // ------------------------------------------------------------ boot
   async function start() {
-    const withTracks = cards.filter(c => c.url);
+    const withTracks = cards.filter(c => c.tracks.length);
     if (!withTracks.length) return;
 
     // The widget appears at once, saying the map is loading, and each day is drawn as its track arrives.
@@ -328,11 +393,23 @@
     catch (e) { collapsed = isPhone() && CFG.mobileCollapsed; }
     setCollapsed(collapsed, false);
     focus = focusIndex();
+    updateIdle();
     caption();
-    showNotice('Loading map …');
+    showNotice(LISTING ? '' : 'Loading map …');
     addEventListener('scroll', onScroll, { passive: true });
     addEventListener('resize', () => { onScroll(); if (mapReady) { map.resize(); frame(true); } });
-    withTracks.forEach(loadCard);
+
+    // A listing can hold hundreds of cards, so each card's tracks load as it comes within a window or so of view.
+    if (LISTING && 'IntersectionObserver' in window) {
+      const io = new IntersectionObserver(entries => entries.forEach(e => {
+        if (!e.isIntersecting) return;
+        io.unobserve(e.target);
+        loadCard(cards.find(c => c.el === e.target));
+      }), { rootMargin: '100% 0px' });
+      withTracks.forEach(c => io.observe(c.el));
+    } else {
+      withTracks.forEach(loadCard);
+    }
 
     baseStyle = await window.esTrack.loadBasemap(CFG, tok);
     baseTried = true;
