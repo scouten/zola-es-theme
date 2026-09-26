@@ -15,6 +15,7 @@ $track-widget-map-height: 270px !default;
   --es-track-current-dim: #9fd9b3;
   --es-track-current-halo: #bddac1;  // opaque: the current green at 22% over the light ground, so overlaps do not compound
   --es-track-ahead: #7a7973;
+  --es-track-ahead-dim: #a3a29b;    // the trip section map's days ahead, receding behind the current day
   --es-track-park-fill: rgba(128, 114, 92, .1);  // a highlighted park: a greyed sand tint, clear of the amber traveled track and the green leg
   --es-track-casing: #f7f6f2;
   --es-track-dot: #ffffff;
@@ -45,6 +46,7 @@ $track-widget-map-height: 270px !default;
   --es-track-current-halo: #254634;  // opaque: the current green at 22% over the dark ground
   --es-track-label: #c3c3cd;         // basemap place names (dark only; light mode keeps the basemap's own)
   --es-track-ahead: #a9aab5;
+  --es-track-ahead-dim: #6c6d77;
   --es-track-park-fill: rgba(140, 126, 104, .14);
   --es-track-casing: #121216;
   --es-track-water: #17285a;
@@ -206,6 +208,8 @@ $track-widget-map-height: 270px !default;
   .mode { font-weight: 600; color: var(--es-track-text); }
   .label { color: var(--es-track-muted); font-size: .78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 }
+// the trip section map's caption leads with the day's title, cut to its one line
+.es-track-widget.is-section .es-track-text .mode { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .es-track-widget .es-track-bar-btn {
   flex: 0 0 auto; width: 1.6rem; height: 1.6rem; border-radius: 50%; padding: 0; margin-left: .1rem;
   border: 1px solid var(--es-track-edge); background: transparent; color: var(--es-track-muted); display: grid; place-items: center;

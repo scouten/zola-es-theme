@@ -1,0 +1,44 @@
+{#-
+  Corner map for a trip's section page (docs/track-map.md): every day's track, with the day whose card is in
+  view highlighted and framed. Included by section.html when the site has [extra.track_map], the section lists
+  its pages chronologically (section_chronological_depth), and at least one page has a track. The tracks
+  themselves come from the cards' data-track-url attributes.
+-#}
+{%- set tm = config.extra.track_map -%}
+{%- set corner = tm.corner | default(value="left") -%}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.css">
+<script defer src="https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.js"></script>
+
+<script type="application/json" id="es-section-track-config">{
+  "title": {{ section.title | json_encode() | safe }},
+  "isDark": {{ config.extra.is_dark | default(value=false) | json_encode() }},
+  "basemap": {{ tm.basemap | default(value="") | json_encode() | safe }},
+  "detail": {{ tm.detail | default(value="minimal") | json_encode() | safe }},
+  "hillshade": {{ tm.hillshade | default(value=true) | json_encode() }},
+  "glyphs": {{ tm.glyphs | default(value="") | json_encode() | safe }},
+  "labelFont": {% if tm.label_font %}{{ tm.label_font | json_encode() | safe }}{% else %}[]{% endif %},
+  "dim": {{ tm.dim_over_photos | default(value=true) | json_encode() }},
+  "mobileCollapsed": {{ tm.mobile_collapsed | default(value=true) | json_encode() }}
+}</script>
+
+<div id="es-track-widget" class="es-track-widget is-corner is-section{% if corner == "right" %} pos-right{% endif %}" hidden>
+  <div class="es-track-map">
+    <div id="es-track-canvas"></div>
+    <div class="es-track-notice" id="es-track-notice" hidden></div>
+    <button type="button" class="es-track-btn es-track-attr-btn" id="es-track-attr-btn" aria-label="Map credits" aria-expanded="false">i</button>
+    <div class="es-track-attr">© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors · <a href="https://openfreemap.org">OpenFreeMap</a> · Terrain: Mapzen, AWS</div>
+  </div>
+  <div class="es-track-bar">
+    <div class="es-track-caption">
+      <span class="es-track-ico" id="es-track-ico" aria-hidden="true"></span>
+      <span class="es-track-text" id="es-track-text"></span>
+      <button type="button" class="es-track-bar-btn es-track-collapse" id="es-track-collapse" aria-label="Collapse map" aria-expanded="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script defer src="/common/track-common.js"></script>
+<script defer src="/common/section-track-map.js"></script>
