@@ -18,16 +18,20 @@
   {%- endblock -%}
 
   {%- block subsections -%}
-  {#- Trips (subsections at least `section_chronological_depth` deep) appear as cards among the pages instead. -#}
-  {%- set sub_depth = section.components | length + 1 -%}
-  {%- set subs_are_trips = config.extra.section_chronological_depth | default(value=0) > 0 and sub_depth >= config.extra.section_chronological_depth | default(value=0) -%}
-  {%- if section.subsections | length > 0 and not subs_are_trips -%}
+  {#- A trip (a subsection at least `section_chronological_depth` deep) whose days this section lists appears as a
+      card among the pages instead. -#}
+  {%- set trip_depth = config.extra | get(key="section_chronological_depth", default=0) -%}
+  {%- set collapses_subs = trip_depth > 0 and section.components | length + 1 >= trip_depth -%}
+  {%- set listed = section.pages | map(attribute = "permalink") -%}
+  {%- set_global subs = [] -%}
+  {%- for sub in section.subsections -%}
+    {%- set sub = get_section(path = sub) -%}
+    {%- if not collapses_subs or sub.pages | length == 0 or not sub.pages[0].permalink in listed -%}
+      {%- set_global subs = subs | concat(with = sub) -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- if subs | length > 0 -%}
     <ul class="subsections">
-      {%- set subs = [] -%}
-      {%- for sub in section.subsections -%}
-        {%- set sub = get_section(path = sub) -%}
-        {%- set_global subs = subs | concat(with = sub) -%}
-      {%- endfor -%}
       {%- set subs = subs | sort(attribute = "relative_path") -%}
       {%- for sub in subs -%}
         <li class="subsection">
@@ -97,8 +101,10 @@
         {%- set card_components = trip.components -%}
         {%- if trip.extra.cover -%}
           {%- set card_extra = trip.extra -%}
+          {%- set card_cover_base = trip.permalink -%}
         {%- else -%}
           {%- set card_extra = first_day.extra -%}
+          {%- set card_cover_base = first_day.permalink -%}
         {%- endif -%}
         {%- set from_year = first_day.date | date(format="%Y") -%}
         {%- set from_month = first_day.date | date(format="%B") -%}
@@ -124,6 +130,7 @@
         {%- set card_permalink = page.permalink -%}
         {%- set card_components = page.components -%}
         {%- set card_extra = page.extra -%}
+        {%- set card_cover_base = page.permalink -%}
         {%- set card_date = page.date | date(format="%e %B %Y") -%}
         {%- set card_summary = page.summary | default(value = "") -%}
       {%- endif -%}
@@ -180,7 +187,7 @@
             {%- if card_extra.cover_cdn_key -%}
               {%- set_global cover_url = "https://img.ericscouten.com/" ~ card_extra.cover_cdn_key ~ "/" ~ "cover-" ~ card_extra.cover ~ "-1000w.jpg" -%}
             {%- else -%}
-              {%- set_global cover_url = card_permalink ~ "cover-" ~ card_extra.cover ~ ".jpg" -%}
+              {%- set_global cover_url = card_cover_base ~ "cover-" ~ card_extra.cover ~ ".jpg" -%}
             {%- endif -%}
             <a href="{{ card_permalink | safe }}">
               <img src="{{ cover_url }}" alt="{{ card_extra.cover_alt | default(value=card_title) }}" />

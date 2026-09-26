@@ -162,9 +162,10 @@
   const tracked = () => cards.filter(c => c.state === 'ok');
 
   // ------------------------------------------------------------ map
+  // In a listing, only the card in view is drawn, so the map is given that card's tracks alone.
   const tripData = () => ({
     type: 'FeatureCollection',
-    features: cards.flatMap((c, i) => c.tracks.filter(t => t.state === 'ok')
+    features: cards.flatMap((c, i) => LISTING && i !== focus ? [] : c.tracks.filter(t => t.state === 'ok')
       .map(t => ({ type: 'Feature', properties: { i }, geometry: { type: 'LineString', coordinates: t.coords } }))),
   });
 
@@ -287,7 +288,7 @@
   // A day's track has arrived or failed: redraw the trip, and reframe if the view depends on that day.
   function dayLoaded(c) {
     if (c.state === 'ok') joinDays();
-    if (mapReady) map.getSource('trip').setData(tripData());
+    if (mapReady && (!LISTING || c === cards[focus])) map.getSource('trip').setData(tripData());
     caption();
     applyFilters();
     updateNotice();
@@ -327,6 +328,7 @@
   function setFocus(i, instant) {
     if (i === focus) return;
     focus = i;
+    if (LISTING && mapReady) map.getSource('trip').setData(tripData());
     updateIdle();
     updateNotice();
     caption();
