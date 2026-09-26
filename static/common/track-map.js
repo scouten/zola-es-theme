@@ -594,7 +594,7 @@
     return b;
   }
 
-  function fitAll(pad) { if (mapReady) map.fitBounds(dayBounds(), { padding: pad, duration: RM ? 0 : 900, maxZoom: 15 }); }
+  function fitAll(pad) { if (mapReady) map.fitBounds(dayBounds(), { padding: pad, duration: animMs(900), maxZoom: 15 }); }
   // Whether `p` ([lon, lat]) lies inside `ring`, by ray casting.
   function inRing(ring, p) {
     let inside = false;
@@ -610,7 +610,7 @@
   function fitOpening(pad) {
     const park = placement === 'expanded' ? startPark() : null;
     if (!park) return fitAll(pad);
-    if (mapReady) map.fitBounds(boundsOf(park.polys.map(poly => poly[0]), [pts[0]]), { padding: pad, duration: RM ? 0 : 900, maxZoom: 15 });
+    if (mapReady) map.fitBounds(boundsOf(park.polys.map(poly => poly[0]), [pts[0]]), { padding: pad, duration: animMs(900), maxZoom: 15 });
   }
   // How far to show around the aircraft, in metres. A floatplane on the water, or a log whose altitude is nonsense
   // (negative), falls back to the video's speed or the mode's default.
@@ -627,6 +627,8 @@
     return [[c[0] - dLon, c[1] - dLat], [c[0] + dLon, c[1] + dLat]];
   };
   let lastFlight = null;  // the centre and radius the flight camera last framed
+  let cameraJumps = false;  // while the map first loads: move the camera straight to its framing, without animating
+  const animMs = ms => RM || cameraJumps ? 0 : ms;
   function applyCamera(force) {
     if (!mapReady || !view || placement !== 'corner' || collapsed) return;
     let key, bounds;
@@ -634,7 +636,7 @@
     if (view.kind === 'start') {
       if (!force && lastCamKey === 'day') return;
       lastCamKey = 'day';
-      map.fitBounds(dayBounds(), { padding: pad, duration: RM ? 0 : 1100, maxZoom: 15, essential: true });
+      map.fitBounds(dayBounds(), { padding: pad, duration: animMs(1100), maxZoom: 15, essential: true });
       return;
     }
 
@@ -646,7 +648,7 @@
       if (!force && same) return;
       lastFlight = { c, r };
       lastCamKey = 'f' + view.capSeg;
-      map.fitBounds(aroundBounds(c, r), { padding: 0, duration: RM ? 0 : 1100, maxZoom: 14.5, essential: true });
+      map.fitBounds(aroundBounds(c, r), { padding: 0, duration: animMs(1100), maxZoom: 14.5, essential: true });
       return;
     }
     if (!view.transit) {
@@ -659,7 +661,7 @@
     }
     if (!force && key === lastCamKey) return;
     lastCamKey = key;
-    map.fitBounds(bounds, { padding: pad, duration: RM ? 0 : 1100, maxZoom: view.transit ? 15.5 : 14.5, essential: true });
+    map.fitBounds(bounds, { padding: pad, duration: animMs(1100), maxZoom: view.transit ? 15.5 : 14.5, essential: true });
   }
   function positionProgressLabels() {
     if (!view) return;
@@ -901,13 +903,15 @@
 
   // ------------------------------------------------------------ map init
   function initMap() {
-    map = new maplibregl.Map({ container: 'es-track-canvas', style: buildStyle(), attributionControl: false, fadeDuration: 0, maxZoom: 17, minZoom: 1, pitchWithRotate: false, center: pts[0], zoom: 9 });
+    map = new maplibregl.Map({ container: 'es-track-canvas', style: buildStyle(), attributionControl: false, fadeDuration: 0, maxZoom: 17, minZoom: 1, pitchWithRotate: false, bounds: dayBounds(), fitBoundsOptions: { padding: isPhone() ? 14 : 26, maxZoom: 15 } });
     setInteractive(false);
     map.on('load', () => {
       mapReady = true; lastCamKey = null; lastGrad = ''; lastPhotoIdx = '';
       setInteractive(placement !== 'corner');
+      cameraJumps = true;
       applyView(true);
       if (placement !== 'corner') fitOpening(placement === 'expanded' ? 70 : 40);
+      cameraJumps = false;
     });
     map.on('style.load', () => { if (mapReady) { lastCamKey = null; lastGrad = ''; lastPhotoIdx = ''; applyView(true); } });
     map.on('error', e => { const m = (e && e.error && e.error.message) || ''; if (m) console.warn('track-map:', m); });
