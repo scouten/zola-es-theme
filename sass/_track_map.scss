@@ -233,8 +233,9 @@ $track-widget-map-height: 270px !default;
   &.is-collapsed .es-track-bar { min-height: 2.4rem; }
 }
 
-.es-track-slot {
-  position: relative; height: 62vh; min-height: 320px; margin: 3em auto 0;
+// Also by id, to win over the page's own `#map` height.
+#map.es-track-slot, .es-track-slot {
+  position: relative; height: 75vh; min-height: 320px; margin: 3em auto 0;
   border-radius: 8px; overflow: hidden; background: $scheme-main;
 }
 .es-track-slot-empty {
