@@ -1,7 +1,8 @@
 {#-
   Corner map for a trip's section page (docs/track-map.md): every day's track, with the day whose card is in
   view highlighted and framed. Included by section.html when the site has [extra.track_map], the section lists
-  its pages chronologically (section_chronological_depth), and at least one page has a track. The tracks
+  its pages chronologically (section_chronological_depth), and at least one page has a track. Year pages and the
+  home page get it too, in listing mode: it shows only the track(s) of the card in view. The tracks
   themselves come from the cards' data-track-url attributes.
 -#}
 {%- set tm = config.extra.track_map -%}
@@ -12,6 +13,7 @@
 
 <script type="application/json" id="es-section-track-config">{
   "title": {{ section.title | json_encode() | safe }},
+  "listing": {{ listing_map | json_encode() }},
   "isDark": {{ config.extra.is_dark | default(value=false) | json_encode() }},
   "basemap": {{ tm.basemap | default(value="") | json_encode() | safe }},
   "detail": {{ tm.detail | default(value="minimal") | json_encode() | safe }},

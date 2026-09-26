@@ -237,6 +237,9 @@ $track-widget-map-height: 270px !default;
   &.is-collapsed .es-track-bar { min-height: 2.4rem; }
 }
 
+// A listing's corner map, while the card in view has no track.
+.es-track-widget.is-corner.is-idle { opacity: 0 !important; visibility: hidden; pointer-events: none; transition: opacity .35s ease, visibility 0s linear .35s; }
+
 // Also by id, to win over the page's own `#map` height.
 #map.es-track-slot, .es-track-slot {
   position: relative; height: 75vh; min-height: 320px; margin: 3em auto 0;
