@@ -158,7 +158,7 @@ Two version numbers, deliberately separate:
 | `v` | int | Format version. Consumers refuse files with a major version they don't know. |
 | `name` | string? | From `<metadata><name>`, when it is a real title. |
 | `dist_m` | int | Sum of moving legs, metres. Stops contribute 0. The map shows it as the day's total; the front-matter `distance` should read the same (§3.3). |
-| `bbox` | [minLon, minLat, maxLon, maxLat] | Of all points. Replaces the hand-typed `bounds` in front matter when that is absent. |
+| `bbox` | [west, minLat, east, maxLat] | Of all points. For a track that crosses the antimeridian, west is greater than east, as in GeoJSON. Replaces the hand-typed `bounds` in front matter when that is absent. |
 | `days` | int? | How many calendar days the log covers, in the page's time zone. Written only when more than one: the map then calls the ends "Start of trip" and "End of trip" rather than "Start of day" and "End of day". A count of days is not a clock time. The page's front-matter `days` overrides it (§3.3). |
 | `legs` | array | In chronological order. See §2.2. |
 | `photos` | array? | Optional photo anchors. See §2.3. |
