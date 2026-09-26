@@ -168,6 +168,15 @@
     }));
   }
 
+  // A park moved onto the same world copy as the track: each vertex's longitude lies within 180° of the track
+  // point nearest the park's first vertex, so fitting the park and the track together stays tight.
+  function unwrapPark(park) {
+    const first = park.polys[0][0][0];
+    let ref = first[0], bd = Infinity;
+    pts.forEach(c => { const d = hav(first, c); if (d < bd) { bd = d; ref = c[0]; } });
+    return Object.assign({}, park, { polys: park.polys.map(poly => poly.map(ring => ring.map(c => [nearLon(c[0], ref), c[1]]))) });
+  }
+
   function flatten() {
     pts = []; cum = []; segOf = []; eleAt = [];
     SEGMENTS.forEach((s, si) => {
@@ -1132,7 +1141,7 @@
     if (!pts.length) throw new Error('track has no points');
     distM = typeof track.dist_m === 'number' ? track.dist_m : total;
     tripDays = CFG.days > 0 ? CFG.days : typeof track.days === 'number' ? track.days : 1;
-    PARKS = (Array.isArray(track.parks) ? track.parks : []).filter(p => Array.isArray(p.polys) && p.polys.length);
+    PARKS = (Array.isArray(track.parks) ? track.parks : []).filter(p => Array.isArray(p.polys) && p.polys.length).map(unwrapPark);
     anchorPhotos(track.photos);
     photos.forEach(p => { p.lon = nearLon(p.lon, pts[p.idx][0]); });
     attachClips(track.clips);
