@@ -48,6 +48,13 @@ curl -s -D - -o /dev/null -H "Origin: http://127.0.0.1:1111" https://img.ericsco
 
 The `distance` and `route` keys still feed the caption under the docked map and the "(map)" link in the title. The map shows the day's total from the track JSON's `dist_m`, so `distance` should read exactly as the map formats that number. `nf blog` and `nf update-blog-for-track-map` both write it that way.
 
+**Counting days.** The map calls the ends of the track "Start of day" and "End of day", or "Start of trip" and "End of trip" when the track JSON's `days` says the log covers more than one calendar day. A page can override that count, for instance when a leg from the evening before is told as the end of this day:
+
+```toml
+[extra]
+days = 1
+```
+
 **Highlighting a park.** List the park's OpenStreetMap relation (or way) in the page's front matter, then run `nf update-blog-for-track-map`, which fetches the boundary into the track JSON:
 
 ```toml

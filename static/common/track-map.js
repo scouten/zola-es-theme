@@ -144,7 +144,7 @@
   let SEGMENTS = [], pts = [], cum = [], segOf = [], total = 0;
   let eleAt = [];  // each track point's logged altitude in metres, or null where it's missing or nonsense (see flatten)
   let distM = 0;  // the day's distance as published (dist_m), which the page's front matter also shows
-  let tripDays = 1;  // calendar days the log covers (the JSON's `days`): more than one is a trip, not a day
+  let tripDays = 1;  // calendar days the log covers (the page's `days`, else the JSON's): more than one is a trip, not a day
   let PARKS = [];  // the parks the page highlights (the JSON's `parks`), tinted under the track
   let map = null, mapReady = false, baseStyle = null;
   let placement = 'corner', placedOnce = false, slotVisible = false, expanded = false, collapsed = false;
@@ -1115,7 +1115,7 @@
     flatten();
     if (!pts.length) throw new Error('track has no points');
     distM = typeof track.dist_m === 'number' ? track.dist_m : total;
-    tripDays = typeof track.days === 'number' ? track.days : 1;
+    tripDays = CFG.days > 0 ? CFG.days : typeof track.days === 'number' ? track.days : 1;
     PARKS = (Array.isArray(track.parks) ? track.parks : []).filter(p => Array.isArray(p.polys) && p.polys.length);
     anchorPhotos(track.photos);
     attachClips(track.clips);

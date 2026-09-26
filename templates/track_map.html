@@ -34,6 +34,7 @@ function addParkMarker() { return null; }
 <script type="application/json" id="es-track-config">{
   "trackUrl": {{ track_url | json_encode() | safe }},
   "trackFallback": {{ track_fallback | json_encode() | safe }},
+  "days": {{ page.extra.days | default(value=0) | json_encode() }},
   "isDark": {{ config.extra.is_dark | default(value=false) | json_encode() }},
   "basemap": {{ tm.basemap | default(value="") | json_encode() | safe }},
   "detail": {{ tm.detail | default(value="minimal") | json_encode() | safe }},

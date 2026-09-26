@@ -159,7 +159,7 @@ Two version numbers, deliberately separate:
 | `name` | string? | From `<metadata><name>`, when it is a real title. |
 | `dist_m` | int | Sum of moving legs, metres. Stops contribute 0. The map shows it as the day's total; the front-matter `distance` should read the same (§3.3). |
 | `bbox` | [minLon, minLat, maxLon, maxLat] | Of all points. Replaces the hand-typed `bounds` in front matter when that is absent. |
-| `days` | int? | How many calendar days the log covers, in the page's time zone. Written only when more than one: the map then calls the ends "Start of trip" and "End of trip" rather than "Start of day" and "End of day". A count of days is not a clock time. |
+| `days` | int? | How many calendar days the log covers, in the page's time zone. Written only when more than one: the map then calls the ends "Start of trip" and "End of trip" rather than "Start of day" and "End of day". A count of days is not a clock time. The page's front-matter `days` overrides it (§3.3). |
 | `legs` | array | In chronological order. See §2.2. |
 | `photos` | array? | Optional photo anchors. See §2.3. |
 | `clips` | array? | Optional flight-video clips. See §2.6. |
@@ -309,6 +309,7 @@ Concretely:
 track_key = "track/v2/2026/03/2026-03-05.json"   # presence of this key selects the new map
 distance = "166 km / 103 mi"                  # the JSON's dist_m (166100) as the map writes it
 bounds = { … }                                # optional: overrides the JSON's bbox
+days = 1                                      # optional: overrides the JSON's days (§2.1)
 markers = "markers.js"                        # unchanged; ids must match photo anchors
 parks = ["relation/5291525"]                  # optional: parks to highlight (§2.7), by OpenStreetMap relation or way
 ```
