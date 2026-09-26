@@ -36,6 +36,10 @@
   // ten times the altitude either side (3–80 km), or else three minutes' travel at the video's speed, or else a
   // default radius for the mode.
   const FLIGHT_RADIUS_M = { fly: 50000, prop: 8000, helicopter: 4000 };
+
+  // The whole-day view spans at least this far across, so a short day still shows its surroundings.
+  const DAY_MIN_SPAN_M = 3000;
+
   const ICONS = {
     car: '<path d="M5 11l1.6-4.2A1.5 1.5 0 0 1 8 6h8a1.5 1.5 0 0 1 1.4.8L19 11"/><path d="M3 17v-4.5A1.5 1.5 0 0 1 4.5 11h15a1.5 1.5 0 0 1 1.5 1.5V17h-2.5M3 17h2.5M9 17h6"/><circle cx="7.5" cy="17" r="1.6"/><circle cx="16.5" cy="17" r="1.6"/>',
     walk: '<circle cx="13" cy="4" r="1.8"/><path d="M12 7.5l-1.5 6 3.5 3 1 5"/><path d="M10.5 13.5l-3 6.5"/><path d="M12 7.5l3 2.5 2.5 1"/><path d="M12 7.5l-3.5 1.5-1 3.5"/>',
@@ -156,6 +160,10 @@
   // `lon` moved by whole turns to lie within 180° of `ref`.
   const nearLon = (lon, ref) => lon + 360 * Math.round((ref - lon) / 360);
 
+  // Screen position of `c` ([lon, lat]) on the world copy nearest the camera. MapLibre keeps its centre within
+  // ±180°, while an unwrapped track can run past that, so a point near Seoul may be at -233° with the centre at 127°.
+  const project = c => map.project([nearLon(c[0], map.getCenter().lng), c[1]]);
+
   // A track that crosses the antimeridian jumps from about -180° to about +180° (or back), and a line drawn
   // between those points would run the long way around the world. Each point's longitude is moved by whole
   // turns to lie within 180° of the one before it, so the track runs on past ±180° instead, which MapLibre
@@ -251,6 +259,31 @@
     for (let s = a; s <= b; s++) if (SEGMENTS[s].mode !== 'stop' && segDist(SEGMENTS[s]) > bd) { bd = segDist(SEGMENTS[s]); best = s; }
     return best;
   }
+  // The view before the first photo, and on the docked map: the whole day, with the dot at its start.
+  const dayStartView = () => ({ kind: 'start', photoIdx: -1, segs: [0, SEGMENTS.length - 1], capSeg: 0, dot: pts[0], frac: 0, m: 0, transit: true });
+
+  // The whole day in a line: its two main ways of travel by distance, then its total ("Flying, driving, and
+  // more · 9,097 km / 5,653 mi"), and the mode to show its icon. Modes that share a name, such as jet and prop
+  // flights, count together.
+  function daySummary() {
+    const byName = new Map();
+    SEGMENTS.forEach(s => {
+      if (s.mode === 'stop') return;
+      const md = MODES[s.mode], name = md ? md.name : 'Travelling';
+      const e = byName.get(name) || { name, mode: s.mode, m: 0 };
+      e.m += segDist(s);
+      byName.set(name, e);
+    });
+    const ranked = [...byName.values()].sort((a, b) => b.m - a.m);
+    if (!ranked.length) return { head: fmtBoth(distM), mode: SEGMENTS[0].mode };
+
+    // "Cable car" is a noun; every other name reads as well mid-sentence in lower case ("by taxi").
+    const lower = n => n === 'Cable car' ? 'cable car' : n.charAt(0).toLowerCase() + n.slice(1);
+    const [a, b] = ranked.map(e => e.name);
+    const ways = ranked.length === 1 ? a : ranked.length === 2 ? `${a} and ${lower(b)}` : `${a}, ${lower(b)}, and more`;
+    return { head: `${ways} · ${fmtBoth(distM)}`, mode: ranked[0].mode };
+  }
+
   function computeView(it) {
     if (!it || !pts.length) return null;
     const i = items.indexOf(it);
@@ -267,8 +300,8 @@
     for (let k = i - 1; k >= 0; k--) if (items[k].photo) { prev = items[k].photo; break; }
     for (let k = i + 1; k < items.length; k++) if (items[k].photo) { next = items[k].photo; break; }
     const last = SEGMENTS.length - 1;
-    // before the first photo: frame the first leg with the dot at its start
-    if (!prev) return mk('start', -1, [0, 0], 0, pts[0], true);
+    // Before the first photo: the whole day, with the dot at its start.
+    if (!prev) return dayStartView();
     const pi = photos.indexOf(prev);
     if (!next) {
       if (prev.seg === last) return mk('photo', pi, [last, last], last, [prev.lon, prev.lat]);
@@ -417,6 +450,9 @@
     return ['case', ['==', ['get', 'seg'], seg], cur, ['<', ['get', 'seg'], seg], tok('accent-dim'), ['<=', ['get', 'i'], curIdx], tok('accent'), tok('ahead')];
   };
 
+  // The whole-day view has the whole day current, so every photo is too.
+  const photoColorFor = v => v && v.kind === 'start' ? tok('current') : photoColorExpr(v ? v.photoIdx : -1, v ? v.capSeg : 0);
+
   const parkOutlines = () => PARKS.flatMap(p => p.polys.map(poly => poly[0]));
   const parksData = () => ({ type: 'FeatureCollection', features: PARKS.map(p => ({ type: 'Feature', properties: { name: p.name || '' }, geometry: { type: 'MultiPolygon', coordinates: p.polys } })) });
   // Under the basemap's labels, so place names stay readable over the shading.
@@ -456,7 +492,7 @@
     // The stretch a flight video covers, over the track and under the dots.
     layers.push({ id: 'es-clip-line', type: 'line', source: 'clip', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': tok('dot'), 'line-width': 4 } });
     if (CFG.dots) {
-      layers.push({ id: 'es-photos', type: 'circle', source: 'photos', paint: { 'circle-radius': big ? 5 : 3, 'circle-color': photoColorExpr(view ? view.photoIdx : -1, view ? view.capSeg : 0), 'circle-stroke-color': tok('ground-deep'), 'circle-stroke-width': 1 } });
+      layers.push({ id: 'es-photos', type: 'circle', source: 'photos', paint: { 'circle-radius': big ? 5 : 3, 'circle-color': photoColorFor(view), 'circle-stroke-color': tok('ground-deep'), 'circle-stroke-width': 1 } });
       layers.push({ id: 'es-photos-hit', type: 'circle', source: 'photos', paint: { 'circle-radius': big ? 12 : 6, 'circle-opacity': 0 } });
     }
     if (big) layers.push({ id: 'es-track-hit', type: 'line', source: 'track', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-width': 18, 'line-opacity': 0 } });
@@ -580,8 +616,14 @@
     if (extra) extra.forEach(c => b.extend(c));
     return b;
   }
-  // The whole day, and any park the page highlights.
-  function fitAll(pad) { if (mapReady) map.fitBounds(boundsOf([pts, ...parkOutlines()]), { padding: pad, duration: RM ? 0 : 900, maxZoom: 15 }); }
+  // The whole day and any park the page highlights, widened about its centre to at least DAY_MIN_SPAN_M across.
+  function dayBounds() {
+    const b = boundsOf([pts, ...parkOutlines()]), c = b.getCenter();
+    aroundBounds([c.lng, c.lat], DAY_MIN_SPAN_M / 2).forEach(corner => b.extend(corner));
+    return b;
+  }
+
+  function fitAll(pad) { if (mapReady) map.fitBounds(dayBounds(), { padding: pad, duration: animMs(900), maxZoom: 15 }); }
   // Whether `p` ([lon, lat]) lies inside `ring`, by ray casting.
   function inRing(ring, p) {
     let inside = false;
@@ -597,7 +639,7 @@
   function fitOpening(pad) {
     const park = placement === 'expanded' ? startPark() : null;
     if (!park) return fitAll(pad);
-    if (mapReady) map.fitBounds(boundsOf(park.polys.map(poly => poly[0]), [pts[0]]), { padding: pad, duration: RM ? 0 : 900, maxZoom: 15 });
+    if (mapReady) map.fitBounds(boundsOf(park.polys.map(poly => poly[0]), [pts[0]]), { padding: pad, duration: animMs(900), maxZoom: 15 });
   }
   // How far to show around the aircraft, in metres. A floatplane on the water, or a log whose altitude is nonsense
   // (negative), falls back to the video's speed or the mode's default.
@@ -614,10 +656,19 @@
     return [[c[0] - dLon, c[1] - dLat], [c[0] + dLon, c[1] + dLat]];
   };
   let lastFlight = null;  // the centre and radius the flight camera last framed
+  let cameraJumps = false;  // while the map first loads: move the camera straight to its framing, without animating
+  const animMs = ms => RM || cameraJumps ? 0 : ms;
   function applyCamera(force) {
     if (!mapReady || !view || placement !== 'corner' || collapsed) return;
     let key, bounds;
     const pad = isPhone() ? 14 : 26;
+    if (view.kind === 'start') {
+      if (!force && lastCamKey === 'day') return;
+      lastCamKey = 'day';
+      map.fitBounds(dayBounds(), { padding: pad, duration: animMs(1100), maxZoom: 15, essential: true });
+      return;
+    }
+
     if (!view.transit && FLIGHT_RADIUS_M[SEGMENTS[view.capSeg].mode]) {
       // Re-frame only when the aircraft has moved a third of the radius, or the radius has changed by half, so the
       // map doesn't swim while a video plays.
@@ -626,7 +677,7 @@
       if (!force && same) return;
       lastFlight = { c, r };
       lastCamKey = 'f' + view.capSeg;
-      map.fitBounds(aroundBounds(c, r), { padding: 0, duration: RM ? 0 : 1100, maxZoom: 14.5, essential: true });
+      map.fitBounds(aroundBounds(c, r), { padding: 0, duration: animMs(1100), maxZoom: 14.5, essential: true });
       return;
     }
     if (!view.transit) {
@@ -639,7 +690,7 @@
     }
     if (!force && key === lastCamKey) return;
     lastCamKey = key;
-    map.fitBounds(bounds, { padding: pad, duration: RM ? 0 : 1100, maxZoom: view.transit ? 15.5 : 14.5, essential: true });
+    map.fitBounds(bounds, { padding: pad, duration: animMs(1100), maxZoom: view.transit ? 15.5 : 14.5, essential: true });
   }
   function positionProgressLabels() {
     if (!view) return;
@@ -666,19 +717,25 @@
   function applyView(force) {
     if (!view) return;
     const seg = SEGMENTS[view.capSeg], md = MODES[seg.mode];
-    document.getElementById('es-track-ico').innerHTML = iconSvg(md ? md.icon : 'route');
+
+    // The whole-day view sums up the day instead of describing its first leg.
+    const summary = view.kind === 'start' ? daySummary() : null;
+    const iconMd = summary ? MODES[summary.mode] : md;
+    document.getElementById('es-track-ico').innerHTML = iconSvg(iconMd ? iconMd.icon : 'route');
     // No clock times in public. A duration appears only on flights and boat rides, on the
     // second line between the endpoints: "ATL → 14h 15min → CPT".
     const showDur = TIMED.includes(seg.mode) && seg.dur_s;
     let head;
-    if (seg.mode === 'stop') head = seg.label || md.name;
+    if (summary) head = summary.head;
+    else if (seg.mode === 'stop') head = seg.label || md.name;
     else if (view.kind === 'clip') {
       const name = PHASE_NAMES[view.phase] || (md ? md.name : '');
       head = `${name ? name + ' · ' : ''}${fmtSpeed(view.kmh)}`;
     }
     else head = `${md ? md.name + ' · ' : ''}${fmtBoth(segDist(seg))}`;
     let sub = seg.mode === 'stop' ? '' : (seg.label || '');
-    if (view.kind === 'clip' && view.alt != null && view.phase !== 'taxi') sub = `Altitude ${fmtAlt(view.alt)}`;
+    if (summary) sub = CFG.route || '';
+    else if (view.kind === 'clip' && view.alt != null && view.phase !== 'taxi') sub = `Altitude ${fmtAlt(view.alt)}`;
     else if (showDur) {
       const m = sub.match(/^(.*?)\s*(→|->|⟶|–)\s*(.*)$/);
       sub = m ? `${m[1]} ${m[2]} ${fmtDur(seg.dur_s)} ${m[2]} ${m[3]}` : (sub ? `${sub} · ${fmtDur(seg.dur_s)}` : fmtDur(seg.dur_s));
@@ -692,7 +749,7 @@
     // On a flight leg, a line for the altitude where the photo was taken, where the log's altitude is believed and
     // at least 50 m above the leg's ground level, so not at the gate or on the water (a flight video's caption shows
     // its own).
-    const photoAlt = view.kind !== 'clip' && FLIGHT_RADIUS_M[seg.mode] ? eleAt[viewIdx(view)] : null;
+    const photoAlt = !summary && view.kind !== 'clip' && FLIGHT_RADIUS_M[seg.mode] ? eleAt[viewIdx(view)] : null;
     if (photoAlt != null && seg.groundEle != null && photoAlt - seg.groundEle >= 50) {
       const altEl = document.createElement('span'); altEl.className = 'label altitude';
       altEl.textContent = `Altitude ${fmtAlt(photoAlt)}`;
@@ -701,7 +758,7 @@
 
     // On foot, a line for the leg's climb and descent (the JSON's `gain_m` and `loss_m`): the main direction, and
     // the other only when it is at least 10 m.
-    if (view.kind !== 'clip' && seg.gain_m != null && seg.loss_m != null && (seg.gain_m || seg.loss_m)) {
+    if (!summary && view.kind !== 'clip' && seg.gain_m != null && seg.loss_m != null && (seg.gain_m || seg.loss_m)) {
       const up = seg.gain_m >= seg.loss_m;
       const parts = [];
       if (up || seg.gain_m >= 10) parts.push(`↑ ${fmtAlt(seg.gain_m)}`);
@@ -710,7 +767,7 @@
       climbEl.textContent = parts.join(' · ');
       text.appendChild(climbEl);
     }
-    badge.querySelector('.es-track-ico').innerHTML = iconSvg(md ? md.icon : 'route');
+    badge.querySelector('.es-track-ico').innerHTML = iconSvg(iconMd ? iconMd.icon : 'route');
     const badgeText = badge.querySelector('.es-track-badge-text');
     badgeText.replaceChildren(...Array.from(text.children).map(n => n.cloneNode(true)));
     // A third line when the dot sits at the very start or end of the day, or of a multi-day trip.
@@ -719,7 +776,7 @@
     if (note) { const n = document.createElement('span'); n.className = 'note'; n.textContent = note; badgeText.appendChild(n); }
     document.getElementById('es-track-fill').style.width = (view.frac * 100).toFixed(2) + '%';
     // current leg's span on the bar: green up to the reader's position, darker green beyond
-    const legA = total ? cum[seg.start] / total : 0, legB = total ? cum[seg.end] / total : 0;
+    const legA = summary || !total ? 0 : cum[seg.start] / total, legB = summary ? 1 : total ? cum[seg.end] / total : 0;
     const at = Math.min(Math.max(view.frac, legA), legB);
     const pct = x => (x * 100).toFixed(2) + '%';
     const done = document.getElementById('es-track-leg-done'), ahead = document.getElementById('es-track-leg-ahead');
@@ -742,10 +799,10 @@
       map.getSource('ahead').setData(aheadData(view));
       map.setPaintProperty('es-track-done', 'line-gradient', doneGradient(view));
     }
-    const dotKey = view.photoIdx + ':' + view.capSeg;
+    const dotKey = view.kind === 'start' ? 'day' : view.photoIdx + ':' + view.capSeg;
     if (CFG.dots && map.getLayer('es-photos') && (force || dotKey !== lastPhotoIdx)) {
       lastPhotoIdx = dotKey;
-      map.setPaintProperty('es-photos', 'circle-color', photoColorExpr(view.photoIdx, view.capSeg));
+      map.setPaintProperty('es-photos', 'circle-color', photoColorFor(view));
     }
     applyCamera(force);
     updateBadge();
@@ -760,7 +817,7 @@
     badge.hidden = !want;
     if (!want) { badgeOff = null; badgeTail.toggleAttribute('hidden', true); return; }
     // direction of travel at the anchor, in screen space, so the badge can sit beside it on the side behind it
-    const i = badgeAnchorIdx(), a = map.project(pts[Math.max(0, i - 3)]), b = map.project(pts[Math.min(pts.length - 1, i + 3)]);
+    const i = badgeAnchorIdx(), a = project(pts[Math.max(0, i - 3)]), b = project(pts[Math.min(pts.length - 1, i + 3)]);
     badgeAt = pts[i];
     badgeOff = window.__esTrackCard.placeNear(badge, badgeAt, { sides: true, gap: 34, travel: { x: b.x - a.x, y: b.y - a.y } });
     drawBadgeTail();
@@ -784,7 +841,7 @@
   function drawTail(tail, el, lonlat) {
     // SVG elements have no `hidden` property, so the attribute is toggled directly
     if (el.hidden || !lonlat) { tail.toggleAttribute('hidden', true); return; }
-    const pt = map.project(lonlat), box = map.getContainer().getBoundingClientRect();
+    const pt = project(lonlat), box = map.getContainer().getBoundingClientRect();
     const rx = el.offsetLeft, ry = el.offsetTop, rw = el.offsetWidth, rh = el.offsetHeight;
     const cx = Math.max(rx, Math.min(rx + rw, pt.x)), cy = Math.max(ry, Math.min(ry + rh, pt.y));  // nearest point on the overlay to the point
     const dx = pt.x - cx, dy = pt.y - cy, len = Math.hypot(dx, dy);
@@ -800,7 +857,7 @@
   }
   function followBadge() {
     if (badge.hidden || !badgeOff || !view) return;
-    const pt = map.project(badgeAt || view.dot), box = map.getContainer().getBoundingClientRect(), edge = 4;
+    const pt = project(badgeAt || view.dot), box = map.getContainer().getBoundingClientRect(), edge = 4;
     badge.style.left = Math.max(edge, Math.min(box.width - edge - badge.offsetWidth, pt.x + badgeOff.dx)) + 'px';
     badge.style.top = Math.max(edge, Math.min(box.height - edge - badge.offsetHeight, pt.y + badgeOff.dy)) + 'px';
     drawBadgeTail();
@@ -811,7 +868,7 @@
     requestAnimationFrame(() => {
       ticking = false;
       if (browseStep != null && placement !== 'corner') { updateOverlap(); return; }
-      const v = computeView(currentItem());
+      const v = placement === 'docked' ? dayStartView() : computeView(currentItem());
       const moved = v && view && v.kind === 'clip' && (v.frac !== view.frac || v.kmh !== view.kmh || v.alt !== view.alt || v.phase !== view.phase);
       if (v && (!view || moved || v.kind !== view.kind || v.photoIdx !== view.photoIdx || v.segs[0] !== view.segs[0] || v.segs[1] !== view.segs[1])) { view = v; applyView(false); }
       updateOverlap();
@@ -835,8 +892,14 @@
     const target = expanded ? 'expanded' : (slotVisible ? 'docked' : 'corner');
     if (placedOnce && target === placement) return;
     placedOnce = true;
+    const from = placement;
     placement = target;
     if (browseStep != null) { browseStep = null; view = computeView(currentItem()) || view; }
+
+    // The docked map shows the whole day from its start; leaving it for the corner picks up the article again.
+    if (target === 'docked' && pts.length) view = dayStartView();
+    else if (target === 'corner' && from === 'docked') view = computeView(currentItem()) || view;
+
     widget.classList.remove('is-corner', 'is-docked', 'is-expanded');
     widget.classList.add('is-' + target);
     (target === 'corner' ? document.body : target === 'docked' ? slot : modal).appendChild(widget);
@@ -854,9 +917,9 @@
       if (framed || placement !== target) return;
       framed = true;
       map.resize();
-      if (target === 'corner') { lastCamKey = null; applyCamera(true); }
-      else fitOpening(target === 'expanded' ? (isPhone() ? 30 : 70) : 40);
-      updateBadge();
+      lastCamKey = null;
+      applyView(true);
+      if (target !== 'corner') fitOpening(target === 'expanded' ? (isPhone() ? 30 : 70) : 40);
     };
     map.once('style.load', frame);
     map.once('idle', frame);
@@ -875,13 +938,15 @@
 
   // ------------------------------------------------------------ map init
   function initMap() {
-    map = new maplibregl.Map({ container: 'es-track-canvas', style: buildStyle(), attributionControl: false, fadeDuration: 0, maxZoom: 17, minZoom: 1, pitchWithRotate: false, center: pts[0], zoom: 9 });
+    map = new maplibregl.Map({ container: 'es-track-canvas', style: buildStyle(), attributionControl: false, fadeDuration: 0, maxZoom: 17, minZoom: 1, pitchWithRotate: false, bounds: dayBounds(), fitBoundsOptions: { padding: isPhone() ? 14 : 26, maxZoom: 15 } });
     setInteractive(false);
     map.on('load', () => {
       mapReady = true; lastCamKey = null; lastGrad = ''; lastPhotoIdx = '';
       setInteractive(placement !== 'corner');
+      cameraJumps = true;
       applyView(true);
       if (placement !== 'corner') fitOpening(placement === 'expanded' ? 70 : 40);
+      cameraJumps = false;
     });
     map.on('style.load', () => { if (mapReady) { lastCamKey = null; lastGrad = ''; lastPhotoIdx = ''; applyView(true); } });
     map.on('error', e => { const m = (e && e.error && e.error.message) || ''; if (m) console.warn('track-map:', m); });
@@ -901,9 +966,9 @@
 
     // Photos whose dots overlap the hovered one at the current zoom, in page order.
     function clusterAt(i) {
-      const c = map.project([photos[i].lon, photos[i].lat]);
+      const c = project([photos[i].lon, photos[i].lat]);
       const group = [];
-      photos.forEach((p, k) => { const q = map.project([p.lon, p.lat]); if (Math.hypot(q.x - c.x, q.y - c.y) <= 12) group.push(k); });
+      photos.forEach((p, k) => { const q = project([p.lon, p.lat]); if (Math.hypot(q.x - c.x, q.y - c.y) <= 12) group.push(k); });
       return group.length ? group : [i];
     }
     let hoverGroup = null, hideTimer = null;
@@ -913,7 +978,7 @@
     // the card keeps its offset from the photo while the map moves, so the funnel stays attached
     function followCard() {
       if (thumb.hidden || !cardAt || !cardOff) return;
-      const pt = map.project(cardAt), box = map.getContainer().getBoundingClientRect(), edge = 4;
+      const pt = project(cardAt), box = map.getContainer().getBoundingClientRect(), edge = 4;
       thumb.style.left = Math.max(edge, Math.min(box.width - edge - thumb.offsetWidth, pt.x + cardOff.dx)) + 'px';
       thumb.style.top = Math.max(edge, Math.min(box.height - edge - thumb.offsetHeight, pt.y + cardOff.dy)) + 'px';
       drawTail(thumbTail, thumb, cardAt);
@@ -943,7 +1008,7 @@
     // travel) then prefers the side the traveller came from, so the badge does not sit in the way ahead
     function placeNear(el, lonlat, opts) {
       opts = opts || {};
-      const pt = map.project(lonlat);
+      const pt = project(lonlat);
       const box = map.getContainer().getBoundingClientRect();
       const w = el.offsetWidth, h = el.offsetHeight, gap = opts.gap || 14, edge = 4;
       const clampX = x => Math.max(edge, Math.min(box.width - edge - w, x));
@@ -960,8 +1025,8 @@
       const onScreen = q => q.x >= 0 && q.y >= 0 && q.x <= box.width && q.y <= box.height;
       const step = Math.max(1, Math.floor(pts.length / 1500));
       const samples = [];
-      for (let i = 0; i < pts.length; i += step) { const q = map.project(pts[i]); if (onScreen(q)) samples.push(q); }
-      const dots = photos.map(o => map.project([o.lon, o.lat])).filter(onScreen);
+      for (let i = 0; i < pts.length; i += step) { const q = project(pts[i]); if (onScreen(q)) samples.push(q); }
+      const dots = photos.map(o => project([o.lon, o.lat])).filter(onScreen);
       const tx = opts.travel ? opts.travel.x : 0;
       const bias = opts.sides ? [20, 20, tx > 0 ? 12 : 0, tx < 0 ? 12 : 0] : [0, 0, 0, 0];  // above, below, right, left
       let best = cands[0], bestScore = Infinity;
@@ -1010,7 +1075,7 @@
       if (map.queryRenderedFeatures(e.point, { layers: ['es-photos-hit'] }).length) return;  // the photo handler has it
       e.originalEvent.stopPropagation();
       let bi = 0, bd = Infinity;
-      for (let i = 0; i < pts.length; i++) { const q = map.project(pts[i]); const d = (q.x - e.point.x) ** 2 + (q.y - e.point.y) ** 2; if (d < bd) { bd = d; bi = i; } }
+      for (let i = 0; i < pts.length; i++) { const q = project(pts[i]); const d = (q.x - e.point.x) ** 2 + (q.y - e.point.y) ** 2; if (d < bd) { bd = d; bi = i; } }
       const k = STEPS.findIndex(st => st.kind === 'leg' && st.leg === segOf[bi]);
       if (k >= 0) browseTo(k);
     });
@@ -1037,13 +1102,16 @@
     });
     if (SEGMENTS.length) STEPS.push({ kind: 'end', leg: SEGMENTS.length - 1 });
   }
+  // The step the view is on. The whole-day view comes before the first, at -1, so the next arrow goes to leg 1.
   function stepIndexFor(v) {
     if (!v) return 0;
+    if (v.kind === 'start') return -1;
     if (v.photoIdx >= 0) { const k = STEPS.findIndex(s => s.kind === 'photos' && s.group.includes(v.photoIdx)); if (k >= 0) return k; }
     const k = STEPS.findIndex(s => s.kind === 'leg' && s.leg === v.capSeg);
     return k < 0 ? 0 : k;
   }
   function stepLabel(k) {
+    if (k < 0) return 'Whole day';
     const s = STEPS[k];
     if (!s) return '';
     if (s.kind === 'leg') return `Leg ${s.leg + 1}/${SEGMENTS.length}`;
@@ -1053,7 +1121,17 @@
   function browseTo(k) {
     if (!mapReady || !STEPS.length || placement === 'corner') return;
     const card = window.__esTrackCard;
-    browseStep = Math.max(0, Math.min(STEPS.length - 1, k));
+    if (k < 0) {
+      // Back past the first step: the whole-day view.
+      browseStep = null;
+      card.hideCard();
+      view = dayStartView();
+      applyView(true);
+      fitAll(placement === 'expanded' ? (isPhone() ? 30 : 70) : 40);
+      return;
+    }
+
+    browseStep = Math.min(STEPS.length - 1, k);
     const s = STEPS[browseStep];
     card.hideCard();
     if (s.kind === 'leg') {
