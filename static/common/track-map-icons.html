@@ -30,12 +30,12 @@
   <div class="toolbar"><button type="button" id="theme-toggle">Switch to light</button></div>
   <div class="grid" id="grid"></div>
 </div>
-<script src="/common/track-map.js"></script>
+<script src="/common/track-common.js"></script>
 <script>
 (function () {
   const T = window.esTrackIcons;
   const grid = document.getElementById('grid');
-  if (!T) { grid.textContent = 'The track-map script did not expose its icons.'; return; }
+  if (!T) { grid.textContent = 'The track-common script did not expose its icons.'; return; }
   const SAMPLE = {
     stop: ['Cape Point', ''],
     fly: ['Flying · 13,580 km / 8,439 mi', 'ATL → 14h 15min → CPT'],

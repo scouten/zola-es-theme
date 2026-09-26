@@ -39,10 +39,20 @@
   {%- endblock subsections -%}
 
   {%- block pages -%}
+  {#- A section at least `section_chronological_depth` levels deep (a trip, on the travel site) lists its pages
+      oldest first and, when the site has the track map, shows a corner map of the trip (section_track_map.html). -#}
+  {%- set chrono_depth = config.extra | get(key="section_chronological_depth", default=0) -%}
+  {%- set chronological = chrono_depth > 0 and section.components | length >= chrono_depth -%}
+  {%- set trip_map = chronological and config.extra | get(key="track_map", default=false) -%}
+  {%- set_global has_tracks = false -%}
   <ul class="pages">
     {%- if section.extra.recent -%}
       {%- set pages = section.pages | sort(attribute = "updated") | reverse -%}
-    {%- elif section.extra.reverse or config.extra.section_reverse_default -%}
+    {%- elif section.extra.reverse -%}
+      {%- set pages = section.pages -%}
+    {%- elif chronological -%}
+      {%- set pages = section.pages | reverse -%}
+    {%- elif config.extra.section_reverse_default -%}
       {%- set pages = section.pages -%}
     {%- else -%}
       {%- set pages = section.pages | reverse -%}
@@ -52,7 +62,24 @@
     {%- endif -%}
     {%- for page in pages -%}
       {%- if not page.extra.hide_from_section -%}
-      <div class="card">
+      {%- set track_url = "" -%}
+      {%- set track_fallback = "" -%}
+      {%- if trip_map and page.extra.track_url -%}
+        {%- set track_url = page.extra.track_url -%}
+      {%- elif trip_map and page.extra.track_key -%}
+        {%- set track_url = "https://img.ericscouten.com/" ~ page.extra.track_key -%}
+        {%- set track_fallback = "/" ~ page.extra.track_key -%}
+      {%- endif -%}
+      {%- if track_url -%}
+        {%- set_global has_tracks = true -%}
+      {%- endif -%}
+      <div class="card"
+        {%- if trip_map %} data-title="{{ page.title }}" data-permalink="{{ page.permalink | safe }}"
+          {%- if track_url %} data-track-url="{{ track_url }}"{% endif -%}
+          {%- if track_fallback %} data-track-fallback="{{ track_fallback }}"{% endif -%}
+          {%- if page.extra.route %} data-route="{{ page.extra.route }}"{% endif -%}
+          {%- if page.extra.distance %} data-distance="{{ page.extra.distance }}"{% endif -%}
+        {%- endif -%}>
         <card-header class="card-header">
           <card-header-title class="card-header-title">
             <info class="card-header-meta">
@@ -97,6 +124,9 @@
       {%- endif -%}
     {%- endfor -%}
   </ul>
+  {%- if has_tracks -%}
+    {%- include "section_track_map.html" -%}
+  {%- endif -%}
   {%- endblock pages -%}
 
   {# TO DO: Add next/prev section links #}

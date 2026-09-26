@@ -67,6 +67,19 @@ To find the reference:
 1. Run `nf update-blog-for-track-map` (or add `-n` for a dry run; `nf blog` asks the same when creating a post). At "Look for parks to highlight?", type part of the park's name, such as `Inverdoorn` or `Russian`. That searches OpenStreetMap's place names within the track's area, which is quick even for a long track. Or answer `y` to search along the whole track, which can be slow. It lists the parks found, each with the value to paste, and marks the ones already listed with `*`.
 2. If the park isn't listed, open [openstreetmap.org](https://www.openstreetmap.org), right-click inside the park, and choose **Query features**. Under **Enclosing features**, pick the park (a nature reserve, park, or protected area) and copy the `relation/…` or `way/…` from its page's URL. A pasted URL works too.
 
+## Trip section pages
+
+A site can list the pages of a deep section (a trip, on ericscouten.travel) oldest first, instead of the newest-first order that `section_reverse_default` gives the rest of the site:
+
+```toml
+[extra]
+section_chronological_depth = 2   # sections at least this many levels deep (2026/02-22+south-africa) list oldest first
+```
+
+A section's own `reverse = true` (newest first) or `recent = true` still wins. Year pages and the home page keep their order.
+
+When the site also has `[extra.track_map]`, such a section gets a corner map of the whole trip, as long as at least one of its pages has a `track_key` or `track_url`. The map frames the day whose card crosses the reading line (40% down the window) and colours the days as the page's map colours legs: the day before it traveled (amber), earlier days finished (a darker amber), that day current (green, with a soft glow), later days ahead (a darker grey, drawn beneath the others so they don't hide an earlier day on a shared road). Before the first card reaches that line, it shows the whole trip in amber, with the number of days and the total distance. The caption has three lines: the day's title (cut to one line), its route, and its main ways of travel with its distance, as the page's own map sums up the day before its first photo. Clicking the map opens that day's page at its map. The corner map is not interactive and has no docked or expanded views. It shares the page map's collapsed state, `corner`, basemap, and `dim_over_photos` settings, fading over the cards' cover photos.
+
 ## The track JSON
 
 Produced by the CDN toolchain from a GPX that Waysmith has cut into legs. The full format, including the privacy rule (no clock times anywhere) and the photo-anchor scheme, is specified in `docs/track-format.md`. In short:
@@ -110,8 +123,12 @@ Map labels are different: MapLibre draws them from pre-rasterised glyph files (`
 |---|---|
 | `templates/track_map.html` | Markup, config JSON, marker shims, script and stylesheet tags |
 | `templates/page.html` | Chooses `track_map.html` or `map.html` (`map` block) |
+| `templates/section_track_map.html` | The trip section's corner map: markup and config JSON |
+| `templates/section.html` | Page order, the cards' track data attributes, and the section map include |
 | `sass/_track_map.scss` | Styles; colours as custom properties the script reads |
 | `static/common/track-map.js` | Behaviour |
+| `static/common/section-track-map.js` | The trip section map's behaviour |
+| `static/common/track-common.js` | Shared by both maps: modes and icons, distance formatting, the day summary, and the basemap style |
 | `docs/track-map-icons.md` | Icon style guide |
 | `docs/track-format.md` | The GPX leg convention and the track JSON format |
 | `tools/gpx2track.py` | Reference converter from GPX to track JSON; the CDN toolchain's behaviour is specified by it |

@@ -1,6 +1,6 @@
 # Track map icons
 
-Mode icons in the track map are hand-drawn line glyphs in `static/common/track-map.js` (`ICONS`). They are original drawings and carry no attribution requirement.
+Mode icons in the track map are hand-drawn line glyphs in `static/common/track-common.js` (`ICONS`). They are original drawings and carry no attribution requirement.
 
 ## Seeing the set
 
@@ -44,6 +44,6 @@ Keep to these and a new glyph sits beside the others without looking borrowed.
 ## Adding a mode
 
 1. Draw the glyph to the rules above. Paste it next to the car in a scratch HTML file and adjust until the weights match.
-2. Add it to `ICONS` in `track-map.js`.
+2. Add it to `ICONS` in `track-common.js`.
 3. Add the mode to `MODES` with a display name and the glyph key. Add it to `TIMED` only if its caption may show a duration.
 4. Add the token to the mode vocabulary in `docs/track-format.md` so the CDN toolchain and Waysmith know it.
