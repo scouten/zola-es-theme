@@ -160,6 +160,10 @@
   // `lon` moved by whole turns to lie within 180° of `ref`.
   const nearLon = (lon, ref) => lon + 360 * Math.round((ref - lon) / 360);
 
+  // Screen position of `c` ([lon, lat]) on the world copy nearest the camera. MapLibre keeps its centre within
+  // ±180°, while an unwrapped track can run past that, so a point near Seoul may be at -233° with the centre at 127°.
+  const project = c => map.project([nearLon(c[0], map.getCenter().lng), c[1]]);
+
   // A track that crosses the antimeridian jumps from about -180° to about +180° (or back), and a line drawn
   // between those points would run the long way around the world. Each point's longitude is moved by whole
   // turns to lie within 180° of the one before it, so the track runs on past ±180° instead, which MapLibre
@@ -810,7 +814,7 @@
     badge.hidden = !want;
     if (!want) { badgeOff = null; badgeTail.toggleAttribute('hidden', true); return; }
     // direction of travel at the anchor, in screen space, so the badge can sit beside it on the side behind it
-    const i = badgeAnchorIdx(), a = map.project(pts[Math.max(0, i - 3)]), b = map.project(pts[Math.min(pts.length - 1, i + 3)]);
+    const i = badgeAnchorIdx(), a = project(pts[Math.max(0, i - 3)]), b = project(pts[Math.min(pts.length - 1, i + 3)]);
     badgeAt = pts[i];
     badgeOff = window.__esTrackCard.placeNear(badge, badgeAt, { sides: true, gap: 34, travel: { x: b.x - a.x, y: b.y - a.y } });
     drawBadgeTail();
@@ -834,7 +838,7 @@
   function drawTail(tail, el, lonlat) {
     // SVG elements have no `hidden` property, so the attribute is toggled directly
     if (el.hidden || !lonlat) { tail.toggleAttribute('hidden', true); return; }
-    const pt = map.project(lonlat), box = map.getContainer().getBoundingClientRect();
+    const pt = project(lonlat), box = map.getContainer().getBoundingClientRect();
     const rx = el.offsetLeft, ry = el.offsetTop, rw = el.offsetWidth, rh = el.offsetHeight;
     const cx = Math.max(rx, Math.min(rx + rw, pt.x)), cy = Math.max(ry, Math.min(ry + rh, pt.y));  // nearest point on the overlay to the point
     const dx = pt.x - cx, dy = pt.y - cy, len = Math.hypot(dx, dy);
@@ -850,7 +854,7 @@
   }
   function followBadge() {
     if (badge.hidden || !badgeOff || !view) return;
-    const pt = map.project(badgeAt || view.dot), box = map.getContainer().getBoundingClientRect(), edge = 4;
+    const pt = project(badgeAt || view.dot), box = map.getContainer().getBoundingClientRect(), edge = 4;
     badge.style.left = Math.max(edge, Math.min(box.width - edge - badge.offsetWidth, pt.x + badgeOff.dx)) + 'px';
     badge.style.top = Math.max(edge, Math.min(box.height - edge - badge.offsetHeight, pt.y + badgeOff.dy)) + 'px';
     drawBadgeTail();
@@ -959,9 +963,9 @@
 
     // Photos whose dots overlap the hovered one at the current zoom, in page order.
     function clusterAt(i) {
-      const c = map.project([photos[i].lon, photos[i].lat]);
+      const c = project([photos[i].lon, photos[i].lat]);
       const group = [];
-      photos.forEach((p, k) => { const q = map.project([p.lon, p.lat]); if (Math.hypot(q.x - c.x, q.y - c.y) <= 12) group.push(k); });
+      photos.forEach((p, k) => { const q = project([p.lon, p.lat]); if (Math.hypot(q.x - c.x, q.y - c.y) <= 12) group.push(k); });
       return group.length ? group : [i];
     }
     let hoverGroup = null, hideTimer = null;
@@ -971,7 +975,7 @@
     // the card keeps its offset from the photo while the map moves, so the funnel stays attached
     function followCard() {
       if (thumb.hidden || !cardAt || !cardOff) return;
-      const pt = map.project(cardAt), box = map.getContainer().getBoundingClientRect(), edge = 4;
+      const pt = project(cardAt), box = map.getContainer().getBoundingClientRect(), edge = 4;
       thumb.style.left = Math.max(edge, Math.min(box.width - edge - thumb.offsetWidth, pt.x + cardOff.dx)) + 'px';
       thumb.style.top = Math.max(edge, Math.min(box.height - edge - thumb.offsetHeight, pt.y + cardOff.dy)) + 'px';
       drawTail(thumbTail, thumb, cardAt);
@@ -1001,7 +1005,7 @@
     // travel) then prefers the side the traveller came from, so the badge does not sit in the way ahead
     function placeNear(el, lonlat, opts) {
       opts = opts || {};
-      const pt = map.project(lonlat);
+      const pt = project(lonlat);
       const box = map.getContainer().getBoundingClientRect();
       const w = el.offsetWidth, h = el.offsetHeight, gap = opts.gap || 14, edge = 4;
       const clampX = x => Math.max(edge, Math.min(box.width - edge - w, x));
@@ -1018,8 +1022,8 @@
       const onScreen = q => q.x >= 0 && q.y >= 0 && q.x <= box.width && q.y <= box.height;
       const step = Math.max(1, Math.floor(pts.length / 1500));
       const samples = [];
-      for (let i = 0; i < pts.length; i += step) { const q = map.project(pts[i]); if (onScreen(q)) samples.push(q); }
-      const dots = photos.map(o => map.project([o.lon, o.lat])).filter(onScreen);
+      for (let i = 0; i < pts.length; i += step) { const q = project(pts[i]); if (onScreen(q)) samples.push(q); }
+      const dots = photos.map(o => project([o.lon, o.lat])).filter(onScreen);
       const tx = opts.travel ? opts.travel.x : 0;
       const bias = opts.sides ? [20, 20, tx > 0 ? 12 : 0, tx < 0 ? 12 : 0] : [0, 0, 0, 0];  // above, below, right, left
       let best = cands[0], bestScore = Infinity;
@@ -1068,7 +1072,7 @@
       if (map.queryRenderedFeatures(e.point, { layers: ['es-photos-hit'] }).length) return;  // the photo handler has it
       e.originalEvent.stopPropagation();
       let bi = 0, bd = Infinity;
-      for (let i = 0; i < pts.length; i++) { const q = map.project(pts[i]); const d = (q.x - e.point.x) ** 2 + (q.y - e.point.y) ** 2; if (d < bd) { bd = d; bi = i; } }
+      for (let i = 0; i < pts.length; i++) { const q = project(pts[i]); const d = (q.x - e.point.x) ** 2 + (q.y - e.point.y) ** 2; if (d < bd) { bd = d; bi = i; } }
       const k = STEPS.findIndex(st => st.kind === 'leg' && st.leg === segOf[bi]);
       if (k >= 0) browseTo(k);
     });
