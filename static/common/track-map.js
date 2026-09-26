@@ -256,7 +256,29 @@
     return best;
   }
   // The view before the first photo, and on the docked map: the whole day, with the dot at its start.
-  const dayStartView = () => ({ kind: 'start', photoIdx: -1, segs: [0, 0], capSeg: 0, dot: pts[0], frac: 0, m: 0, transit: true });
+  const dayStartView = () => ({ kind: 'start', photoIdx: -1, segs: [0, SEGMENTS.length - 1], capSeg: 0, dot: pts[0], frac: 0, m: 0, transit: true });
+
+  // The whole day in a line: its two main ways of travel by distance, then its total ("Flying, driving, and
+  // more · 9,097 km / 5,653 mi"), and the mode to show its icon. Modes that share a name, such as jet and prop
+  // flights, count together.
+  function daySummary() {
+    const byName = new Map();
+    SEGMENTS.forEach(s => {
+      if (s.mode === 'stop') return;
+      const md = MODES[s.mode], name = md ? md.name : 'Travelling';
+      const e = byName.get(name) || { name, mode: s.mode, m: 0 };
+      e.m += segDist(s);
+      byName.set(name, e);
+    });
+    const ranked = [...byName.values()].sort((a, b) => b.m - a.m);
+    if (!ranked.length) return { head: fmtBoth(distM), mode: SEGMENTS[0].mode };
+
+    // "Cable car" is a noun; every other name reads as well mid-sentence in lower case ("by taxi").
+    const lower = n => n === 'Cable car' ? 'cable car' : n.charAt(0).toLowerCase() + n.slice(1);
+    const [a, b] = ranked.map(e => e.name);
+    const ways = ranked.length === 1 ? a : ranked.length === 2 ? `${a} and ${lower(b)}` : `${a}, ${lower(b)}, and more`;
+    return { head: `${ways} · ${fmtBoth(distM)}`, mode: ranked[0].mode };
+  }
 
   function computeView(it) {
     if (!it || !pts.length) return null;
@@ -688,19 +710,25 @@
   function applyView(force) {
     if (!view) return;
     const seg = SEGMENTS[view.capSeg], md = MODES[seg.mode];
-    document.getElementById('es-track-ico').innerHTML = iconSvg(md ? md.icon : 'route');
+
+    // The whole-day view sums up the day instead of describing its first leg.
+    const summary = view.kind === 'start' ? daySummary() : null;
+    const iconMd = summary ? MODES[summary.mode] : md;
+    document.getElementById('es-track-ico').innerHTML = iconSvg(iconMd ? iconMd.icon : 'route');
     // No clock times in public. A duration appears only on flights and boat rides, on the
     // second line between the endpoints: "ATL → 14h 15min → CPT".
     const showDur = TIMED.includes(seg.mode) && seg.dur_s;
     let head;
-    if (seg.mode === 'stop') head = seg.label || md.name;
+    if (summary) head = summary.head;
+    else if (seg.mode === 'stop') head = seg.label || md.name;
     else if (view.kind === 'clip') {
       const name = PHASE_NAMES[view.phase] || (md ? md.name : '');
       head = `${name ? name + ' · ' : ''}${fmtSpeed(view.kmh)}`;
     }
     else head = `${md ? md.name + ' · ' : ''}${fmtBoth(segDist(seg))}`;
     let sub = seg.mode === 'stop' ? '' : (seg.label || '');
-    if (view.kind === 'clip' && view.alt != null && view.phase !== 'taxi') sub = `Altitude ${fmtAlt(view.alt)}`;
+    if (summary) sub = CFG.route || '';
+    else if (view.kind === 'clip' && view.alt != null && view.phase !== 'taxi') sub = `Altitude ${fmtAlt(view.alt)}`;
     else if (showDur) {
       const m = sub.match(/^(.*?)\s*(→|->|⟶|–)\s*(.*)$/);
       sub = m ? `${m[1]} ${m[2]} ${fmtDur(seg.dur_s)} ${m[2]} ${m[3]}` : (sub ? `${sub} · ${fmtDur(seg.dur_s)}` : fmtDur(seg.dur_s));
@@ -714,7 +742,7 @@
     // On a flight leg, a line for the altitude where the photo was taken, where the log's altitude is believed and
     // at least 50 m above the leg's ground level, so not at the gate or on the water (a flight video's caption shows
     // its own).
-    const photoAlt = view.kind !== 'clip' && FLIGHT_RADIUS_M[seg.mode] ? eleAt[viewIdx(view)] : null;
+    const photoAlt = !summary && view.kind !== 'clip' && FLIGHT_RADIUS_M[seg.mode] ? eleAt[viewIdx(view)] : null;
     if (photoAlt != null && seg.groundEle != null && photoAlt - seg.groundEle >= 50) {
       const altEl = document.createElement('span'); altEl.className = 'label altitude';
       altEl.textContent = `Altitude ${fmtAlt(photoAlt)}`;
@@ -723,7 +751,7 @@
 
     // On foot, a line for the leg's climb and descent (the JSON's `gain_m` and `loss_m`): the main direction, and
     // the other only when it is at least 10 m.
-    if (view.kind !== 'clip' && seg.gain_m != null && seg.loss_m != null && (seg.gain_m || seg.loss_m)) {
+    if (!summary && view.kind !== 'clip' && seg.gain_m != null && seg.loss_m != null && (seg.gain_m || seg.loss_m)) {
       const up = seg.gain_m >= seg.loss_m;
       const parts = [];
       if (up || seg.gain_m >= 10) parts.push(`↑ ${fmtAlt(seg.gain_m)}`);
@@ -732,7 +760,7 @@
       climbEl.textContent = parts.join(' · ');
       text.appendChild(climbEl);
     }
-    badge.querySelector('.es-track-ico').innerHTML = iconSvg(md ? md.icon : 'route');
+    badge.querySelector('.es-track-ico').innerHTML = iconSvg(iconMd ? iconMd.icon : 'route');
     const badgeText = badge.querySelector('.es-track-badge-text');
     badgeText.replaceChildren(...Array.from(text.children).map(n => n.cloneNode(true)));
     // A third line when the dot sits at the very start or end of the day, or of a multi-day trip.
@@ -741,7 +769,7 @@
     if (note) { const n = document.createElement('span'); n.className = 'note'; n.textContent = note; badgeText.appendChild(n); }
     document.getElementById('es-track-fill').style.width = (view.frac * 100).toFixed(2) + '%';
     // current leg's span on the bar: green up to the reader's position, darker green beyond
-    const legA = total ? cum[seg.start] / total : 0, legB = total ? cum[seg.end] / total : 0;
+    const legA = summary || !total ? 0 : cum[seg.start] / total, legB = summary ? 1 : total ? cum[seg.end] / total : 0;
     const at = Math.min(Math.max(view.frac, legA), legB);
     const pct = x => (x * 100).toFixed(2) + '%';
     const done = document.getElementById('es-track-leg-done'), ahead = document.getElementById('es-track-leg-ahead');
