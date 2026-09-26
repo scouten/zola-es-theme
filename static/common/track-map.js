@@ -36,6 +36,10 @@
   // ten times the altitude either side (3–80 km), or else three minutes' travel at the video's speed, or else a
   // default radius for the mode.
   const FLIGHT_RADIUS_M = { fly: 50000, prop: 8000, helicopter: 4000 };
+
+  // The whole-day view spans at least this far across, so a short day still shows its surroundings.
+  const DAY_MIN_SPAN_M = 3000;
+
   const ICONS = {
     car: '<path d="M5 11l1.6-4.2A1.5 1.5 0 0 1 8 6h8a1.5 1.5 0 0 1 1.4.8L19 11"/><path d="M3 17v-4.5A1.5 1.5 0 0 1 4.5 11h15a1.5 1.5 0 0 1 1.5 1.5V17h-2.5M3 17h2.5M9 17h6"/><circle cx="7.5" cy="17" r="1.6"/><circle cx="16.5" cy="17" r="1.6"/>',
     walk: '<circle cx="13" cy="4" r="1.8"/><path d="M12 7.5l-1.5 6 3.5 3 1 5"/><path d="M10.5 13.5l-3 6.5"/><path d="M12 7.5l3 2.5 2.5 1"/><path d="M12 7.5l-3.5 1.5-1 3.5"/>',
@@ -251,6 +255,9 @@
     for (let s = a; s <= b; s++) if (SEGMENTS[s].mode !== 'stop' && segDist(SEGMENTS[s]) > bd) { bd = segDist(SEGMENTS[s]); best = s; }
     return best;
   }
+  // The view before the first photo, and on the docked map: the whole day, with the dot at its start.
+  const dayStartView = () => ({ kind: 'start', photoIdx: -1, segs: [0, 0], capSeg: 0, dot: pts[0], frac: 0, m: 0, transit: true });
+
   function computeView(it) {
     if (!it || !pts.length) return null;
     const i = items.indexOf(it);
@@ -267,8 +274,8 @@
     for (let k = i - 1; k >= 0; k--) if (items[k].photo) { prev = items[k].photo; break; }
     for (let k = i + 1; k < items.length; k++) if (items[k].photo) { next = items[k].photo; break; }
     const last = SEGMENTS.length - 1;
-    // before the first photo: frame the first leg with the dot at its start
-    if (!prev) return mk('start', -1, [0, 0], 0, pts[0], true);
+    // Before the first photo: the whole day, with the dot at its start.
+    if (!prev) return dayStartView();
     const pi = photos.indexOf(prev);
     if (!next) {
       if (prev.seg === last) return mk('photo', pi, [last, last], last, [prev.lon, prev.lat]);
@@ -580,8 +587,14 @@
     if (extra) extra.forEach(c => b.extend(c));
     return b;
   }
-  // The whole day, and any park the page highlights.
-  function fitAll(pad) { if (mapReady) map.fitBounds(boundsOf([pts, ...parkOutlines()]), { padding: pad, duration: RM ? 0 : 900, maxZoom: 15 }); }
+  // The whole day and any park the page highlights, widened about its centre to at least DAY_MIN_SPAN_M across.
+  function dayBounds() {
+    const b = boundsOf([pts, ...parkOutlines()]), c = b.getCenter();
+    aroundBounds([c.lng, c.lat], DAY_MIN_SPAN_M / 2).forEach(corner => b.extend(corner));
+    return b;
+  }
+
+  function fitAll(pad) { if (mapReady) map.fitBounds(dayBounds(), { padding: pad, duration: RM ? 0 : 900, maxZoom: 15 }); }
   // Whether `p` ([lon, lat]) lies inside `ring`, by ray casting.
   function inRing(ring, p) {
     let inside = false;
@@ -618,6 +631,13 @@
     if (!mapReady || !view || placement !== 'corner' || collapsed) return;
     let key, bounds;
     const pad = isPhone() ? 14 : 26;
+    if (view.kind === 'start') {
+      if (!force && lastCamKey === 'day') return;
+      lastCamKey = 'day';
+      map.fitBounds(dayBounds(), { padding: pad, duration: RM ? 0 : 1100, maxZoom: 15, essential: true });
+      return;
+    }
+
     if (!view.transit && FLIGHT_RADIUS_M[SEGMENTS[view.capSeg].mode]) {
       // Re-frame only when the aircraft has moved a third of the radius, or the radius has changed by half, so the
       // map doesn't swim while a video plays.
@@ -811,7 +831,7 @@
     requestAnimationFrame(() => {
       ticking = false;
       if (browseStep != null && placement !== 'corner') { updateOverlap(); return; }
-      const v = computeView(currentItem());
+      const v = placement === 'docked' ? dayStartView() : computeView(currentItem());
       const moved = v && view && v.kind === 'clip' && (v.frac !== view.frac || v.kmh !== view.kmh || v.alt !== view.alt || v.phase !== view.phase);
       if (v && (!view || moved || v.kind !== view.kind || v.photoIdx !== view.photoIdx || v.segs[0] !== view.segs[0] || v.segs[1] !== view.segs[1])) { view = v; applyView(false); }
       updateOverlap();
@@ -835,8 +855,14 @@
     const target = expanded ? 'expanded' : (slotVisible ? 'docked' : 'corner');
     if (placedOnce && target === placement) return;
     placedOnce = true;
+    const from = placement;
     placement = target;
     if (browseStep != null) { browseStep = null; view = computeView(currentItem()) || view; }
+
+    // The docked map shows the whole day from its start; leaving it for the corner picks up the article again.
+    if (target === 'docked' && pts.length) view = dayStartView();
+    else if (target === 'corner' && from === 'docked') view = computeView(currentItem()) || view;
+
     widget.classList.remove('is-corner', 'is-docked', 'is-expanded');
     widget.classList.add('is-' + target);
     (target === 'corner' ? document.body : target === 'docked' ? slot : modal).appendChild(widget);
@@ -854,9 +880,9 @@
       if (framed || placement !== target) return;
       framed = true;
       map.resize();
-      if (target === 'corner') { lastCamKey = null; applyCamera(true); }
-      else fitOpening(target === 'expanded' ? (isPhone() ? 30 : 70) : 40);
-      updateBadge();
+      lastCamKey = null;
+      applyView(true);
+      if (target !== 'corner') fitOpening(target === 'expanded' ? (isPhone() ? 30 : 70) : 40);
     };
     map.once('style.load', frame);
     map.once('idle', frame);
