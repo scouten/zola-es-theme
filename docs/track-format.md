@@ -193,6 +193,8 @@ Produced when the exporter knows the photo capture times, which Waysmith does wh
 | `i` | int | Index into that leg's `pts` of the last point recorded at or before the photo, which simplification always keeps (§2.2). 0 for a photo taken before the leg starts. |
 | `f` | number | Fraction of the day's `dist_m` travelled at the photo, 0 to 1. Drives the progress bar and the traveled-portion gradient. |
 
+A photo belongs to the leg whose time span contains its capture time, or else the leg whose start or end is nearest in time to it. Legs are matched by time, not by their order in the file, so a leg the author moved out of chronological order (an evening walk from the day before, placed at the end of the day's story) still claims its photos, and their `f` follows the file order. A leg's time span runs from its first to its last point *with a time*: points without one, such as routed points added in Waysmith at a leg's ends, are skipped, and distance along the leg is interpolated between the timed points either side of the photo.
+
 When `photos` is absent, or a photo id is missing from it, the theme falls back to the forward-constrained nearest-point rule: snap each photo, in page order, to the nearest track point at or after the previous photo's point. That works without timestamps and handles out-and-back roads.
 
 ### 2.4 Caption rules (what the reader sees)

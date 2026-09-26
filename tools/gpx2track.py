@@ -279,6 +279,32 @@ def photo_time(ph):
         return None
 
 
+def timed_span(pp):
+    """(first, last) recorded time among pp's points. Points without a time, such as
+    routed ones at a leg's ends, are skipped; (None, None) when none has one."""
+    ts = [p['t'] for p in pp if p['t'] is not None]
+    return (ts[0], ts[-1]) if ts else (None, None)
+
+
+def along_at(pp, t):
+    """Metres along pp at time t, interpolated between the timed points either side of
+    it. Before the first timed point, that point's distance; after the last, the whole leg."""
+    acc, prev = 0.0, None
+    for k, p in enumerate(pp):
+        if k:
+            acc += p['d']
+        if p['t'] is None:
+            continue
+        if p['t'] >= t:
+            if prev is None:
+                return acc
+            span = (p['t'] - prev[1]).total_seconds()
+            frac = (t - prev[1]).total_seconds() / span if span > 0 else 0.0
+            return prev[0] + (acc - prev[0]) * frac
+        prev = (acc, p['t'])
+    return acc
+
+
 def photo_leg(spans, t):
     """The leg a photo taken at t belongs to: the first whose time span contains it,
     or else the one whose start or end is nearest in time. spans are (t0, t1) pairs."""
@@ -309,7 +335,7 @@ def last_at_or_before(pp, t):
 
 
 def anchor_photos(legs, photos, total):
-    spans = [(l['_pp'][0]['t'], l['_pp'][-1]['t']) for l in legs]
+    spans = [timed_span(l['_pp']) for l in legs]
     before, acc = [], 0
     for leg in legs:
         before.append(acc)
@@ -325,18 +351,7 @@ def anchor_photos(legs, photos, total):
         b = before[li]
         leg = legs[li]
         pp = leg['_pp']
-        along = 0.0
-        if t >= pp[-1]['t']:
-            along = sum(p['d'] for p in pp[1:])
-        elif t > pp[0]['t']:
-            acc = 0.0
-            for k in range(1, len(pp)):
-                if pp[k]['t'] >= t:
-                    span = (pp[k]['t'] - pp[k - 1]['t']).total_seconds()
-                    frac = (t - pp[k - 1]['t']).total_seconds() / span if span > 0 else 0.0
-                    along = acc + pp[k]['d'] * frac
-                    break
-                acc += pp[k]['d']
+        along = along_at(pp, t)
         # The last point recorded at or before the photo, which simplification kept.
         k = last_at_or_before(pp, t)
         k = 0 if k is None else k
@@ -362,7 +377,7 @@ def build(meta_name, tracks, labels=None, mode_overrides=None, times=False, phot
     # passes where the photo was taken, and the last one at or before it, which the
     # photo is anchored to.
     pinned = [[] for _ in runs]
-    spans = [(r[0][0]['t'], r[0][-1]['t']) for r in runs]
+    spans = [timed_span(r[0]) for r in runs]
     for ph in photos or []:
         t = photo_time(ph)
         li = photo_leg(spans, t) if t is not None else None
