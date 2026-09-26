@@ -288,20 +288,26 @@ def timed_span(pp):
 
 def along_at(pp, t):
     """Metres along pp at time t, interpolated between the timed points either side of
-    it. Before the first timed point, that point's distance; after the last, the whole leg."""
-    acc, prev = 0.0, None
+    it. Points without a time are walked past. Before the first timed point, that
+    point's distance; after the last, the distance to it."""
+    timed = [k for k, p in enumerate(pp) if p['t'] is not None]
+    if not timed:
+        return 0.0
+    if t >= pp[timed[-1]]['t']:
+        return sum(p['d'] for p in pp[1:timed[-1] + 1])
+    if t <= pp[timed[0]]['t']:
+        return sum(p['d'] for p in pp[1:timed[0] + 1])
+    acc, seg, prev = 0.0, 0.0, None
     for k, p in enumerate(pp):
         if k:
-            acc += p['d']
+            seg += p['d']
         if p['t'] is None:
             continue
-        if p['t'] >= t:
-            if prev is None:
-                return acc
-            span = (p['t'] - prev[1]).total_seconds()
-            frac = (t - prev[1]).total_seconds() / span if span > 0 else 0.0
-            return prev[0] + (acc - prev[0]) * frac
-        prev = (acc, p['t'])
+        if prev is not None and p['t'] >= t:
+            span = (p['t'] - prev).total_seconds()
+            frac = (t - prev).total_seconds() / span if span > 0 else 0.0
+            return acc + seg * frac
+        acc, seg, prev = acc + seg, 0.0, p['t']
     return acc
 
 
