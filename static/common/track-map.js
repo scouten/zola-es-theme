@@ -153,6 +153,21 @@
   let STEPS = [];         // the day as a sequence: each leg, then the photos taken on it
 
   // ------------------------------------------------------------ track
+  // `lon` moved by whole turns to lie within 180° of `ref`.
+  const nearLon = (lon, ref) => lon + 360 * Math.round((ref - lon) / 360);
+
+  // A track that crosses the antimeridian jumps from about -180° to about +180° (or back), and a line drawn
+  // between those points would run the long way around the world. Each point's longitude is moved by whole
+  // turns to lie within 180° of the one before it, so the track runs on past ±180° instead, which MapLibre
+  // draws, fits and pans across as one continuous line.
+  function unwrapLongitudes() {
+    let prev = null;
+    SEGMENTS.forEach(s => s.coords.forEach(c => {
+      if (prev != null) c[0] = nearLon(c[0], prev);
+      prev = c[0];
+    }));
+  }
+
   function flatten() {
     pts = []; cum = []; segOf = []; eleAt = [];
     SEGMENTS.forEach((s, si) => {
@@ -1112,12 +1127,14 @@
     if (!track || !Array.isArray(track.legs) || !track.legs.length) throw new Error('empty track');
     if (track.v && track.v > 1) throw new Error('unsupported track version ' + track.v);
     SEGMENTS = track.legs.map(l => Object.assign({}, l, { coords: (l.pts || []).map(p => [p[0], p[1]]), eles: (l.pts || []).map(p => p[2]) })).filter(s => s.coords.length);
+    unwrapLongitudes();
     flatten();
     if (!pts.length) throw new Error('track has no points');
     distM = typeof track.dist_m === 'number' ? track.dist_m : total;
     tripDays = CFG.days > 0 ? CFG.days : typeof track.days === 'number' ? track.days : 1;
     PARKS = (Array.isArray(track.parks) ? track.parks : []).filter(p => Array.isArray(p.polys) && p.polys.length);
     anchorPhotos(track.photos);
+    photos.forEach(p => { p.lon = nearLon(p.lon, pts[p.idx][0]); });
     attachClips(track.clips);
     buildSteps();
 

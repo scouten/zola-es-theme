@@ -270,6 +270,25 @@ def make_leg(pp, mode, label, origin, times, pinned=()):
     return leg
 
 
+def lon_span(lons):
+    """(west, east) edges of the longitudes lons, taken in track order.
+
+    Each longitude is moved by whole turns to lie within 180 degrees of the one before
+    it, so a track that crosses the antimeridian stays continuous. When it does cross,
+    west is greater than east, as in GeoJSON (RFC 7946 §5.2)."""
+    un = []
+    for x in lons:
+        un.append(x + 360 * round((un[-1] - x) / 360) if un else x)
+    west, east = min(un), max(un)
+    if east - west >= 360:
+        return -180.0, 180.0
+
+    def norm(x):
+        return round((x + 180) % 360 - 180, 5)
+
+    return norm(west), norm(east)
+
+
 # ---------------------------------------------------------------- photo anchors
 
 def photo_time(ph):
@@ -400,7 +419,8 @@ def build(meta_name, tracks, labels=None, mode_overrides=None, times=False, phot
     if meta_name and not re.match(r'^\d{4}-\d{2}-\d{2}', meta_name):
         out['name'] = meta_name
     out['dist_m'] = total
-    out['bbox'] = [min(lons), min(lats), max(lons), max(lats)]
+    west, east = lon_span(lons)
+    out['bbox'] = [west, min(lats), east, max(lats)]
     out['legs'] = legs
     if photos:
         out['photos'] = anchor_photos(legs, photos, total)
