@@ -1,6 +1,7 @@
 /* track-common.js — what the track maps share: the travel modes and their icons, distance formatting, the
  * one-line summary of a day's travel, and the basemap under the maps (OpenFreeMap's vector style, trimmed to the
- * detail a view wants and recoloured from the widget's --es-track-* custom properties, with optional hillshade).
+ * detail a view wants and recoloured from the widget's --es-track-* custom properties, with optional hillshade, and
+ * an optional region that the maps set apart from its surroundings).
  *
  * Used by track-map.js (a day's page) and section-track-map.js (a trip's section page), which add their own
  * sources and layers on top of the basemap, and by the icon preview page. Load it before any of them.
@@ -54,20 +55,26 @@
 
   // ------------------------------------------------------------ distances
   // Distances: the metric side picks the tier, and the imperial side follows it with the same
-  // rounding. Under 950 m: metres and feet, both to the nearest 10 ("920 m / 3020 ft").
-  // Under 9.95 km: one decimal in both ("1.3 km / 0.8 mi"). Otherwise whole units ("167 km / 104 mi").
+  // rounding, except that feet give way to miles above 1000 ft. Under 950 m: metres to the nearest 10,
+  // and feet to the nearest 10 up to 1000 ft ("250 m / 820 ft"), else miles to one decimal
+  // ("920 m / 0.6 mi"). Under 9.95 km: one decimal in both ("1.3 km / 0.8 mi"). Otherwise whole units
+  // ("167 km / 104 mi").
   const tierOf = m => m < 950 ? 'm' : m < 9950 ? 'km1' : 'km';
+  const feetOf = m => Math.round(m * 3.28084 / 10) * 10;
+  const imperialTierOf = m => tierOf(m) === 'm' && feetOf(m) > 1000 ? 'km1' : tierOf(m);
   function fmtMetricAs(m, tier) {
     if (tier === 'm') return `${Math.round(m / 10) * 10} m`;
     if (tier === 'km1') return `${(m / 1000).toFixed(1)} km`;
     return `${Math.round(m / 1000).toLocaleString('en-US')} km`;
   }
+
+  // `tier` is from `imperialTierOf`.
   function fmtImperialAs(m, tier) {
-    if (tier === 'm') return `${Math.round(m * 3.28084 / 10) * 10} ft`;
+    if (tier === 'm') return `${feetOf(m)} ft`;
     if (tier === 'km1') return `${(m / 1609.344).toFixed(1)} mi`;
     return `${Math.round(m / 1609.344).toLocaleString('en-US')} mi`;
   }
-  const fmtBoth = m => `${fmtMetricAs(m, tierOf(m))} / ${fmtImperialAs(m, tierOf(m))}`;
+  const fmtBoth = m => `${fmtMetricAs(m, tierOf(m))} / ${fmtImperialAs(m, imperialTierOf(m))}`;
 
   // ------------------------------------------------------------ day summary
   // A mode covering more than this share of the distance traveled names the day alone.
@@ -133,6 +140,9 @@
     if (base) {
       style = JSON.parse(JSON.stringify(base));
       style.layers = style.layers.filter(l => keepLayer(l, detail));
+
+      // A site can drop the highways' route numbers ("5", "99") at every detail.
+      if (cfg.hideRouteNumbers) style.layers = style.layers.filter(l => l.id !== 'highway_name_motorway');
       const water = tok('water'), coast = tok('coast'), road = tok('road'), roadMajor = tok('road-major');
       // Roads as single simple lines: drop the casing layers the stock style draws under them,
       // and paint what's left one grey, with major roads a little wider.
@@ -194,9 +204,66 @@
     return style;
   }
 
+  // ------------------------------------------------------------ region
+  // A site can set its maps in a region (`region_outline`: the URL of a GeoJSON document of polygons, such as a
+  // state): everything outside it dims, and a fine line traces its border.
+  const WORLD = [[-180, -85], [180, -85], [180, 85], [-180, 85], [-180, -85]];
+
+  // The maps wait for the outline before they're drawn, so a slow one is given up on after this long.
+  const REGION_TIMEOUT_MS = 5000;
+
+  // Every polygon in a GeoJSON document, each as its list of rings: the outer ring, then any holes.
+  function polygonsOf(doc) {
+    if (!doc) return [];
+    if (doc.type === 'FeatureCollection') return (doc.features || []).flatMap(polygonsOf);
+    if (doc.type === 'GeometryCollection') return (doc.geometries || []).flatMap(polygonsOf);
+    if (doc.type === 'Feature') return polygonsOf(doc.geometry);
+    if (doc.type === 'Polygon') return [doc.coordinates];
+    if (doc.type === 'MultiPolygon') return doc.coordinates;
+    return [];
+  }
+
+  // The region, as one multipolygon of every polygon in the outline, or null when the site sets none or it can't be
+  // fetched (the maps then go without it).
+  async function loadRegion(url) {
+    if (!url) return null;
+
+    // An AbortController and a timer rather than AbortSignal.timeout, which older browsers lack. The timer runs until
+    // the body has been read, so a response that stalls partway through is given up on too.
+    const abort = new AbortController();
+    const timer = setTimeout(() => abort.abort(), REGION_TIMEOUT_MS);
+    try {
+      const r = await fetch(url, { signal: abort.signal });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const polys = polygonsOf(await r.json());
+      return polys.length ? { type: 'MultiPolygon', coordinates: polys } : null;
+    } catch (e) {
+      console.warn('track map: could not load the region outline ' + url, e);
+      return null;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  // Adds the region's layers to `style`, above the basemap and its labels, for the caller's own layers to go on top.
+  function addRegion(style, region, tok) {
+    if (!region) return;
+    const polys = polygonsOf(region);
+    const feature = geometry => ({ type: 'Feature', properties: {}, geometry });
+
+    // Outside the region: the world, less each polygon's outer ring, and each polygon's holes, which lie outside it too.
+    const beyond = [[WORLD, ...polys.map(p => p[0])], ...polys.flatMap(p => p.slice(1).map(hole => [hole]))];
+    style.sources['es-region'] = { type: 'geojson', data: feature(region) };
+    style.sources['es-beyond-region'] = { type: 'geojson', data: feature({ type: 'MultiPolygon', coordinates: beyond }) };
+    style.layers.push(
+      { id: 'es-beyond-region', type: 'fill', source: 'es-beyond-region', paint: { 'fill-color': tok('casing'), 'fill-opacity': .55 } },
+      { id: 'es-region-border', type: 'line', source: 'es-region', layout: { 'line-join': 'round' }, paint: { 'line-color': tok('text-soft'), 'line-opacity': .45, 'line-width': 1 } },
+    );
+  }
+
   window.esTrack = {
-    MODES, ICONS, iconSvg, tierOf, fmtMetricAs, fmtImperialAs, fmtBoth, modeSummary,
-    loadBasemap: load, basemapStyle: buildStyle,
+    MODES, ICONS, iconSvg, tierOf, imperialTierOf, fmtMetricAs, fmtImperialAs, fmtBoth, modeSummary,
+    loadBasemap: load, basemapStyle: buildStyle, loadRegion, addRegion,
   };
 
   // The icon preview page reads the icons from here.

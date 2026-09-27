@@ -18,6 +18,8 @@
   "basemap": {{ tm.basemap | default(value="") | json_encode() | safe }},
   "detail": {{ tm.detail | default(value="minimal") | json_encode() | safe }},
   "hillshade": {{ tm.hillshade | default(value=true) | json_encode() }},
+  "regionOutline": {{ tm.region_outline | default(value="") | json_encode() | safe }},
+  "hideRouteNumbers": {{ tm.hide_route_numbers | default(value=false) | json_encode() }},
   "glyphs": {{ tm.glyphs | default(value="") | json_encode() | safe }},
   "labelFont": {% if tm.label_font %}{{ tm.label_font | json_encode() | safe }}{% else %}[]{% endif %},
   "dim": {{ tm.dim_over_photos | default(value=true) | json_encode() }},

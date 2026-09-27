@@ -148,6 +148,8 @@ $track-widget-map-height: 270px !default;
   background: var(--es-track-panel-solid); border: 1px solid var(--es-track-edge-strong); border-radius: 6px; padding: 3px; box-shadow: var(--es-track-shadow);
   img { display: block; width: 160px; height: auto; border-radius: 3px; }
   .es-track-thumb-loc { width: 160px; padding: 4px 2px 1px; font-size: .7rem; line-height: 1.25; color: var(--es-track-text); white-space: normal; }
+  // A photo without a caption: no empty line under it, so the photo has the same margin on every side.
+  .es-track-thumb-loc:empty { display: none; }
   .more { display: block; margin-top: 2px; color: var(--es-track-accent); font-weight: 600; }
 }
 // badge at the position dot when it has no photo (leg start, end of the track): repeats the caption

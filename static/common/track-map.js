@@ -10,7 +10,7 @@
   'use strict';
 
   if (!window.esTrack) return;
-  const { MODES, iconSvg, tierOf, fmtMetricAs, fmtImperialAs, fmtBoth, modeSummary } = window.esTrack;
+  const { MODES, iconSvg, tierOf, imperialTierOf, fmtMetricAs, fmtImperialAs, fmtBoth, modeSummary } = window.esTrack;
 
   // legs whose caption may show a duration (the only time-derived value ever shown)
   const TIMED = ['fly', 'prop', 'boat', 'ferry', 'helicopter'];
@@ -21,6 +21,10 @@
 
   // The whole-day view spans at least this far across, so a short day still shows its surroundings.
   const DAY_MIN_SPAN_M = 3000;
+
+  // With `start_span_km` set, the corner map opens on the day's region, at least that far across, until the reader
+  // scrolls this far; then it closes in on the day.
+  const REGION_SCROLL_PX = 24;
 
   const cfgEl = document.getElementById('es-track-config');
   const widget = document.getElementById('es-track-widget');
@@ -39,9 +43,9 @@
     return 2 * R * Math.asin(Math.sqrt(s));
   }
   // Same tier as a reference distance, so "0 km / 0 mi" sits beside "167 km / 104 mi".
-  const fmtLike = (m, ref) => `${fmtMetricAs(m, tierOf(ref))} / ${fmtImperialAs(m, tierOf(ref))}`;
+  const fmtLike = (m, ref) => `${fmtMetricAs(m, tierOf(ref))} / ${fmtImperialAs(m, imperialTierOf(ref))}`;
   const fmtSpeed = kmh => `${Math.round(kmh).toLocaleString('en-US')} km/h / ${Math.round(kmh / 1.609344).toLocaleString('en-US')} mph`;
-  // Feet to the nearest 10, as in the metres tier of `fmtBoth`.
+  // Feet to the nearest 10, as `fmtBoth` gives short distances. Altitudes stay in feet however high.
   const fmtAlt = m => `${Math.round(m).toLocaleString('en-US')} m / ${(Math.round(m * 3.28084 / 10) * 10).toLocaleString('en-US')} ft`;
   // Units run against the numbers, unlike distances: "1h 0min", "14h 15min", "45min".
   function fmtDur(s) {
@@ -92,6 +96,7 @@
   let distM = 0;  // the day's distance as published (dist_m), which the page's front matter also shows
   let tripDays = 1;  // calendar days the log covers (the page's `days`, else the JSON's): more than one is a trip, not a day
   let PARKS = [];  // the parks the page highlights (the JSON's `parks`), tinted under the track
+  let REGION = null;  // the site's region (`region_outline`), set apart from its surroundings, or null
   let map = null, mapReady = false, baseStyle = null;
   let placement = 'corner', placedOnce = false, slotVisible = false, expanded = false, collapsed = false;
   let view = null, lastCamKey = null, lastGrad = '', lastPhotoIdx = '';
@@ -202,7 +207,10 @@
     return best;
   }
   // The view before the first photo, and on the docked map: the whole day, with the dot at its start.
-  const dayStartView = () => ({ kind: 'start', photoIdx: -1, segs: [0, SEGMENTS.length - 1], capSeg: 0, dot: pts[0], frac: 0, m: 0, transit: true });
+  const dayStartView = region => ({ kind: 'start', region: !!region, photoIdx: -1, segs: [0, SEGMENTS.length - 1], capSeg: 0, dot: pts[0], frac: 0, m: 0, transit: true });
+
+  // At the top of the page, before the reader scrolls, when the site sets a region to open on.
+  const atRegion = () => CFG.startSpanKm > 0 && scrollY < REGION_SCROLL_PX;
 
   // The whole day in a line: its main ways of travel and its total ("Flying, driving, and more · 9,097 km /
   // 5,653 mi"), and the mode to show its icon (see `modeSummary` in track-common.js).
@@ -214,6 +222,9 @@
 
   function computeView(it) {
     if (!it || !pts.length) return null;
+
+    // At the top of the page, the region, even when a photo is already nearest the reading line.
+    if (atRegion()) return dayStartView(true);
     const i = items.indexOf(it);
     const mk = (kind, pi, segs, capSeg, dot, transit) => {
       const p = pi >= 0 ? photos[pi] : null;
@@ -448,6 +459,7 @@
     Object.assign(style.sources, ourSources());
     const labels = style.layers.findIndex(l => l.type === 'symbol');
     style.layers.splice(labels < 0 ? style.layers.length : labels, 0, ...parkLayers());
+    window.esTrack.addRegion(style, REGION, tok);
     style.layers.push(...ourLayers());
     widget.classList.toggle('basemap-muted', detail !== 'standard');
     return style;
@@ -469,6 +481,13 @@
   function dayBounds() {
     const b = boundsOf([pts, ...parkOutlines()]), c = b.getCenter();
     aroundBounds([c.lng, c.lat], DAY_MIN_SPAN_M / 2).forEach(corner => b.extend(corner));
+    return b;
+  }
+
+  // The day's region: the whole day, widened about its centre to at least `start_span_km` across.
+  function regionBounds() {
+    const b = dayBounds(), c = b.getCenter();
+    aroundBounds([c.lng, c.lat], CFG.startSpanKm * 1000 / 2).forEach(corner => b.extend(corner));
     return b;
   }
 
@@ -512,9 +531,10 @@
     let key, bounds;
     const pad = isPhone() ? 14 : 26;
     if (view.kind === 'start') {
-      if (!force && lastCamKey === 'day') return;
-      lastCamKey = 'day';
-      map.fitBounds(dayBounds(), { padding: pad, duration: animMs(1100), maxZoom: 15, essential: true });
+      const key = view.region ? 'region' : 'day';
+      if (!force && lastCamKey === key) return;
+      lastCamKey = key;
+      map.fitBounds(view.region ? regionBounds() : dayBounds(), { padding: pad, duration: animMs(1100), maxZoom: 15, essential: true });
       return;
     }
 
@@ -719,7 +739,7 @@
       if (browseStep != null && placement !== 'corner') { updateOverlap(); return; }
       const v = placement === 'docked' ? dayStartView() : computeView(currentItem());
       const moved = v && view && v.kind === 'clip' && (v.frac !== view.frac || v.kmh !== view.kmh || v.alt !== view.alt || v.phase !== view.phase);
-      if (v && (!view || moved || v.kind !== view.kind || v.photoIdx !== view.photoIdx || v.segs[0] !== view.segs[0] || v.segs[1] !== view.segs[1])) { view = v; applyView(false); }
+      if (v && (!view || moved || v.kind !== view.kind || v.region !== view.region || v.photoIdx !== view.photoIdx || v.segs[0] !== view.segs[0] || v.segs[1] !== view.segs[1])) { view = v; applyView(false); }
       updateOverlap();
     });
   }
@@ -833,6 +853,15 @@
       drawTail(thumbTail, thumb, cardAt);
     }
     map.on('move', followCard);
+
+    // While the map moves, the card keeps its offset from the photo, clamped to the map's edges. A card placed
+    // mid-move (its image arrived while the camera was still settling) can end up over its own dot once the camera
+    // stops: choose its spot again then.
+    map.on('moveend', () => {
+      if (thumb.hidden || !cardAt || !hoverGroup) return;
+      const q = project(cardAt), l = thumb.offsetLeft, t = thumb.offsetTop;
+      if (q.x >= l - 6 && q.x <= l + thumb.offsetWidth + 6 && q.y >= t - 6 && q.y <= t + thumb.offsetHeight + 6) placeCard(photos[hoverGroup[0]]);
+    });
     function showCard(group) {
       const p = photos[group[0]];
       if (!p) return;
@@ -997,7 +1026,7 @@
       const p = photos[s.group[0]];
       view = { kind: 'browse', photoIdx: s.group[0], segs: [s.leg, s.leg], capSeg: s.leg, dot: [p.lon, p.lat], frac: p.frac, m: p.m, transit: false };
       applyView(true);
-      map.once('moveend', () => { if (browseStep != null && STEPS[browseStep] === s) card.showCard(s.group); });
+      const show = () => { if (browseStep != null && STEPS[browseStep] === s) card.showCard(s.group); };
 
       // A flight video's step frames the whole stretch it covers, which the photo card then sits over.
       const clip = s.group.map(i => photos[i]).find(q => q.clip);
@@ -1005,6 +1034,11 @@
       // A photo from the air shows what's in view from the aircraft, as the corner map does.
       else if (FLIGHT_RADIUS_M[SEGMENTS[s.leg].mode]) map.fitBounds(aroundBounds([p.lon, p.lat], flightRadius(view)), { padding: 0, duration: RM ? 0 : 700, maxZoom: 14 });
       else map.easeTo({ center: [p.lon, p.lat], zoom: Math.max(map.getZoom(), 14), duration: RM ? 0 : 600 });
+
+      // The card waits for the camera to settle. Starting the move stopped any move still under way, which fired its
+      // 'moveend' at once, so only now is the wait for this one; a move without a duration has already ended.
+      if (map.isMoving()) map.once('moveend', show);
+      else show();
     }
   }
   const stepFrom = () => (browseStep == null ? stepIndexFor(view) : browseStep);
@@ -1084,7 +1118,7 @@
     setCollapsed(collapsed, false);
 
     view = computeView(currentItem()); applyView(true);
-    await loadBaseStyle();
+    [, REGION] = await Promise.all([loadBaseStyle(), window.esTrack.loadRegion(CFG.regionOutline)]);
     if (!window.maplibregl) { showNotice('The map library could not be loaded.'); return; }
     initMap();
     new IntersectionObserver(es => { slotVisible = es[0].isIntersecting; place(); }, { threshold: 0 }).observe(slot);

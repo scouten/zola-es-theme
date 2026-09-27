@@ -65,6 +65,7 @@
   });
 
   let map = null, mapReady = false, baseStyle = null, baseTried = false, noLibrary = false;
+  let region = null;  // The site's region (`region_outline`), set apart from its surroundings, or null.
   let focus = null, collapsed = false;
 
   // ------------------------------------------------------------ tracks
@@ -192,6 +193,7 @@
 
   function buildStyle() {
     const style = window.esTrack.basemapStyle(baseStyle, { cfg: CFG, tok, detail: CFG.detail || 'minimal' });
+    window.esTrack.addRegion(style, region, tok);
     style.sources.trip = { type: 'geojson', data: tripData() };
     const line = { 'line-cap': 'round', 'line-join': 'round' };
     const day = (id, paint) => ({ id, type: 'line', source: 'trip', filter: FILTERS[id](), layout: line, paint });
@@ -413,7 +415,7 @@
       withTracks.forEach(loadCard);
     }
 
-    baseStyle = await window.esTrack.loadBasemap(CFG, tok);
+    [baseStyle, region] = await Promise.all([window.esTrack.loadBasemap(CFG, tok), window.esTrack.loadRegion(CFG.regionOutline)]);
     baseTried = true;
     noLibrary = !window.maplibregl;
     updateNotice();
