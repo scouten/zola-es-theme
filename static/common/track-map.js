@@ -491,7 +491,22 @@
     return b;
   }
 
-  function fitAll(pad) { if (mapReady) map.fitBounds(dayBounds(), { padding: pad, duration: animMs(900), maxZoom: 15 }); }
+  // The least zoom the map allows is normally 1, so the big map can't be zoomed out past the world. A day that spans
+  // more of the globe than fits at zoom 1 (a long flight, especially on a phone's 76 px map) lowers it as far as its
+  // fit needs, down to MapLibre's least (-2), and it rises back toward 1 as the map settles closer in.
+  const MIN_ZOOM = 1, LEAST_ZOOM = -2;
+  const floorZoom = z => Math.max(LEAST_ZOOM, Math.min(MIN_ZOOM, z));
+
+  // `map.fitBounds`, first lowering the least zoom when the fit needs it. Stopping any move under way first lets its
+  // 'moveend' raise the least zoom before this fit lowers it, not partway through this fit.
+  function fit(bounds, opts) {
+    map.stop();
+    const cam = map.cameraForBounds(bounds, { padding: opts.padding });
+    if (cam && cam.zoom < map.getMinZoom()) map.setMinZoom(floorZoom(cam.zoom));
+    map.fitBounds(bounds, opts);
+  }
+
+  function fitAll(pad) { if (mapReady) fit(dayBounds(), { padding: pad, duration: animMs(900), maxZoom: 15 }); }
   // Whether `p` ([lon, lat]) lies inside `ring`, by ray casting.
   function inRing(ring, p) {
     let inside = false;
@@ -507,7 +522,7 @@
   function fitOpening(pad) {
     const park = placement === 'expanded' ? startPark() : null;
     if (!park) return fitAll(pad);
-    if (mapReady) map.fitBounds(boundsOf(park.polys.map(poly => poly[0]), [pts[0]]), { padding: pad, duration: animMs(900), maxZoom: 15 });
+    if (mapReady) fit(boundsOf(park.polys.map(poly => poly[0]), [pts[0]]), { padding: pad, duration: animMs(900), maxZoom: 15 });
   }
   // How far to show around the aircraft, in metres. A floatplane on the water, or a log whose altitude is nonsense
   // (negative), falls back to the video's speed or the mode's default.
@@ -534,7 +549,7 @@
       const key = view.region ? 'region' : 'day';
       if (!force && lastCamKey === key) return;
       lastCamKey = key;
-      map.fitBounds(view.region ? regionBounds() : dayBounds(), { padding: pad, duration: animMs(1100), maxZoom: 15, essential: true });
+      fit(view.region ? regionBounds() : dayBounds(), { padding: pad, duration: animMs(1100), maxZoom: 15, essential: true });
       return;
     }
 
@@ -546,7 +561,7 @@
       if (!force && same) return;
       lastFlight = { c, r };
       lastCamKey = 'f' + view.capSeg;
-      map.fitBounds(aroundBounds(c, r), { padding: 0, duration: animMs(1100), maxZoom: 14.5, essential: true });
+      fit(aroundBounds(c, r), { padding: 0, duration: animMs(1100), maxZoom: 14.5, essential: true });
       return;
     }
     if (!view.transit) {
@@ -559,7 +574,7 @@
     }
     if (!force && key === lastCamKey) return;
     lastCamKey = key;
-    map.fitBounds(bounds, { padding: pad, duration: animMs(1100), maxZoom: view.transit ? 15.5 : 14.5, essential: true });
+    fit(bounds, { padding: pad, duration: animMs(1100), maxZoom: view.transit ? 15.5 : 14.5, essential: true });
   }
   function positionProgressLabels() {
     if (!view) return;
@@ -807,7 +822,8 @@
 
   // ------------------------------------------------------------ map init
   function initMap() {
-    map = new maplibregl.Map({ container: 'es-track-canvas', style: buildStyle(), attributionControl: false, fadeDuration: 0, maxZoom: 17, minZoom: 1, pitchWithRotate: false, bounds: dayBounds(), fitBoundsOptions: { padding: isPhone() ? 14 : 26, maxZoom: 15 } });
+    map = new maplibregl.Map({ container: 'es-track-canvas', style: buildStyle(), attributionControl: false, fadeDuration: 0, maxZoom: 17, minZoom: LEAST_ZOOM, pitchWithRotate: false, bounds: dayBounds(), fitBoundsOptions: { padding: isPhone() ? 14 : 26, maxZoom: 15 } });
+    map.setMinZoom(floorZoom(map.getZoom()));
     setInteractive(false);
     map.on('load', () => {
       mapReady = true; lastCamKey = null; lastGrad = ''; lastPhotoIdx = '';
@@ -832,6 +848,10 @@
     map.on('move', followBadge);
     // funnels fade back in once settled: a move that starts before the previous one has finished keeps them hidden
     map.on('moveend', () => { updateBadge(); requestAnimationFrame(() => { if (!map.isMoving()) widget.classList.remove('is-moving'); }); });
+
+    // Once the map settles, the least zoom rises back toward 1, but never above where the map now is, so it never
+    // makes the map jump.
+    map.on('moveend', () => { if (!map.isMoving()) map.setMinZoom(floorZoom(map.getZoom())); });
 
     // Photos whose dots overlap the hovered one at the current zoom, in page order.
     function clusterAt(i) {
@@ -1084,7 +1104,7 @@
       const seg = SEGMENTS[s.leg];
       view = { kind: 'browse', photoIdx: -1, idx: seg.start, segs: [s.leg, s.leg], capSeg: s.leg, dot: seg.coords[0], frac: total ? cum[seg.start] / total : 0, m: cum[seg.start], transit: true };
       applyView(true);
-      map.fitBounds(boundsOf([seg.coords], [seg.coords[0]]), { padding: isPhone() ? 40 : 90, duration: RM ? 0 : 700, maxZoom: 15.5 });
+      fit(boundsOf([seg.coords], [seg.coords[0]]), { padding: isPhone() ? 40 : 90, duration: RM ? 0 : 700, maxZoom: 15.5 });
     } else if (s.kind === 'end') {
       const endIdx = pts.length - 1, endPt = pts[endIdx];
       view = { kind: 'browse', photoIdx: -1, idx: endIdx, segs: [s.leg, s.leg], capSeg: s.leg, dot: endPt, frac: 1, m: total, transit: false };
@@ -1098,9 +1118,9 @@
 
       // A flight video's step frames the whole stretch it covers, which the photo card then sits over.
       const clip = s.group.map(i => photos[i]).find(q => q.clip);
-      if (clip) map.fitBounds(boundsOf([clipCoords(clip)], [[p.lon, p.lat]]), { padding: isPhone() ? 40 : 90, duration: RM ? 0 : 700, maxZoom: 15.5 });
+      if (clip) fit(boundsOf([clipCoords(clip)], [[p.lon, p.lat]]), { padding: isPhone() ? 40 : 90, duration: RM ? 0 : 700, maxZoom: 15.5 });
       // A photo from the air shows what's in view from the aircraft, as the corner map does.
-      else if (FLIGHT_RADIUS_M[SEGMENTS[s.leg].mode]) map.fitBounds(aroundBounds([p.lon, p.lat], flightRadius(view)), { padding: 0, duration: RM ? 0 : 700, maxZoom: 14 });
+      else if (FLIGHT_RADIUS_M[SEGMENTS[s.leg].mode]) fit(aroundBounds([p.lon, p.lat], flightRadius(view)), { padding: 0, duration: RM ? 0 : 700, maxZoom: 14 });
       else map.easeTo({ center: [p.lon, p.lat], zoom: Math.max(map.getZoom(), 14), duration: RM ? 0 : 600 });
 
       // The card waits for the camera to settle. Starting the move stopped any move still under way, which fired its
