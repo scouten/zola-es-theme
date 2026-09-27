@@ -676,7 +676,12 @@
     clipSpan.hidden = !clipP;
     if (clipP) { const f = clipP.clip.f; clipSpan.style.left = pct(f[0]); clipSpan.style.width = pct(f[f.length - 1] - f[0]); }
     positionProgressLabels();
-    document.getElementById('es-track-step-label').textContent = stepLabel(browseStep == null ? stepIndexFor(view) : browseStep);
+    const stepAt = browseStep == null ? stepIndexFor(view) : browseStep;
+    document.getElementById('es-track-step-label').textContent = stepLabel(stepAt);
+
+    // The arrows dim at either end of the day: back at the whole day, onward at its end.
+    document.getElementById('es-track-prev').disabled = stepAt < 0;
+    document.getElementById('es-track-next').disabled = stepAt >= STEPS.length - 1;
     if (!mapReady) return;
     map.getSource('dot').setData(dotData(view));
     map.getSource('current').setData(currentLegData(view));
@@ -705,6 +710,7 @@
     const onPhotoStep = browseStep != null && STEPS[browseStep] && STEPS[browseStep].kind === 'photos';
     const want = mapReady && placement !== 'corner' && !collapsed && view && thumb.hidden && !onPhotoStep && window.__esTrackCard;
     badge.hidden = !want;
+    placeStep();
     if (!want) { badgeOff = null; badgeTail.toggleAttribute('hidden', true); return; }
     // direction of travel at the anchor, in screen space, so the badge can sit beside it on the side behind it
     const i = badgeAnchorIdx(), a = project(pts[Math.max(0, i - 3)]), b = project(pts[Math.min(pts.length - 1, i + 3)]);
@@ -712,6 +718,22 @@
     badgeOff = window.__esTrackCard.placeNear(badge, badgeAt, { sides: true, gap: 34, travel: { x: b.x - a.x, y: b.y - a.y } });
     drawBadgeTail();
   }
+
+  // On a phone, the full-screen map's step controls ride just under the badge or the photo card, where the reader is
+  // already looking, rather than in the status bar. While neither is up (the camera moving between steps), they stay
+  // where they were rather than jumping to the bar and back. Everywhere else, they're in the bar.
+  const stepEl = widget.querySelector('.es-track-step'), stepHome = stepEl.parentNode, stepBefore = stepEl.nextElementSibling;
+  function placeStep() {
+    const riding = placement === 'expanded' && isPhone();
+    const host = !riding ? stepHome : !thumb.hidden ? thumb : !badge.hidden ? badge : stepEl.parentNode;
+    if (stepEl.parentNode === host) return;
+    if (host === stepHome) stepHome.insertBefore(stepEl, stepBefore);
+    else host.appendChild(stepEl);
+  }
+
+  // A tap between the arrows must not reach the photo card, which opens its photo.
+  stepEl.addEventListener('click', e => e.stopPropagation());
+
   // Where the badge points. Normally the dot. When stepping onto a leg that has no photos of its own (and is not
   // the first leg of the day, whose badge marks the start), the badge labels the leg itself from its midpoint.
   let badgeAt = null;
@@ -796,6 +818,7 @@
     modal.hidden = target !== 'expanded';
     document.body.style.overflow = target === 'expanded' ? 'hidden' : '';
     thumb.hidden = true;
+    placeStep();
     requestAnimationFrame(positionProgressLabels);
     if (!mapReady) return;
     setInteractive(target !== 'corner');
@@ -904,6 +927,7 @@
       // A card that comes up afresh, or for another photo, may make room for itself again.
       if (thumb.hidden || roomMadeFor !== p) roomMadeFor = null;
       thumb.hidden = false;
+      placeStep();
       placeCard(p);
       updateBadge();
     }
