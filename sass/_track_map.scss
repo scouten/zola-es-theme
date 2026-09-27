@@ -294,6 +294,10 @@ $track-widget-map-height: 270px !default;
   }
   .es-track-modal { padding: 0; }
   .es-track-widget.is-expanded { border-radius: 0; border: 0; }
+
+  // The caption's first line (the way of travel and its distance) keeps to one line too, cut short like the place
+  // name under it, rather than wrapping partway through a distance.
+  .es-track-widget .es-track-text .mode { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 }
 
 @media (prefers-reduced-motion: reduce) {
