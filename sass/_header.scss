@@ -21,7 +21,15 @@ header {
     }
 
     .full-name { opacity: 100%; }
-    .short-name { opacity: 0; }
+
+    // The page title stays on the logo's line: a long one is cut short with an ellipsis rather than wrapping
+    // into the page below.
+    .short-name {
+        opacity: 0;
+        right: .6em;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
 
     .title {
         opacity: 0;
