@@ -872,21 +872,29 @@
       else { thumbImg.removeAttribute('src'); thumbImg.style.display = 'none'; }
       thumbLoc.textContent = p.loc || '';
       if (group.length > 1) { const more = document.createElement('span'); more.className = 'more'; more.textContent = `+${group.length - 1} more`; thumbLoc.appendChild(more); }
+
+      // A card that comes up afresh, or for another photo, may make room for itself again.
+      if (thumb.hidden || roomMadeFor !== p) roomMadeFor = null;
       thumb.hidden = false;
       placeCard(p);
       updateBadge();
     }
+    // The photo whose card has moved the map to make room for itself, while that card is up.
+    let roomMadeFor = null;
+
     // keep the card inside the map: below the dot when there's no room above, clamped sideways
-    function placeCard(p, panned) {
+    function placeCard(p) {
       cardAt = [p.lon, p.lat];
       cardOff = placeNear(thumb, cardAt, { gap: 34 });
       drawTail(thumbTail, thumb, cardAt);
 
       // A card the stepper holds may move the map to make room for itself (a tall photo on a phone, say), once its
-      // image has arrived and set its height. A card under the pointer never does, nor does one already moved for.
+      // image has arrived and set its height. It does so only once while it's up, so it never undoes the reader's
+      // own moves of the map. A card under the pointer never does.
       const sized = thumbImg.style.display === 'none' || thumbImg.complete;
-      if (!cardOff.clean && !panned && sized && stepperHoldsCard()) {
-        makeRoom(thumb, cardAt, 34, () => { if (!thumb.hidden && hoverGroup && photos[hoverGroup[0]] === p) placeCard(p, true); });
+      if (!cardOff.clean && roomMadeFor !== p && sized && stepperHoldsCard()) {
+        roomMadeFor = p;
+        makeRoom(thumb, cardAt, 34, () => { if (!thumb.hidden && hoverGroup && photos[hoverGroup[0]] === p) placeCard(p); });
       }
     }
 
