@@ -227,14 +227,21 @@
   // fetched (the maps then go without it).
   async function loadRegion(url) {
     if (!url) return null;
+
+    // An AbortController and a timer rather than AbortSignal.timeout, which older browsers lack. The timer runs until
+    // the body has been read, so a response that stalls partway through is given up on too.
+    const abort = new AbortController();
+    const timer = setTimeout(() => abort.abort(), REGION_TIMEOUT_MS);
     try {
-      const r = await fetch(url, { signal: AbortSignal.timeout ? AbortSignal.timeout(REGION_TIMEOUT_MS) : undefined });
+      const r = await fetch(url, { signal: abort.signal });
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const polys = polygonsOf(await r.json());
       return polys.length ? { type: 'MultiPolygon', coordinates: polys } : null;
     } catch (e) {
       console.warn('track map: could not load the region outline ' + url, e);
       return null;
+    } finally {
+      clearTimeout(timer);
     }
   }
 
