@@ -129,10 +129,5 @@ about {
   }
 }
 
-// Phones have no room for the floating search field: it sits over the header text and the map's controls.
-@media screen and (max-width: 600px) {
-  about .search-assembly { display: none; }
-}
-
-// Nor does it belong over the full-screen map, at any size.
+// The floating search field would sit over the full-screen map's controls: hide it while the map is open.
 body:has(.es-track-modal:not([hidden])) about .search-assembly { display: none; }
