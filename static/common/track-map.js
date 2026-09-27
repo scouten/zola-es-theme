@@ -676,7 +676,12 @@
     clipSpan.hidden = !clipP;
     if (clipP) { const f = clipP.clip.f; clipSpan.style.left = pct(f[0]); clipSpan.style.width = pct(f[f.length - 1] - f[0]); }
     positionProgressLabels();
-    document.getElementById('es-track-step-label').textContent = stepLabel(browseStep == null ? stepIndexFor(view) : browseStep);
+    const stepAt = browseStep == null ? stepIndexFor(view) : browseStep;
+    document.getElementById('es-track-step-label').textContent = stepLabel(stepAt);
+
+    // The arrows dim at either end of the day: back at the whole day, onward at its end.
+    document.getElementById('es-track-prev').disabled = stepAt < 0;
+    document.getElementById('es-track-next').disabled = stepAt >= STEPS.length - 1;
     if (!mapReady) return;
     map.getSource('dot').setData(dotData(view));
     map.getSource('current').setData(currentLegData(view));

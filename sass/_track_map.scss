@@ -215,7 +215,8 @@ $track-widget-map-height: 270px !default;
 .es-track-widget .es-track-bar-btn {
   flex: 0 0 auto; width: 1.6rem; height: 1.6rem; border-radius: 50%; padding: 0; margin-left: .1rem;
   border: 1px solid var(--es-track-edge); background: transparent; color: var(--es-track-muted); display: grid; place-items: center;
-  &:hover { color: var(--es-track-text); border-color: var(--es-track-text-soft); }
+  &:hover:not(:disabled) { color: var(--es-track-text); border-color: var(--es-track-text-soft); }
+  &:disabled { opacity: .35; cursor: default; }
   svg { width: .9rem; height: .9rem; transition: transform .25s ease; }
 }
 .es-track-widget.is-collapsed .es-track-collapse svg { transform: rotate(180deg); }
