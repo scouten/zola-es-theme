@@ -17,6 +17,7 @@ photo_dots = true        # a dot on the map for every photo
 dim_over_photos = true   # fade the corner widget while it overlaps a photo
 mobile_collapsed = true  # phones start with just the status line
 corner = "left"          # or "right"
+start_span_km = 0        # when set, the corner map opens on the day's region, at least this many km across, until the reader scrolls
 glyphs = ""              # optional glyph URL template for map labels, see Fonts
 label_font = []          # optional font stack for map labels, e.g. ["Expo Sans Pro Regular"]
 ```
@@ -98,6 +99,7 @@ Modes: `drive`, `taxi`, `walk`, `hike`, `bike`, `horse`, `bus`, `train`, `tram`,
 
 ## What the reader sees
 
+- **Opening on the region**: with `start_span_km` set (146parks.blog uses 200, about a third of Washington), the corner map first shows the day's surroundings at least that far across, to set the scene. The reader's first scroll closes in on the whole day.
 - **Corner widget** (lower left, 380 px): the day's route with the traveled part in amber, finished legs in a darker amber, the current leg under a soft glow, and a dot at the photo in view. Under it, a progress bar carrying the distance so far at the colour transition and the day's total at the right, then a caption: mode icon, "Walking · 1.3 km / 0.8 mi", and the leg's name. A chevron collapses the widget to the caption alone.
 - **Prose between photo groups** frames the leg that connects them and draws it dashed.
 - **Docked**: when the reader reaches the map slot at the end of the article (the `#map` anchor the title links to), the widget moves into it at full width and becomes interactive, with photo thumbnails on hover.

@@ -22,6 +22,10 @@
   // The whole-day view spans at least this far across, so a short day still shows its surroundings.
   const DAY_MIN_SPAN_M = 3000;
 
+  // With `start_span_km` set, the corner map opens on the day's region, at least that far across, until the reader
+  // scrolls this far; then it closes in on the day.
+  const REGION_SCROLL_PX = 24;
+
   const cfgEl = document.getElementById('es-track-config');
   const widget = document.getElementById('es-track-widget');
   if (!cfgEl || !widget) return;
@@ -202,7 +206,10 @@
     return best;
   }
   // The view before the first photo, and on the docked map: the whole day, with the dot at its start.
-  const dayStartView = () => ({ kind: 'start', photoIdx: -1, segs: [0, SEGMENTS.length - 1], capSeg: 0, dot: pts[0], frac: 0, m: 0, transit: true });
+  const dayStartView = region => ({ kind: 'start', region: !!region, photoIdx: -1, segs: [0, SEGMENTS.length - 1], capSeg: 0, dot: pts[0], frac: 0, m: 0, transit: true });
+
+  // At the top of the page, before the reader scrolls, when the site sets a region to open on.
+  const atRegion = () => CFG.startSpanKm > 0 && scrollY < REGION_SCROLL_PX;
 
   // The whole day in a line: its main ways of travel and its total ("Flying, driving, and more · 9,097 km /
   // 5,653 mi"), and the mode to show its icon (see `modeSummary` in track-common.js).
@@ -228,8 +235,8 @@
     for (let k = i - 1; k >= 0; k--) if (items[k].photo) { prev = items[k].photo; break; }
     for (let k = i + 1; k < items.length; k++) if (items[k].photo) { next = items[k].photo; break; }
     const last = SEGMENTS.length - 1;
-    // Before the first photo: the whole day, with the dot at its start.
-    if (!prev) return dayStartView();
+    // Before the first photo: the whole day, with the dot at its start, or its region at the top of the page.
+    if (!prev) return dayStartView(atRegion());
     const pi = photos.indexOf(prev);
     if (!next) {
       if (prev.seg === last) return mk('photo', pi, [last, last], last, [prev.lon, prev.lat]);
@@ -472,6 +479,13 @@
     return b;
   }
 
+  // The day's region: the whole day, widened about its centre to at least `start_span_km` across.
+  function regionBounds() {
+    const b = dayBounds(), c = b.getCenter();
+    aroundBounds([c.lng, c.lat], CFG.startSpanKm * 1000 / 2).forEach(corner => b.extend(corner));
+    return b;
+  }
+
   function fitAll(pad) { if (mapReady) map.fitBounds(dayBounds(), { padding: pad, duration: animMs(900), maxZoom: 15 }); }
   // Whether `p` ([lon, lat]) lies inside `ring`, by ray casting.
   function inRing(ring, p) {
@@ -512,9 +526,10 @@
     let key, bounds;
     const pad = isPhone() ? 14 : 26;
     if (view.kind === 'start') {
-      if (!force && lastCamKey === 'day') return;
-      lastCamKey = 'day';
-      map.fitBounds(dayBounds(), { padding: pad, duration: animMs(1100), maxZoom: 15, essential: true });
+      const key = view.region ? 'region' : 'day';
+      if (!force && lastCamKey === key) return;
+      lastCamKey = key;
+      map.fitBounds(view.region ? regionBounds() : dayBounds(), { padding: pad, duration: animMs(1100), maxZoom: 15, essential: true });
       return;
     }
 
@@ -719,7 +734,7 @@
       if (browseStep != null && placement !== 'corner') { updateOverlap(); return; }
       const v = placement === 'docked' ? dayStartView() : computeView(currentItem());
       const moved = v && view && v.kind === 'clip' && (v.frac !== view.frac || v.kmh !== view.kmh || v.alt !== view.alt || v.phase !== view.phase);
-      if (v && (!view || moved || v.kind !== view.kind || v.photoIdx !== view.photoIdx || v.segs[0] !== view.segs[0] || v.segs[1] !== view.segs[1])) { view = v; applyView(false); }
+      if (v && (!view || moved || v.kind !== view.kind || v.region !== view.region || v.photoIdx !== view.photoIdx || v.segs[0] !== view.segs[0] || v.segs[1] !== view.segs[1])) { view = v; applyView(false); }
       updateOverlap();
     });
   }
