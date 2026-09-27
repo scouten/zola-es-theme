@@ -833,6 +833,15 @@
       drawTail(thumbTail, thumb, cardAt);
     }
     map.on('move', followCard);
+
+    // While the map moves, the card keeps its offset from the photo, clamped to the map's edges. A card placed
+    // mid-move (its image arrived while the camera was still settling) can end up over its own dot once the camera
+    // stops: choose its spot again then.
+    map.on('moveend', () => {
+      if (thumb.hidden || !cardAt || !hoverGroup) return;
+      const q = project(cardAt), l = thumb.offsetLeft, t = thumb.offsetTop;
+      if (q.x >= l - 6 && q.x <= l + thumb.offsetWidth + 6 && q.y >= t - 6 && q.y <= t + thumb.offsetHeight + 6) placeCard(photos[hoverGroup[0]]);
+    });
     function showCard(group) {
       const p = photos[group[0]];
       if (!p) return;
@@ -997,7 +1006,7 @@
       const p = photos[s.group[0]];
       view = { kind: 'browse', photoIdx: s.group[0], segs: [s.leg, s.leg], capSeg: s.leg, dot: [p.lon, p.lat], frac: p.frac, m: p.m, transit: false };
       applyView(true);
-      map.once('moveend', () => { if (browseStep != null && STEPS[browseStep] === s) card.showCard(s.group); });
+      const show = () => { if (browseStep != null && STEPS[browseStep] === s) card.showCard(s.group); };
 
       // A flight video's step frames the whole stretch it covers, which the photo card then sits over.
       const clip = s.group.map(i => photos[i]).find(q => q.clip);
@@ -1005,6 +1014,11 @@
       // A photo from the air shows what's in view from the aircraft, as the corner map does.
       else if (FLIGHT_RADIUS_M[SEGMENTS[s.leg].mode]) map.fitBounds(aroundBounds([p.lon, p.lat], flightRadius(view)), { padding: 0, duration: RM ? 0 : 700, maxZoom: 14 });
       else map.easeTo({ center: [p.lon, p.lat], zoom: Math.max(map.getZoom(), 14), duration: RM ? 0 : 600 });
+
+      // The card waits for the camera to settle. Starting the move stopped any move still under way, which fired its
+      // 'moveend' at once, so only now is the wait for this one; a move without a duration has already ended.
+      if (map.isMoving()) map.once('moveend', show);
+      else show();
     }
   }
   const stepFrom = () => (browseStep == null ? stepIndexFor(view) : browseStep);
