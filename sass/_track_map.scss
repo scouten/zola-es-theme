@@ -295,6 +295,21 @@ $track-widget-map-height: 270px !default;
   .es-track-modal { padding: 0; }
   .es-track-widget.is-expanded { border-radius: 0; border: 0; }
 
+  // The full-screen map's step controls ride under the badge or the photo card (see `placeStep` in track-map.js): a
+  // row of their own under a fine rule, arrows at either end, and tappable though the badge isn't.
+  .es-track-badge { flex-wrap: wrap; max-width: calc(100% - 8px); }
+
+  // The text shares the first row with its icon rather than wrapping under it, cut short when the map is too narrow.
+  .es-track-badge-text { flex: 1 1 0; min-width: 0; > * { overflow: hidden; text-overflow: ellipsis; } }
+
+  .es-track-badge, .es-track-thumb {
+    .es-track-step {
+      flex: 1 0 100%; justify-content: space-between; margin-left: 0; padding-top: .35rem;
+      border-top: 1px solid var(--es-track-edge); pointer-events: auto;
+    }
+  }
+  .es-track-thumb .es-track-step { margin-top: .3rem; }
+
   // The caption's first line (the way of travel and its distance) keeps to one line too, cut short like the place
   // name under it, rather than wrapping partway through a distance.
   .es-track-widget .es-track-text .mode { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
