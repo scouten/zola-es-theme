@@ -17,11 +17,10 @@
   const cfgEl = document.getElementById('es-section-track-config');
   const widget = document.getElementById('es-track-widget');
   if (!cfgEl || !widget || !window.esTrack) return;
-  const { MODES, iconSvg, fmtBoth, modeSummary } = window.esTrack;
+  const { MODES, iconSvg, fmtBoth, modeSummary, isPhone } = window.esTrack;
   const CFG = JSON.parse(cfgEl.textContent);
   const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const tok = n => getComputedStyle(widget).getPropertyValue('--es-track-' + n).trim();
-  const isPhone = () => innerWidth <= 720;
 
   // A day's view spans at least this far across, as on the page's own map.
   const DAY_MIN_SPAN_M = 3000;
