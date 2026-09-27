@@ -10,7 +10,7 @@
   'use strict';
 
   if (!window.esTrack) return;
-  const { MODES, iconSvg, tierOf, fmtMetricAs, fmtImperialAs, fmtBoth, modeSummary } = window.esTrack;
+  const { MODES, iconSvg, tierOf, imperialTierOf, fmtMetricAs, fmtImperialAs, fmtBoth, modeSummary } = window.esTrack;
 
   // legs whose caption may show a duration (the only time-derived value ever shown)
   const TIMED = ['fly', 'prop', 'boat', 'ferry', 'helicopter'];
@@ -39,9 +39,9 @@
     return 2 * R * Math.asin(Math.sqrt(s));
   }
   // Same tier as a reference distance, so "0 km / 0 mi" sits beside "167 km / 104 mi".
-  const fmtLike = (m, ref) => `${fmtMetricAs(m, tierOf(ref))} / ${fmtImperialAs(m, tierOf(ref))}`;
+  const fmtLike = (m, ref) => `${fmtMetricAs(m, tierOf(ref))} / ${fmtImperialAs(m, imperialTierOf(ref))}`;
   const fmtSpeed = kmh => `${Math.round(kmh).toLocaleString('en-US')} km/h / ${Math.round(kmh / 1.609344).toLocaleString('en-US')} mph`;
-  // Feet to the nearest 10, as in the metres tier of `fmtBoth`.
+  // Feet to the nearest 10, as `fmtBoth` gives short distances. Altitudes stay in feet however high.
   const fmtAlt = m => `${Math.round(m).toLocaleString('en-US')} m / ${(Math.round(m * 3.28084 / 10) * 10).toLocaleString('en-US')} ft`;
   // Units run against the numbers, unlike distances: "1h 0min", "14h 15min", "45min".
   function fmtDur(s) {

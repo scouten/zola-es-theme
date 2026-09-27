@@ -54,20 +54,26 @@
 
   // ------------------------------------------------------------ distances
   // Distances: the metric side picks the tier, and the imperial side follows it with the same
-  // rounding. Under 950 m: metres and feet, both to the nearest 10 ("920 m / 3020 ft").
-  // Under 9.95 km: one decimal in both ("1.3 km / 0.8 mi"). Otherwise whole units ("167 km / 104 mi").
+  // rounding, except that feet give way to miles above 1000 ft. Under 950 m: metres to the nearest 10,
+  // and feet to the nearest 10 up to 1000 ft ("250 m / 820 ft"), else miles to one decimal
+  // ("920 m / 0.6 mi"). Under 9.95 km: one decimal in both ("1.3 km / 0.8 mi"). Otherwise whole units
+  // ("167 km / 104 mi").
   const tierOf = m => m < 950 ? 'm' : m < 9950 ? 'km1' : 'km';
+  const feetOf = m => Math.round(m * 3.28084 / 10) * 10;
+  const imperialTierOf = m => tierOf(m) === 'm' && feetOf(m) > 1000 ? 'km1' : tierOf(m);
   function fmtMetricAs(m, tier) {
     if (tier === 'm') return `${Math.round(m / 10) * 10} m`;
     if (tier === 'km1') return `${(m / 1000).toFixed(1)} km`;
     return `${Math.round(m / 1000).toLocaleString('en-US')} km`;
   }
+
+  // `tier` is from `imperialTierOf`.
   function fmtImperialAs(m, tier) {
-    if (tier === 'm') return `${Math.round(m * 3.28084 / 10) * 10} ft`;
+    if (tier === 'm') return `${feetOf(m)} ft`;
     if (tier === 'km1') return `${(m / 1609.344).toFixed(1)} mi`;
     return `${Math.round(m / 1609.344).toLocaleString('en-US')} mi`;
   }
-  const fmtBoth = m => `${fmtMetricAs(m, tierOf(m))} / ${fmtImperialAs(m, tierOf(m))}`;
+  const fmtBoth = m => `${fmtMetricAs(m, tierOf(m))} / ${fmtImperialAs(m, imperialTierOf(m))}`;
 
   // ------------------------------------------------------------ day summary
   // A mode covering more than this share of the distance traveled names the day alone.
@@ -195,7 +201,7 @@
   }
 
   window.esTrack = {
-    MODES, ICONS, iconSvg, tierOf, fmtMetricAs, fmtImperialAs, fmtBoth, modeSummary,
+    MODES, ICONS, iconSvg, tierOf, imperialTierOf, fmtMetricAs, fmtImperialAs, fmtBoth, modeSummary,
     loadBasemap: load, basemapStyle: buildStyle,
   };
 
