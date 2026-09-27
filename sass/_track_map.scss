@@ -279,15 +279,18 @@ $track-widget-map-height: 270px !default;
 @media (max-width: 720px) {
   .es-track-widget.is-corner {
     left: 0; right: 0; bottom: 0; width: auto; border-radius: 12px 12px 0 0; border-bottom: 0;
-    display: grid; grid-template-columns: 76px 1fr; align-items: stretch;
+
+    // `minmax(0, 1fr)` rather than `1fr`, whose minimum is the content's own: the caption's place name, kept to one
+    // line, would otherwise widen the strip past the screen (as WebKit lays it out) rather than being cut short.
+    display: grid; grid-template-columns: 76px minmax(0, 1fr); align-items: stretch;
     padding-bottom: env(safe-area-inset-bottom, 0px);
 
     &.pos-right { left: 0; right: 0; }
     .es-track-map { height: 76px; }
     .es-track-expand, .es-track-attr-btn, .es-track-zoom { display: none; }
-    .es-track-bar { padding: .4rem .9rem .5rem; }
+    .es-track-bar { padding: .4rem .9rem .5rem; min-width: 0; }
     &.over-photo:not(:hover) { opacity: 1; }
-    &.is-collapsed { grid-template-columns: 1fr; }
+    &.is-collapsed { grid-template-columns: minmax(0, 1fr); }
   }
   .es-track-modal { padding: 0; }
   .es-track-widget.is-expanded { border-radius: 0; border: 0; }
