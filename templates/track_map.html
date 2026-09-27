@@ -41,6 +41,7 @@ function addParkMarker() { return null; }
   "basemap": {{ tm.basemap | default(value="") | json_encode() | safe }},
   "detail": {{ tm.detail | default(value="minimal") | json_encode() | safe }},
   "hillshade": {{ tm.hillshade | default(value=true) | json_encode() }},
+  "regionOutline": {{ tm.region_outline | default(value="") | json_encode() | safe }},
   "glyphs": {{ tm.glyphs | default(value="") | json_encode() | safe }},
   "labelFont": {% if tm.label_font %}{{ tm.label_font | json_encode() | safe }}{% else %}[]{% endif %},
   "dots": {{ tm.photo_dots | default(value=true) | json_encode() }},

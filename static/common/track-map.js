@@ -96,6 +96,7 @@
   let distM = 0;  // the day's distance as published (dist_m), which the page's front matter also shows
   let tripDays = 1;  // calendar days the log covers (the page's `days`, else the JSON's): more than one is a trip, not a day
   let PARKS = [];  // the parks the page highlights (the JSON's `parks`), tinted under the track
+  let REGION = null;  // the site's region (`region_outline`), set apart from its surroundings, or null
   let map = null, mapReady = false, baseStyle = null;
   let placement = 'corner', placedOnce = false, slotVisible = false, expanded = false, collapsed = false;
   let view = null, lastCamKey = null, lastGrad = '', lastPhotoIdx = '';
@@ -455,6 +456,7 @@
     Object.assign(style.sources, ourSources());
     const labels = style.layers.findIndex(l => l.type === 'symbol');
     style.layers.splice(labels < 0 ? style.layers.length : labels, 0, ...parkLayers());
+    window.esTrack.addRegion(style, REGION, tok);
     style.layers.push(...ourLayers());
     widget.classList.toggle('basemap-muted', detail !== 'standard');
     return style;
@@ -1113,7 +1115,7 @@
     setCollapsed(collapsed, false);
 
     view = computeView(currentItem()); applyView(true);
-    await loadBaseStyle();
+    [, REGION] = await Promise.all([loadBaseStyle(), window.esTrack.loadRegion(CFG.regionOutline)]);
     if (!window.maplibregl) { showNotice('The map library could not be loaded.'); return; }
     initMap();
     new IntersectionObserver(es => { slotVisible = es[0].isIntersecting; place(); }, { threshold: 0 }).observe(slot);

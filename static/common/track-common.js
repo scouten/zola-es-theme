@@ -1,6 +1,7 @@
 /* track-common.js — what the track maps share: the travel modes and their icons, distance formatting, the
  * one-line summary of a day's travel, and the basemap under the maps (OpenFreeMap's vector style, trimmed to the
- * detail a view wants and recoloured from the widget's --es-track-* custom properties, with optional hillshade).
+ * detail a view wants and recoloured from the widget's --es-track-* custom properties, with optional hillshade, and
+ * an optional region that the maps set apart from its surroundings).
  *
  * Used by track-map.js (a day's page) and section-track-map.js (a trip's section page), which add their own
  * sources and layers on top of the basemap, and by the icon preview page. Load it before any of them.
@@ -200,9 +201,42 @@
     return style;
   }
 
+  // ------------------------------------------------------------ region
+  // A site can set its maps in a region (`region_outline`: the URL of a GeoJSON polygon or multipolygon, such as a
+  // state): everything outside it dims, and a fine line traces its border.
+  const WORLD = [[-180, -85], [180, -85], [180, 85], [-180, 85], [-180, -85]];
+
+  // The region's geometry, or null when the site sets none or it can't be fetched (the maps then go without it).
+  async function loadRegion(url) {
+    if (!url) return null;
+    try {
+      const r = await fetch(url);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const doc = await r.json();
+      const geom = doc.type === 'FeatureCollection' ? doc.features[0] && doc.features[0].geometry : doc.type === 'Feature' ? doc.geometry : doc;
+      return geom && /Polygon$/.test(geom.type) ? geom : null;
+    } catch (e) {
+      console.warn('track map: could not load the region outline ' + url, e);
+      return null;
+    }
+  }
+
+  // Adds the region's layers to `style`, above the basemap and its labels, for the caller's own layers to go on top.
+  function addRegion(style, region, tok) {
+    if (!region) return;
+    const polys = region.type === 'MultiPolygon' ? region.coordinates : [region.coordinates];
+    const feature = geometry => ({ type: 'Feature', properties: {}, geometry });
+    style.sources['es-region'] = { type: 'geojson', data: feature(region) };
+    style.sources['es-beyond-region'] = { type: 'geojson', data: feature({ type: 'Polygon', coordinates: [WORLD, ...polys.map(p => p[0])] }) };
+    style.layers.push(
+      { id: 'es-beyond-region', type: 'fill', source: 'es-beyond-region', paint: { 'fill-color': tok('casing'), 'fill-opacity': .55 } },
+      { id: 'es-region-border', type: 'line', source: 'es-region', layout: { 'line-join': 'round' }, paint: { 'line-color': tok('text-soft'), 'line-opacity': .45, 'line-width': 1 } },
+    );
+  }
+
   window.esTrack = {
     MODES, ICONS, iconSvg, tierOf, imperialTierOf, fmtMetricAs, fmtImperialAs, fmtBoth, modeSummary,
-    loadBasemap: load, basemapStyle: buildStyle,
+    loadBasemap: load, basemapStyle: buildStyle, loadRegion, addRegion,
   };
 
   // The icon preview page reads the icons from here.
