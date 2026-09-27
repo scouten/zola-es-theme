@@ -209,11 +209,14 @@
   // state): everything outside it dims, and a fine line traces its border.
   const WORLD = [[-180, -85], [180, -85], [180, 85], [-180, 85], [-180, -85]];
 
+  // The maps wait for the outline before they're drawn, so a slow one is given up on after this long.
+  const REGION_TIMEOUT_MS = 5000;
+
   // The region's geometry, or null when the site sets none or it can't be fetched (the maps then go without it).
   async function loadRegion(url) {
     if (!url) return null;
     try {
-      const r = await fetch(url);
+      const r = await fetch(url, { signal: AbortSignal.timeout ? AbortSignal.timeout(REGION_TIMEOUT_MS) : undefined });
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const doc = await r.json();
       const geom = doc.type === 'FeatureCollection' ? doc.features[0] && doc.features[0].geometry : doc.type === 'Feature' ? doc.geometry : doc;
