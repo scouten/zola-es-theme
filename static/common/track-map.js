@@ -222,6 +222,9 @@
 
   function computeView(it) {
     if (!it || !pts.length) return null;
+
+    // At the top of the page, the region, even when a photo is already nearest the reading line.
+    if (atRegion()) return dayStartView(true);
     const i = items.indexOf(it);
     const mk = (kind, pi, segs, capSeg, dot, transit) => {
       const p = pi >= 0 ? photos[pi] : null;
@@ -236,8 +239,8 @@
     for (let k = i - 1; k >= 0; k--) if (items[k].photo) { prev = items[k].photo; break; }
     for (let k = i + 1; k < items.length; k++) if (items[k].photo) { next = items[k].photo; break; }
     const last = SEGMENTS.length - 1;
-    // Before the first photo: the whole day, with the dot at its start, or its region at the top of the page.
-    if (!prev) return dayStartView(atRegion());
+    // Before the first photo: the whole day, with the dot at its start.
+    if (!prev) return dayStartView();
     const pi = photos.indexOf(prev);
     if (!next) {
       if (prev.seg === last) return mk('photo', pi, [last, last], last, [prev.lon, prev.lat]);
