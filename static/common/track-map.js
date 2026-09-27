@@ -492,10 +492,16 @@
   }
 
   // The least zoom the map allows is normally 1, so the big map can't be zoomed out past the world. A day that spans
-  // more of the globe than fits at zoom 1 (a long flight, especially on a phone's 76 px map) lowers it as far as its
-  // fit needs, down to MapLibre's least (-2), and it rises back toward 1 as the map settles closer in.
+  // more of the globe than fits at zoom 1 (a long flight, especially on a phone's 76 px map) lowers it to the zoom
+  // that shows the whole day, down to MapLibre's least (-2), so the reader can always zoom back out to the whole day.
   const MIN_ZOOM = 1, LEAST_ZOOM = -2;
   const floorZoom = z => Math.max(LEAST_ZOOM, Math.min(MIN_ZOOM, z));
+
+  // The zoom that shows the whole day in the map at its present size.
+  function wholeDayZoom() {
+    const cam = map.cameraForBounds(dayBounds(), { padding: isPhone() ? 14 : 26 });
+    return cam ? cam.zoom : MIN_ZOOM;
+  }
 
   // `map.fitBounds`, first lowering the least zoom when the fit needs it. Stopping any move under way first lets its
   // 'moveend' raise the least zoom before this fit lowers it, not partway through this fit.
@@ -823,7 +829,7 @@
   // ------------------------------------------------------------ map init
   function initMap() {
     map = new maplibregl.Map({ container: 'es-track-canvas', style: buildStyle(), attributionControl: false, fadeDuration: 0, maxZoom: 17, minZoom: LEAST_ZOOM, pitchWithRotate: false, bounds: dayBounds(), fitBoundsOptions: { padding: isPhone() ? 14 : 26, maxZoom: 15 } });
-    map.setMinZoom(floorZoom(map.getZoom()));
+    map.setMinZoom(floorZoom(Math.min(wholeDayZoom(), map.getZoom())));
     setInteractive(false);
     map.on('load', () => {
       mapReady = true; lastCamKey = null; lastGrad = ''; lastPhotoIdx = '';
@@ -849,9 +855,11 @@
     // funnels fade back in once settled: a move that starts before the previous one has finished keeps them hidden
     map.on('moveend', () => { updateBadge(); requestAnimationFrame(() => { if (!map.isMoving()) widget.classList.remove('is-moving'); }); });
 
-    // Once the map settles, the least zoom rises back toward 1, but never above where the map now is, so it never
-    // makes the map jump.
-    map.on('moveend', () => { if (!map.isMoving()) map.setMinZoom(floorZoom(map.getZoom())); });
+    // Once the map settles (and after a resize, when the map changes placement), the least zoom is the one that shows
+    // the whole day at the map's present size, or 1 if that's closer in. A fit that went further out (the region at
+    // the top of the page) keeps its own until the map is closer in than the whole day, so the least zoom never
+    // rises above where the map is and never makes it jump.
+    map.on('moveend', () => { if (!map.isMoving()) map.setMinZoom(floorZoom(Math.min(wholeDayZoom(), map.getZoom()))); });
 
     // Photos whose dots overlap the hovered one at the current zoom, in page order.
     function clusterAt(i) {
