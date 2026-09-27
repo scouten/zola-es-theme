@@ -312,6 +312,12 @@ $track-widget-map-height: 270px !default;
   }
   .es-track-thumb .es-track-step { margin-top: .3rem; }
 
+  // In the big views, the photo card's photo is no taller than leaves room in the map for the rest of the card (its
+  // caption and the step controls), so a tall photo on a short screen (a phone turned sideways) never pushes the
+  // controls out of the map. The photo keeps its shape, centred over its caption.
+  .es-track-widget:not(.is-corner) .es-track-map { container-type: size; }
+  .es-track-widget:not(.is-corner) .es-track-thumb img { width: auto; max-width: 320px; max-height: calc(100cqh - 120px); margin: 0 auto; }
+
   // The caption's first line (the way of travel and its distance) keeps to one line too, cut short like the place
   // name under it, rather than wrapping partway through a distance.
   .es-track-widget .es-track-text .mode { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
