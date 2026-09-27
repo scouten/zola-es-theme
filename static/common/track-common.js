@@ -261,8 +261,15 @@
     );
   }
 
+  // ------------------------------------------------------------ screen
+  // A phone, for the maps' layout: a narrow screen, or a short one (a phone turned sideways, whose screen is wide
+  // but a few hundred pixels tall). The same query as the phone rules in sass/_track_map.scss, so the maps' scripts
+  // and styles always agree.
+  const PHONE_QUERY = '(max-width: 720px), (max-height: 500px)';
+  const isPhone = () => matchMedia(PHONE_QUERY).matches;
+
   window.esTrack = {
-    MODES, ICONS, iconSvg, tierOf, imperialTierOf, fmtMetricAs, fmtImperialAs, fmtBoth, modeSummary,
+    MODES, ICONS, iconSvg, tierOf, imperialTierOf, fmtMetricAs, fmtImperialAs, fmtBoth, modeSummary, isPhone,
     loadBasemap: load, basemapStyle: buildStyle, loadRegion, addRegion,
   };
 

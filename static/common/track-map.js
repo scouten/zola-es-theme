@@ -10,7 +10,7 @@
   'use strict';
 
   if (!window.esTrack) return;
-  const { MODES, iconSvg, tierOf, imperialTierOf, fmtMetricAs, fmtImperialAs, fmtBoth, modeSummary } = window.esTrack;
+  const { MODES, iconSvg, tierOf, imperialTierOf, fmtMetricAs, fmtImperialAs, fmtBoth, modeSummary, isPhone } = window.esTrack;
 
   // legs whose caption may show a duration (the only time-derived value ever shown)
   const TIMED = ['fly', 'prop', 'boat', 'ferry', 'helicopter'];
@@ -32,7 +32,6 @@
   const CFG = JSON.parse(cfgEl.textContent);
   const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const tok = n => getComputedStyle(widget).getPropertyValue('--es-track-' + n).trim();
-  const isPhone = () => innerWidth <= 720;
 
   // ------------------------------------------------------------ helpers
   const R = 6371000;

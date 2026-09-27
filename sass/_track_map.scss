@@ -276,8 +276,9 @@ $track-widget-map-height: 270px !default;
 .es-track-widget.is-expanded .es-track-progress .cur, .es-track-widget.is-docked .es-track-progress .cur,
 .es-track-widget.is-expanded .es-track-progress .tot, .es-track-widget.is-docked .es-track-progress .tot { font-size: .74rem; }
 
-// phones: a bottom strip, collapsed to the status line by default
-@media (max-width: 720px) {
+// phones: a bottom strip, collapsed to the status line by default. A phone is a narrow screen or a short one (turned
+// sideways); keep this query the same as `PHONE_QUERY` in track-common.js.
+@media (max-width: 720px), (max-height: 500px) {
   .es-track-widget.is-corner {
     left: 0; right: 0; bottom: 0; width: auto; border-radius: 12px 12px 0 0; border-bottom: 0;
 
