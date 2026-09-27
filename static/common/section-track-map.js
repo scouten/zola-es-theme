@@ -229,7 +229,7 @@
     const c = focus >= 0 ? cards[focus] : null;
     const days = c && c.state === 'ok' ? [c] : LISTING ? [] : tracked();
     if (!days.length) return;
-    map.fitBounds(boundsOf(days), { padding: isPhone() ? 14 : 26, maxZoom: 15, duration: instant || RM ? 0 : 1100, essential: true });
+    map.fitBounds(boundsOf(days), { padding: isPhone() ? 8 : 26, maxZoom: 15, duration: instant || RM ? 0 : 1100, essential: true });
   }
 
   // ------------------------------------------------------------ caption
@@ -421,8 +421,9 @@
     updateNotice();
     if (noLibrary) return;
 
-    // A trip with long flights can span most of the globe, which only fits the corner widget below zoom 1.
-    map = new maplibregl.Map({ container: 'es-track-canvas', style: buildStyle(), interactive: false, attributionControl: false, fadeDuration: 0, maxZoom: 17, minZoom: 0 });
+    // A trip with long flights can span most of the globe, which only fits the corner widget below zoom 1, and a
+    // phone's 76 px map below zoom 0 (Seattle to Cape Town needs about -1.7 there): allow MapLibre's lowest zoom.
+    map = new maplibregl.Map({ container: 'es-track-canvas', style: buildStyle(), interactive: false, attributionControl: false, fadeDuration: 0, maxZoom: 17, minZoom: -2 });
 
     // Tracks may have arrived, and the reader scrolled on, while the map loaded.
     map.on('load', () => {
