@@ -128,3 +128,6 @@ about {
     display: none;
   }
 }
+
+// The floating search field would sit over the full-screen map's controls: hide it while the map is open.
+body:has(.es-track-modal:not([hidden])) about .search-assembly { display: none; }

@@ -856,11 +856,12 @@
 
     // While the map moves, the card keeps its offset from the photo, clamped to the map's edges. A card placed
     // mid-move (its image arrived while the camera was still settling) can end up over its own dot once the camera
-    // stops: choose its spot again then.
+    // stops, or be clamped onto one of the map's controls: choose its spot again then.
     map.on('moveend', () => {
       if (thumb.hidden || !cardAt || !hoverGroup) return;
       const q = project(cardAt), l = thumb.offsetLeft, t = thumb.offsetTop;
-      if (q.x >= l - 6 && q.x <= l + thumb.offsetWidth + 6 && q.y >= t - 6 && q.y <= t + thumb.offsetHeight + 6) placeCard(photos[hoverGroup[0]]);
+      const overDot = q.x >= l - 6 && q.x <= l + thumb.offsetWidth + 6 && q.y >= t - 6 && q.y <= t + thumb.offsetHeight + 6;
+      if (overDot || coversControl(thumb)) placeCard(photos[hoverGroup[0]]);
     });
     function showCard(group) {
       const p = photos[group[0]];
@@ -871,16 +872,45 @@
       else { thumbImg.removeAttribute('src'); thumbImg.style.display = 'none'; }
       thumbLoc.textContent = p.loc || '';
       if (group.length > 1) { const more = document.createElement('span'); more.className = 'more'; more.textContent = `+${group.length - 1} more`; thumbLoc.appendChild(more); }
+
+      // A card that comes up afresh, or for another photo, may make room for itself again.
+      if (thumb.hidden || roomMadeFor !== p) roomMadeFor = null;
       thumb.hidden = false;
       placeCard(p);
       updateBadge();
     }
+    // The photo whose card has moved the map to make room for itself, while that card is up.
+    let roomMadeFor = null;
+
     // keep the card inside the map: below the dot when there's no room above, clamped sideways
     function placeCard(p) {
       cardAt = [p.lon, p.lat];
       cardOff = placeNear(thumb, cardAt, { gap: 34 });
       drawTail(thumbTail, thumb, cardAt);
+
+      // A card the stepper holds may move the map to make room for itself (a tall photo on a phone, say), once its
+      // image has arrived and set its height. It does so only once while it's up, so it never undoes the reader's
+      // own moves of the map. A card under the pointer never does.
+      const sized = thumbImg.style.display === 'none' || thumbImg.complete;
+      if (!cardOff.clean && roomMadeFor !== p && sized && stepperHoldsCard()) {
+        roomMadeFor = p;
+        makeRoom(thumb, cardAt, 34, () => { if (!thumb.hidden && hoverGroup && photos[hoverGroup[0]] === p) placeCard(p); });
+      }
     }
+
+    // The map's own controls on screen (close or expand, zoom, credits), as boxes in the map's coordinates.
+    function controlBoxes() {
+      const box = map.getContainer().getBoundingClientRect();
+      return Array.from(widget.querySelectorAll('.es-track-map > .es-track-btn, .es-track-zoom, .es-track-attr'))
+        .map(c => c.getBoundingClientRect())
+        .filter(r => r.width && r.height)
+        .map(r => ({ x: r.left - box.left, y: r.top - box.top, w: r.width, h: r.height }));
+    }
+
+    // Whether the box at (`x`, `y`), `w` by `h`, comes within `pad` of the control box `c`.
+    const overControl = (x, y, w, h, c, pad) => x < c.x + c.w + pad && x + w > c.x - pad && y < c.y + c.h + pad && y + h > c.y - pad;
+    const coversControl = el => controlBoxes().some(c => overControl(el.offsetLeft, el.offsetTop, el.offsetWidth, el.offsetHeight, c, 0));
+
     // returns the chosen offset from the dot so the element can follow it while the map moves
     // opts.sides prefers left/right of the dot over above/below; opts.travel (screen-space direction of
     // travel) then prefers the side the traveller came from, so the badge does not sit in the way ahead
@@ -888,17 +918,30 @@
       opts = opts || {};
       const pt = project(lonlat);
       const box = map.getContainer().getBoundingClientRect();
-      const w = el.offsetWidth, h = el.offsetHeight, gap = opts.gap || 14, edge = 4;
+      const w = el.offsetWidth, h = el.offsetHeight, gap = opts.gap || 14, edge = 4, clear = 6;
       const clampX = x => Math.max(edge, Math.min(box.width - edge - w, x));
       const clampY = y => Math.max(edge, Math.min(box.height - edge - h, y));
-      // candidate spots around the dot, each kept inside the map (so never over the status bar)
+      const controls = controlBoxes();
+
+      // Candidate spots around the dot, each kept inside the map (so never over the status bar).
       const cands = [
         [pt.x - w / 2, pt.y - gap - h],  // above
         [pt.x - w / 2, pt.y + gap],      // below
         [pt.x + gap, pt.y - h / 2],      // right
         [pt.x - gap - w, pt.y - h / 2],  // left
-      ].map(([x, y]) => ({ x: clampX(x), y: clampY(y) }));
-      // pick the spot that hides the least of the track and photo dots on screen, and never the dot itself
+      ].map(([x, y], side) => ({ x: clampX(x), y: clampY(y), side }));
+
+      // Whether the funnel from the spot to the dot can be drawn well once clamping has moved the spot: the dot still
+      // faces the side the spot was chosen for, so the funnel meets that side square on rather than at a corner, and
+      // it lies far enough from the dot to show, but not so far that it's left out (see `drawTail`).
+      function funnelFits(r) {
+        const facing = r.side < 2 ? pt.x >= r.x + 10 && pt.x <= r.x + w - 10 : pt.y >= r.y + 10 && pt.y <= r.y + h - 10;
+        const d = Math.hypot(pt.x - Math.max(r.x, Math.min(r.x + w, pt.x)), pt.y - Math.max(r.y, Math.min(r.y + h, pt.y)));
+        return facing && d >= 24 && d <= 90;
+      }
+
+      // Pick the spot that hides the least of the track and photo dots on screen, and never the dot itself, keeping
+      // clear of the map's controls and with room for its funnel.
       const inside = (r, q) => q.x >= r.x - 6 && q.x <= r.x + w + 6 && q.y >= r.y - 6 && q.y <= r.y + h + 6;
       const onScreen = q => q.x >= 0 && q.y >= 0 && q.x <= box.width && q.y <= box.height;
       const step = Math.max(1, Math.floor(pts.length / 1500));
@@ -907,16 +950,41 @@
       const dots = photos.map(o => project([o.lon, o.lat])).filter(onScreen);
       const tx = opts.travel ? opts.travel.x : 0;
       const bias = opts.sides ? [20, 20, tx > 0 ? 12 : 0, tx < 0 ? 12 : 0] : [0, 0, 0, 0];  // above, below, right, left
+
+      // Hiding the dot outweighs covering a control, which outweighs a poor funnel, and each outweighs anything the
+      // track and photo dots under the spot can add up to.
+      const HIDES_DOT = 1e7, COVERS_CONTROL = 1e6, POOR_FUNNEL = 1e5;
       let best = cands[0], bestScore = Infinity;
-      cands.forEach((r, k) => {
-        let score = (inside(r, pt) ? 1000 : 0) + bias[k];
+      cands.forEach(r => {
+        let score = (inside(r, pt) ? HIDES_DOT : 0) + bias[r.side];
+        if (!funnelFits(r)) score += POOR_FUNNEL;
+        if (controls.some(c => overControl(r.x, r.y, w, h, c, clear))) score += COVERS_CONTROL;
         for (const q of samples) if (inside(r, q)) score += 1;
         for (const q of dots) if (inside(r, q)) score += 20;
         if (score < bestScore) { bestScore = score; best = r; }
       });
       el.style.left = best.x + 'px';
       el.style.top = best.y + 'px';
-      return { dx: best.x - pt.x, dy: best.y - pt.y };
+
+      // `clean`: the spot hides neither the dot nor a control, and has room for its funnel.
+      const clean = !inside(best, pt) && funnelFits(best) && !controls.some(c => overControl(best.x, best.y, w, h, c, clear));
+      return { dx: best.x - pt.x, dy: best.y - pt.y, clean };
+    }
+
+    // Pans the map up or down so that the dot at `lonlat` has room for `el` above or below it, clear of the map's
+    // controls, whichever takes the shorter pan; when `el` is too tall for either, the pan still centres the two in
+    // the room there is. Calls `done` once the pan has ended, and does nothing when the dot is already in place.
+    function makeRoom(el, lonlat, gap, done) {
+      const pt = project(lonlat), box = map.getContainer().getBoundingClientRect(), h = el.offsetHeight, edge = 4;
+      const controls = controlBoxes();
+      const top = Math.max(edge, ...controls.filter(c => c.y + c.h / 2 < box.height / 2).map(c => c.y + c.h + 6));
+      const bottom = Math.min(box.height - edge, ...controls.filter(c => c.y + c.h / 2 >= box.height / 2).map(c => c.y - 6));
+      const spare = (bottom - top - gap - h) / 2;
+      const below = top + spare, above = bottom - spare;
+      const to = Math.abs(below - pt.y) <= Math.abs(above - pt.y) ? below : above;
+      if (Math.abs(to - pt.y) < 2) return;
+      map.once('moveend', done);
+      map.panBy([0, pt.y - to], { duration: RM ? 0 : 400 });
     }
     window.__esTrackCard = { showCard, hideCard, placeNear };
     function goTo(i) {
