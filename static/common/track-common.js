@@ -205,22 +205,33 @@
   }
 
   // ------------------------------------------------------------ region
-  // A site can set its maps in a region (`region_outline`: the URL of a GeoJSON polygon or multipolygon, such as a
+  // A site can set its maps in a region (`region_outline`: the URL of a GeoJSON document of polygons, such as a
   // state): everything outside it dims, and a fine line traces its border.
   const WORLD = [[-180, -85], [180, -85], [180, 85], [-180, 85], [-180, -85]];
 
   // The maps wait for the outline before they're drawn, so a slow one is given up on after this long.
   const REGION_TIMEOUT_MS = 5000;
 
-  // The region's geometry, or null when the site sets none or it can't be fetched (the maps then go without it).
+  // Every polygon in a GeoJSON document, each as its list of rings: the outer ring, then any holes.
+  function polygonsOf(doc) {
+    if (!doc) return [];
+    if (doc.type === 'FeatureCollection') return (doc.features || []).flatMap(polygonsOf);
+    if (doc.type === 'GeometryCollection') return (doc.geometries || []).flatMap(polygonsOf);
+    if (doc.type === 'Feature') return polygonsOf(doc.geometry);
+    if (doc.type === 'Polygon') return [doc.coordinates];
+    if (doc.type === 'MultiPolygon') return doc.coordinates;
+    return [];
+  }
+
+  // The region, as one multipolygon of every polygon in the outline, or null when the site sets none or it can't be
+  // fetched (the maps then go without it).
   async function loadRegion(url) {
     if (!url) return null;
     try {
       const r = await fetch(url, { signal: AbortSignal.timeout ? AbortSignal.timeout(REGION_TIMEOUT_MS) : undefined });
       if (!r.ok) throw new Error('HTTP ' + r.status);
-      const doc = await r.json();
-      const geom = doc.type === 'FeatureCollection' ? doc.features[0] && doc.features[0].geometry : doc.type === 'Feature' ? doc.geometry : doc;
-      return geom && /Polygon$/.test(geom.type) ? geom : null;
+      const polys = polygonsOf(await r.json());
+      return polys.length ? { type: 'MultiPolygon', coordinates: polys } : null;
     } catch (e) {
       console.warn('track map: could not load the region outline ' + url, e);
       return null;
@@ -230,10 +241,13 @@
   // Adds the region's layers to `style`, above the basemap and its labels, for the caller's own layers to go on top.
   function addRegion(style, region, tok) {
     if (!region) return;
-    const polys = region.type === 'MultiPolygon' ? region.coordinates : [region.coordinates];
+    const polys = polygonsOf(region);
     const feature = geometry => ({ type: 'Feature', properties: {}, geometry });
+
+    // Outside the region: the world, less each polygon's outer ring, and each polygon's holes, which lie outside it too.
+    const beyond = [[WORLD, ...polys.map(p => p[0])], ...polys.flatMap(p => p.slice(1).map(hole => [hole]))];
     style.sources['es-region'] = { type: 'geojson', data: feature(region) };
-    style.sources['es-beyond-region'] = { type: 'geojson', data: feature({ type: 'Polygon', coordinates: [WORLD, ...polys.map(p => p[0])] }) };
+    style.sources['es-beyond-region'] = { type: 'geojson', data: feature({ type: 'MultiPolygon', coordinates: beyond }) };
     style.layers.push(
       { id: 'es-beyond-region', type: 'fill', source: 'es-beyond-region', paint: { 'fill-color': tok('casing'), 'fill-opacity': .55 } },
       { id: 'es-region-border', type: 'line', source: 'es-region', layout: { 'line-join': 'round' }, paint: { 'line-color': tok('text-soft'), 'line-opacity': .45, 'line-width': 1 } },
