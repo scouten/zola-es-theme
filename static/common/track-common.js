@@ -140,6 +140,9 @@
     if (base) {
       style = JSON.parse(JSON.stringify(base));
       style.layers = style.layers.filter(l => keepLayer(l, detail));
+
+      // A site can drop the highways' route numbers ("5", "99") at every detail.
+      if (cfg.hideRouteNumbers) style.layers = style.layers.filter(l => l.id !== 'highway_name_motorway');
       const water = tok('water'), coast = tok('coast'), road = tok('road'), roadMajor = tok('road-major');
       // Roads as single simple lines: drop the casing layers the stock style draws under them,
       // and paint what's left one grey, with major roads a little wider.

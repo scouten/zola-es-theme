@@ -19,6 +19,7 @@ mobile_collapsed = true  # phones start with just the status line
 corner = "left"          # or "right"
 start_span_km = 0        # when set, the corner map opens on the day's region, at least this many km across, until the reader scrolls
 region_outline = ""      # URL of a GeoJSON polygon (e.g. a state) that the maps set apart: its surroundings dim, its border traced
+hide_route_numbers = false  # drop the highways' route numbers from the basemap
 glyphs = ""              # optional glyph URL template for map labels, see Fonts
 label_font = []          # optional font stack for map labels, e.g. ["Expo Sans Pro Regular"]
 ```
