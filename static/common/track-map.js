@@ -942,11 +942,15 @@
       const dots = photos.map(o => project([o.lon, o.lat])).filter(onScreen);
       const tx = opts.travel ? opts.travel.x : 0;
       const bias = opts.sides ? [20, 20, tx > 0 ? 12 : 0, tx < 0 ? 12 : 0] : [0, 0, 0, 0];  // above, below, right, left
+
+      // Hiding the dot outweighs covering a control, which outweighs a poor funnel, and each outweighs anything the
+      // track and photo dots under the spot can add up to.
+      const HIDES_DOT = 1e7, COVERS_CONTROL = 1e6, POOR_FUNNEL = 1e5;
       let best = cands[0], bestScore = Infinity;
       cands.forEach(r => {
-        let score = (inside(r, pt) ? 1000 : 0) + bias[r.side];
-        if (!funnelFits(r)) score += 300;
-        for (const c of controls) if (overControl(r.x, r.y, w, h, c, clear)) score += 500;
+        let score = (inside(r, pt) ? HIDES_DOT : 0) + bias[r.side];
+        if (!funnelFits(r)) score += POOR_FUNNEL;
+        if (controls.some(c => overControl(r.x, r.y, w, h, c, clear))) score += COVERS_CONTROL;
         for (const q of samples) if (inside(r, q)) score += 1;
         for (const q of dots) if (inside(r, q)) score += 20;
         if (score < bestScore) { bestScore = score; best = r; }
