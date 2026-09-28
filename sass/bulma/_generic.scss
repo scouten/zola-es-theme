@@ -3,7 +3,6 @@
 $code-padding: 0.25em 0.5em 0.25em !default;
 $code-weight: normal !default;
 $code-size: 0.875em !default;
-$small-font-size: 0.875em !default;
 $hr-background-color: $background !default;
 $hr-height: 2px !default;
 $hr-margin: 1.5rem 0 !default;
@@ -25,22 +24,16 @@ html {
   text-size-adjust: 100%;
 }
 
-article,
-aside,
 figure,
 footer,
 header,
-hgroup,
 section {
   display: block;
 }
 
 body,
 button,
-input,
-optgroup,
-select,
-textarea {
+input {
   font-family: $body-family;
 }
 
@@ -94,15 +87,6 @@ img {
   max-width: 100%;
 }
 
-input[type="checkbox"],
-input[type="radio"] {
-  vertical-align: baseline;
-}
-
-small {
-  font-size: $small-font-size;
-}
-
 span {
   font-style: inherit;
   font-weight: inherit;
@@ -114,10 +98,6 @@ strong {
 }
 
 // Block.
-fieldset {
-  border: none;
-}
-
 pre {
   -webkit-overflow-scrolling: touch;
   background-color: $pre-background;
@@ -133,20 +113,5 @@ pre {
     color: currentColor;
     font-size: $pre-code-font-size;
     padding: 0;
-  }
-}
-
-table {
-  td,
-  th {
-    vertical-align: top;
-
-    &:not([align]) {
-      text-align: inherit;
-    }
-  }
-
-  th {
-    color: $text-strong;
   }
 }
