@@ -80,7 +80,13 @@
   {%- block after_content -%}
   {%- endblock -%}
 
-  {%- include "map.html" -%}
+  {%- block map -%}
+    {%- if config.extra.track_map and (page.extra.track_key or page.extra.track_url) -%}
+      {%- include "track_map.html" -%}
+    {%- else -%}
+      {%- include "map.html" -%}
+    {%- endif -%}
+  {%- endblock map -%}
   {%- include "endmark.html" -%}
   {%- include "next_prev.html" -%}
   {%- include "comments.html" -%}

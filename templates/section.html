@@ -18,13 +18,20 @@
   {%- endblock -%}
 
   {%- block subsections -%}
-  {%- if section.subsections | length > 0 -%}
+  {#- A trip (a subsection at least `section_chronological_depth` deep) whose days this section lists appears as a
+      card among the pages instead. -#}
+  {%- set trip_depth = config.extra | get(key="section_chronological_depth", default=0) -%}
+  {%- set collapses_subs = trip_depth > 0 and section.components | length + 1 >= trip_depth -%}
+  {%- set listed = section.pages | map(attribute = "permalink") -%}
+  {%- set_global subs = [] -%}
+  {%- for sub in section.subsections -%}
+    {%- set sub = get_section(path = sub) -%}
+    {%- if not collapses_subs or sub.pages | length == 0 or not sub.pages[0].permalink in listed -%}
+      {%- set_global subs = subs | concat(with = sub) -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- if subs | length > 0 -%}
     <ul class="subsections">
-      {%- set subs = [] -%}
-      {%- for sub in section.subsections -%}
-        {%- set sub = get_section(path = sub) -%}
-        {%- set_global subs = subs | concat(with = sub) -%}
-      {%- endfor -%}
       {%- set subs = subs | sort(attribute = "relative_path") -%}
       {%- for sub in subs -%}
         <li class="subsection">
@@ -39,10 +46,24 @@
   {%- endblock subsections -%}
 
   {%- block pages -%}
+  {#- A section at least `section_chronological_depth` levels deep (a trip, on the travel site) lists its pages
+      oldest first and, when the site has the track map, shows a corner map of the trip (section_track_map.html). -#}
+  {%- set chrono_depth = config.extra | get(key="section_chronological_depth", default=0) -%}
+  {%- set chronological = chrono_depth > 0 and section.components | length >= chrono_depth -%}
+  {%- set trip_map = chronological and config.extra | get(key="track_map", default=false) -%}
+  {#- Year pages and the home page (which list trips as single cards) get the corner map too, following the card in
+      view. -#}
+  {%- set listing_map = chrono_depth > 0 and not chronological and config.extra | get(key="track_map", default=false) -%}
+  {%- set map_on = trip_map or listing_map -%}
+  {%- set_global has_tracks = false -%}
   <ul class="pages">
     {%- if section.extra.recent -%}
       {%- set pages = section.pages | sort(attribute = "updated") | reverse -%}
-    {%- elif section.extra.reverse or config.extra.section_reverse_default -%}
+    {%- elif section.extra.reverse -%}
+      {%- set pages = section.pages -%}
+    {%- elif chronological -%}
+      {%- set pages = section.pages | reverse -%}
+    {%- elif config.extra.section_reverse_default -%}
       {%- set pages = section.pages -%}
     {%- else -%}
       {%- set pages = section.pages | reverse -%}
@@ -50,17 +71,104 @@
     {%- if section.extra.limit -%}
       {%- set pages = pages | slice(end=section.extra.limit) -%}
     {%- endif -%}
+    {#- Outside a trip, a trip's days collapse into one card for the trip, placed where its latest day falls. -#}
+    {%- set collapse_trips = chrono_depth > 0 and not chronological -%}
+    {%- set_global seen_trips = [] -%}
     {%- for page in pages -%}
       {%- if not page.extra.hide_from_section -%}
-      <div class="card">
+      {%- set trip = false -%}
+      {%- if collapse_trips and page.components | length > chrono_depth -%}
+        {%- set trip_dir = page.components | slice(end = chrono_depth) | join(sep = "/") -%}
+        {%- set trip_path = trip_dir ~ "/_index.md" -%}
+        {%- if trip_path in seen_trips -%}
+          {%- continue -%}
+        {%- endif -%}
+        {%- set_global seen_trips = seen_trips | concat(with = trip_path) -%}
+        {%- set trip = get_section(path = trip_path) -%}
+      {%- endif -%}
+      {%- if trip -%}
+        {%- set_global days = [] -%}
+        {%- for day in trip.pages -%}
+          {%- if not day.extra.hide_from_section -%}
+            {%- set_global days = days | concat(with = day) -%}
+          {%- endif -%}
+        {%- endfor -%}
+        {%- set first_day = days | last -%}
+        {%- set last_day = days | first -%}
+        {%- set card_title = trip.title -%}
+        {%- set card_count = days | length -%}
+        {%- set card_permalink = trip.permalink -%}
+        {%- set card_components = trip.components -%}
+        {%- if trip.extra.cover -%}
+          {%- set card_extra = trip.extra -%}
+          {%- set card_cover_base = trip.permalink -%}
+        {%- else -%}
+          {%- set card_extra = first_day.extra -%}
+          {%- set card_cover_base = first_day.permalink -%}
+        {%- endif -%}
+        {%- set from_year = first_day.date | date(format="%Y") -%}
+        {%- set from_month = first_day.date | date(format="%B") -%}
+        {%- set from_day = first_day.date | date(format="%-d") -%}
+        {%- set to_date = last_day.date | date(format="%-d %B %Y") -%}
+        {%- if from_year != last_day.date | date(format="%Y") -%}
+          {%- set card_date = from_day ~ " " ~ from_month ~ " " ~ from_year ~ " – " ~ to_date -%}
+        {%- elif from_month != last_day.date | date(format="%B") -%}
+          {%- set card_date = from_day ~ " " ~ from_month ~ " – " ~ to_date -%}
+        {%- elif from_day != last_day.date | date(format="%-d") -%}
+          {%- set card_date = from_day ~ "–" ~ to_date -%}
+        {%- else -%}
+          {%- set card_date = to_date -%}
+        {%- endif -%}
+        {%- if trip.content | trim -%}
+          {%- set card_summary = trip.content -%}
+        {%- else -%}
+          {%- set card_summary = first_day.summary | default(value = "") -%}
+        {%- endif -%}
+      {%- else -%}
+        {%- set card_title = page.title -%}
+        {%- set card_count = 0 -%}
+        {%- set card_permalink = page.permalink -%}
+        {%- set card_components = page.components -%}
+        {%- set card_extra = page.extra -%}
+        {%- set card_cover_base = page.permalink -%}
+        {%- set card_date = page.date | date(format="%e %B %Y") -%}
+        {%- set card_summary = page.summary | default(value = "") -%}
+      {%- endif -%}
+      {#- The card's tracks, for the corner map: a trip card has every day's. Fallbacks pair with the URLs by
+          position, "-" where a track has none. -#}
+      {%- set_global track_urls = [] -%}
+      {%- set_global track_fallbacks = [] -%}
+      {%- if map_on -%}
+        {%- if trip -%}{%- set track_pages = days | reverse -%}{%- else -%}{%- set track_pages = [page] -%}{%- endif -%}
+        {%- for tp in track_pages -%}
+          {%- if tp.extra.track_url -%}
+            {%- set_global track_urls = track_urls | concat(with = tp.extra.track_url) -%}
+            {%- set_global track_fallbacks = track_fallbacks | concat(with = "-") -%}
+          {%- elif tp.extra.track_key -%}
+            {%- set_global track_urls = track_urls | concat(with = "https://img.ericscouten.com/" ~ tp.extra.track_key) -%}
+            {%- set_global track_fallbacks = track_fallbacks | concat(with = "/" ~ tp.extra.track_key) -%}
+          {%- endif -%}
+        {%- endfor -%}
+      {%- endif -%}
+      {%- if track_urls | length > 0 -%}
+        {%- set_global has_tracks = true -%}
+      {%- endif -%}
+      <div class="card"
+        {%- if map_on %} data-title="{{ card_title }}" data-permalink="{{ card_permalink | safe }}"
+          {%- if track_urls %} data-track-url="{{ track_urls | join(sep = " ") }}" data-track-fallback="{{ track_fallbacks | join(sep = " ") }}"{% endif -%}
+          {%- if card_count %} data-days="{{ card_count }}"{% endif -%}
+          {%- if not trip and page.extra.route %} data-route="{{ page.extra.route }}"{% endif -%}
+          {%- if not trip and page.extra.distance %} data-distance="{{ page.extra.distance }}"{% endif -%}
+        {%- endif -%}>
         <card-header class="card-header">
           <card-header-title class="card-header-title">
             <info class="card-header-meta">
-              {%- if page.components | length > 2 -%}
+              {#- On a trip's own page, every card would repeat the page's own breadcrumbs. -#}
+              {%- if card_components | length > 2 and not chronological -%}
               <nav class="breadcrumb has-succeeds-separator" aria-label="breadcrumbs">
                 <ul>
                   {%- set_global bc_slug = "" -%}
-                  {%- for parent in page.components | slice(end=-1) -%}
+                  {%- for parent in card_components | slice(end=-1) -%}
                     {%- set_global bc_slug = bc_slug ~ parent ~ "/" -%}
                     {%- set bc_page = get_section(path = bc_slug ~ "_index.md") -%}
                       <li><a href="{{ bc_page.permalink | safe }}">{{ bc_page.title }}</a></li>
@@ -68,35 +176,38 @@
                 </ul>
               </nav>
               {%- endif -%}
-              <item class="title"><a href="{{ page.permalink | safe }}">{{ page.title }}</a></item>
-              <item class="date">{{ page.date | date(format="%e %B %Y") }}</item>
+              <item class="title"><a href="{{ card_permalink | safe }}">{{ card_title }}</a></item>
+              <item class="date">{{ card_date }}</item>
             </info>
           </card-header-title>
         </card-header>
-        {%- if page.extra.cover -%}
+        {%- if card_extra.cover -%}
         <div class="card-image">
           <figure class="image is-16by9">
-            {%- if page.extra.cover_cdn_key -%}
-              {%- set_global cover_url = "https://img.ericscouten.com/" ~ page.extra.cover_cdn_key ~ "/" ~ "cover-" ~ page.extra.cover ~ "-1000w.jpg" -%}
+            {%- if card_extra.cover_cdn_key -%}
+              {%- set_global cover_url = "https://img.ericscouten.com/" ~ card_extra.cover_cdn_key ~ "/" ~ "cover-" ~ card_extra.cover ~ "-1000w.jpg" -%}
             {%- else -%}
-              {%- set_global cover_url = page.permalink ~ "cover-" ~ page.extra.cover ~ ".jpg" -%}
+              {%- set_global cover_url = card_cover_base ~ "cover-" ~ card_extra.cover ~ ".jpg" -%}
             {%- endif -%}
-            <a href="{{ page.permalink | safe }}">
-              <img src="{{ cover_url }}" alt="{{ page.extra.cover_alt | default(value=page.title) }}" />
+            <a href="{{ card_permalink | safe }}">
+              <img src="{{ cover_url }}" alt="{{ card_extra.cover_alt | default(value=card_title) }}" />
             </a>
           </figure>
         </div>
         {%- endif -%}
         <div class="card-content">
           <div class="content">
-            {{ page.summary | safe }}
-            <div class="read-more"><a href="{{ page.permalink | safe }}">Read more &rarr;</a></div>
+            {{ card_summary | safe }}
+            <div class="read-more"><a href="{{ card_permalink | safe }}">Read more &rarr;</a></div>
           </div>
         </div>
       </div>
       {%- endif -%}
     {%- endfor -%}
   </ul>
+  {%- if has_tracks -%}
+    {%- include "section_track_map.html" -%}
+  {%- endif -%}
   {%- endblock pages -%}
 
   {# TO DO: Add next/prev section links #}

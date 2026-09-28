@@ -1,0 +1,12 @@
+// Section layout ported from Bulma 0.9.4.
+
+$section-padding: 3rem 1.5rem !default;
+$section-padding-desktop: 3rem 3rem !default;
+
+.section {
+  padding: $section-padding;
+
+  @media screen and (min-width: $desktop) {
+    padding: $section-padding-desktop;
+  }
+}

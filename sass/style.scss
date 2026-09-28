@@ -1,11 +1,12 @@
 @charset "utf-8";
 
 @import "./variables";
-@import "../../../vendor/bulma/bulma";
+@import "./bulma/all";
 
 @import "./es_image";
 @import "./es_video";
 @import "./es_vimeo";
+@import "./track_map";
 
 @import "./header";
 @import "./about";
