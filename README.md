@@ -20,7 +20,7 @@ This is a theme that I use for several of my public sites that are built with th
 
 ## Credits
 
-The styles under `sass/bulma/` are ported from [Bulma](https://bulma.io) 0.9.4 by Jeremy Thomas, used under the [MIT License](https://github.com/jgthms/bulma/blob/0.9.4/LICENSE). Earlier versions of this theme imported the full Bulma 0.9 tree from a `vendor/bulma` submodule in each site; the theme now carries only the reset, element defaults, and handful of components it actually uses, so sites no longer need that submodule.
+The styles under `sass/bulma/` are ported from [Bulma](https://bulma.io) 0.9.4 and the [minireset.css](https://github.com/jgthms/minireset.css) it bundles, both copyright (c) Jeremy Thomas and used under the MIT License; the full notice is in [`sass/bulma/LICENSE`](sass/bulma/LICENSE). Earlier versions of this theme imported the full Bulma 0.9 tree from a `vendor/bulma` submodule in each site; the theme now carries only the reset, element defaults, and handful of components it actually uses, so sites no longer need that submodule.
 
 ## (Non-)License
 
