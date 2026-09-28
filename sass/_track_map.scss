@@ -290,6 +290,10 @@ $track-widget-map-height: 270px !default;
     &.pos-right { left: 0; right: 0; }
     .es-track-map { height: 76px; }
     .es-track-expand, .es-track-attr-btn, .es-track-zoom { display: none; }
+
+    // The strip's caption goes without the way-of-travel icon: the map beside it already carries the colour, and
+    // the icon's column is better spent on the place name.
+    .es-track-caption .es-track-ico { display: none; }
     .es-track-bar { padding: .4rem .9rem .5rem; min-width: 0; }
     &.over-photo:not(:hover) { opacity: 1; }
     &.is-collapsed { grid-template-columns: minmax(0, 1fr); }
