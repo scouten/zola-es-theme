@@ -1,0 +1,75 @@
+// Bulma's palette and derived values, reduced to what the ported partials use.
+// Site stylesheets may override any of these before importing the theme.
+
+// Palette.
+$black: hsl(0, 0%, 4%) !default;
+$grey-darker: hsl(0, 0%, 21%) !default;
+$grey-light: hsl(0, 0%, 71%) !default;
+$grey-lighter: hsl(0, 0%, 86%) !default;
+$white-ter: hsl(0, 0%, 96%) !default;
+$white: hsl(0, 0%, 100%) !default;
+$red: hsl(348, 86%, 61%) !default;
+
+// General colors.
+$scheme-main: $white !default;
+$scheme-invert: $black !default;
+$background: $white-ter !default;
+$border: $grey-lighter !default;
+$border-hover: $grey-light !default;
+$dark: $grey-darker !default;
+$dark-invert: $white !default;
+
+// Text colors.
+$text: $grey-darker !default;
+$text-strong: $grey-darker !default;
+
+// Code colors.
+$code: darken($red, 15%) !default;
+$code-background: $background !default;
+$pre: $text !default;
+$pre-background: $background !default;
+
+// Link colors.
+$link: hsl(229, 53%, 53%) !default;
+$link-hover: $grey-darker !default;
+
+// Typography.
+$family-sans-serif: BlinkMacSystemFont, -apple-system, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", "Helvetica", "Arial", sans-serif !default;
+$family-monospace: monospace !default;
+$family-primary: $family-sans-serif !default;
+$family-code: $family-monospace !default;
+$size-small: 0.75rem !default;
+$size-normal: 1rem !default;
+$weight-normal: 400 !default;
+$weight-semibold: 600 !default;
+$weight-bold: 700 !default;
+
+// Miscellaneous.
+$radius: 4px !default;
+$radius-rounded: 9999px !default;
+$block-spacing: 1.5rem !default;
+$shadow: 0 0.5em 1em -0.125em rgba($scheme-invert, 0.1), 0 0px 0 1px rgba($scheme-invert, 0.02) !default;
+
+// Responsiveness.
+$tablet: 769px !default;
+$desktop: 1024px !default;
+
+// Body.
+$body-background-color: $scheme-main !default;
+$body-size: 16px !default;
+$body-min-width: 300px !default;
+$body-rendering: optimizeLegibility !default;
+$body-family: $family-primary !default;
+$body-overflow-x: hidden !default;
+$body-overflow-y: scroll !default;
+$body-color: $text !default;
+$body-font-size: 1em !default;
+$body-weight: $weight-normal !default;
+$body-line-height: 1.5 !default;
+
+// Form controls.
+$control-border-width: 1px !default;
+$control-height: 2.5em !default;
+$control-line-height: 1.5 !default;
+$control-padding-vertical: calc(0.5em - #{$control-border-width}) !default;
+$control-padding-horizontal: calc(0.75em - #{$control-border-width}) !default;

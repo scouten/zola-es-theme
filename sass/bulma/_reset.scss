@@ -1,0 +1,92 @@
+// Bulma's copy of minireset.css v0.0.6 (github.com/jgthms/minireset.css),
+// copyright (c) Jeremy Thomas, MIT License; see LICENSE alongside this file.
+
+// Blocks.
+html,
+body,
+p,
+ol,
+ul,
+li,
+dl,
+dt,
+dd,
+blockquote,
+figure,
+fieldset,
+legend,
+textarea,
+pre,
+iframe,
+hr,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+  padding: 0;
+}
+
+// Headings.
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-size: 100%;
+  font-weight: normal;
+}
+
+// Lists.
+ul {
+  list-style: none;
+}
+
+// Forms.
+button,
+input,
+select,
+textarea {
+  margin: 0;
+}
+
+// Box sizing.
+html {
+  box-sizing: border-box;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
+// Media.
+img,
+video {
+  height: auto;
+  max-width: 100%;
+}
+
+// Iframes.
+iframe {
+  border: 0;
+}
+
+// Tables.
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+td,
+th {
+  padding: 0;
+
+  &:not([align]) {
+    text-align: inherit;
+  }
+}

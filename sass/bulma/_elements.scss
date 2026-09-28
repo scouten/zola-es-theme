@@ -1,0 +1,197 @@
+// Elements ported from Bulma 0.9.4: container, content, icon, image, tag, and title.
+// Only the modifiers the sites use are kept.
+
+// Container.
+$gap: 32px !default;
+$widescreen: 1216px !default;
+$fullhd: 1408px !default;
+$container-offset: (2 * $gap) !default;
+
+.container {
+  flex-grow: 1;
+  margin: 0 auto;
+  position: relative;
+  width: auto;
+
+  @media screen and (min-width: $desktop) {
+    max-width: $desktop - $container-offset;
+  }
+
+  @media screen and (min-width: $widescreen) {
+    max-width: $widescreen - $container-offset;
+  }
+
+  @media screen and (min-width: $fullhd) {
+    max-width: $fullhd - $container-offset;
+  }
+}
+
+// Content.
+// Wraps markdown in card summaries and the about box. Trimmed to the elements
+// those actually produce: paragraphs, block quotes, figures, and superscripts.
+$content-block-margin-bottom: 1em !default;
+$content-blockquote-background-color: $background !default;
+$content-blockquote-border-left: 5px solid $border !default;
+$content-blockquote-padding: 1.25em 1.5em !default;
+
+.content {
+  p,
+  blockquote {
+    &:not(:last-child) {
+      margin-bottom: $content-block-margin-bottom;
+    }
+  }
+
+  blockquote {
+    background-color: $content-blockquote-background-color;
+    border-left: $content-blockquote-border-left;
+    padding: $content-blockquote-padding;
+  }
+
+  figure {
+    margin-left: 2em;
+    margin-right: 2em;
+    text-align: center;
+
+    &:not(:last-child) {
+      margin-bottom: 2em;
+    }
+
+    img {
+      display: inline-block;
+    }
+  }
+
+  sup,
+  sub {
+    font-size: 75%;
+  }
+}
+
+// Icon.
+$icon-dimensions: 1.5rem !default;
+$icon-dimensions-small: 1rem !default;
+
+.icon {
+  align-items: center;
+  display: inline-flex;
+  justify-content: center;
+  height: $icon-dimensions;
+  width: $icon-dimensions;
+
+  &.is-small {
+    height: $icon-dimensions-small;
+    width: $icon-dimensions-small;
+  }
+}
+
+// Image.
+.image {
+  display: block;
+  position: relative;
+
+  img {
+    display: block;
+    height: auto;
+    width: 100%;
+
+    &.is-rounded {
+      border-radius: $radius-rounded;
+    }
+  }
+
+  &.is-16by9 {
+    padding-top: 56.25%;
+
+    img {
+      bottom: 0;
+      left: 0;
+      position: absolute;
+      right: 0;
+      top: 0;
+      height: 100%;
+      width: 100%;
+    }
+  }
+
+  &.is-128x128 {
+    height: 128px;
+    width: 128px;
+  }
+}
+
+// Tag.
+// `.tags` is not used by the theme's own templates but is by a site's.
+$tag-background-color: $background !default;
+$tag-color: $text !default;
+$tag-radius: $radius !default;
+
+.tags {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+
+  .tag {
+    margin-bottom: 0.5rem;
+
+    &:not(:last-child) {
+      margin-right: 0.5rem;
+    }
+  }
+
+  &:last-child {
+    margin-bottom: -0.5rem;
+  }
+
+  &:not(:last-child) {
+    margin-bottom: 1rem;
+  }
+}
+
+.tag:not(body) {
+  align-items: center;
+  background-color: $tag-background-color;
+  border-radius: $tag-radius;
+  color: $tag-color;
+  display: inline-flex;
+  font-size: $size-small;
+  height: 2em;
+  justify-content: center;
+  line-height: 1.5;
+  padding-left: 0.75em;
+  padding-right: 0.75em;
+  white-space: nowrap;
+
+  &.is-dark {
+    background-color: $dark;
+    color: $dark-invert;
+  }
+
+  &.is-rounded {
+    border-radius: $radius-rounded;
+  }
+}
+
+// Title.
+$title-color: $text-strong !default;
+$title-size: 2rem !default;
+$title-weight: $weight-semibold !default;
+$title-line-height: 1.125 !default;
+
+.title {
+  &:not(:last-child) {
+    margin-bottom: $block-spacing;
+  }
+
+  word-break: break-word;
+
+  span {
+    font-weight: inherit;
+  }
+
+  color: $title-color;
+  font-size: $title-size;
+  font-weight: $title-weight;
+  line-height: $title-line-height;
+}

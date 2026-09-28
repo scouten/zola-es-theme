@@ -5,8 +5,22 @@ This is a theme that I use for several of my public sites that are built with th
 ## Where This Is Used
 
 * [146 Parks](https://146parks.blog)
+* [Eric Scouten](https://ericscouten.com)
 * [ericscouten.dev](https://ericscouten.dev)
+* [ericscouten.link](https://ericscouten.link)
+* [ericscouten.me](https://ericscouten.me)
+* [ericscouten.studio](https://ericscouten.studio)
 * [ericscouten.travel](https://ericscouten.travel)
+* [now.ericscouten.com](https://now.ericscouten.com)
+* [photoblog.ericscouten.com](https://photoblog.ericscouten.com)
+* [Random Octocat](https://random-octocat.family)
+* [Rozmyn Family Archive](https://rozmyn.family)
+* [stats.ericscouten.com](https://stats.ericscouten.com)
+* [This Is North Kitsap](https://thisisnorthkitsap.com)
+
+## Credits
+
+The styles under `sass/bulma/` are ported from [Bulma](https://bulma.io) 0.9.4 and the [minireset.css](https://github.com/jgthms/minireset.css) it bundles, both copyright (c) Jeremy Thomas and used under the MIT License; the full notice is in [`sass/bulma/LICENSE`](sass/bulma/LICENSE). Earlier versions of this theme imported the full Bulma 0.9 tree from a `vendor/bulma` submodule in each site; the theme now carries only the reset, element defaults, and handful of components it actually uses, so sites no longer need that submodule.
 
 ## (Non-)License
 
