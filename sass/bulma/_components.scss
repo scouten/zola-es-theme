@@ -1,0 +1,189 @@
+// Components ported from Bulma 0.9.4: breadcrumb, card, and media object.
+// Only the modifiers the sites use are kept.
+
+// Breadcrumb.
+$breadcrumb-item-color: $link !default;
+$breadcrumb-item-hover-color: $link-hover !default;
+$breadcrumb-item-padding-vertical: 0 !default;
+$breadcrumb-item-padding-horizontal: 0.75em !default;
+$breadcrumb-item-separator-color: $border-hover !default;
+
+.breadcrumb {
+  &:not(:last-child) {
+    margin-bottom: $block-spacing;
+  }
+
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  font-size: $size-normal;
+  white-space: nowrap;
+
+  a {
+    align-items: center;
+    color: $breadcrumb-item-color;
+    display: flex;
+    justify-content: center;
+    padding: $breadcrumb-item-padding-vertical $breadcrumb-item-padding-horizontal;
+
+    &:hover {
+      color: $breadcrumb-item-hover-color;
+    }
+  }
+
+  li {
+    align-items: center;
+    display: flex;
+
+    &:first-child a {
+      padding-left: 0;
+    }
+
+    & + li::before {
+      color: $breadcrumb-item-separator-color;
+      content: "\0002f";
+    }
+  }
+
+  ul,
+  ol {
+    align-items: flex-start;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .icon {
+    &:first-child {
+      margin-right: 0.5em;
+    }
+
+    &:last-child {
+      margin-left: 0.5em;
+    }
+  }
+
+  &.has-succeeds-separator {
+    li + li::before {
+      content: "\0227B";
+    }
+  }
+}
+
+// Card.
+$card-color: $text !default;
+$card-background-color: $scheme-main !default;
+$card-shadow: $shadow !default;
+$card-radius: 0.25rem !default;
+$card-header-background-color: transparent !default;
+$card-header-color: $text-strong !default;
+$card-header-padding: 0.75rem 1rem !default;
+$card-header-shadow: 0 0.125em 0.25em rgba($scheme-invert, 0.1) !default;
+$card-header-weight: $weight-bold !default;
+$card-content-background-color: transparent !default;
+$card-content-padding: 1.5rem !default;
+$card-media-margin: $block-spacing !default;
+
+.card {
+  background-color: $card-background-color;
+  border-radius: $card-radius;
+  box-shadow: $card-shadow;
+  color: $card-color;
+  max-width: 100%;
+  position: relative;
+}
+
+.card-header,
+.card-content {
+  &:first-child {
+    border-top-left-radius: $card-radius;
+    border-top-right-radius: $card-radius;
+  }
+
+  &:last-child {
+    border-bottom-left-radius: $card-radius;
+    border-bottom-right-radius: $card-radius;
+  }
+}
+
+.card-header {
+  background-color: $card-header-background-color;
+  align-items: stretch;
+  box-shadow: $card-header-shadow;
+  display: flex;
+}
+
+.card-header-title {
+  align-items: center;
+  color: $card-header-color;
+  display: flex;
+  flex-grow: 1;
+  font-weight: $card-header-weight;
+  padding: $card-header-padding;
+}
+
+.card-image {
+  display: block;
+  position: relative;
+
+  &:first-child {
+    img {
+      border-top-left-radius: $card-radius;
+      border-top-right-radius: $card-radius;
+    }
+  }
+
+  &:last-child {
+    img {
+      border-bottom-left-radius: $card-radius;
+      border-bottom-right-radius: $card-radius;
+    }
+  }
+}
+
+.card-content {
+  background-color: $card-content-background-color;
+  padding: $card-content-padding;
+}
+
+.card {
+  .media:not(:last-child) {
+    margin-bottom: $card-media-margin;
+  }
+}
+
+// Media object.
+$media-spacing: 1rem !default;
+$media-content-spacing: 0.75rem !default;
+
+.media {
+  align-items: flex-start;
+  display: flex;
+  text-align: inherit;
+
+  .content:not(:last-child) {
+    margin-bottom: $media-content-spacing;
+  }
+}
+
+.media-left {
+  flex-basis: auto;
+  flex-grow: 0;
+  flex-shrink: 0;
+  margin-right: $media-spacing;
+}
+
+.media-content {
+  flex-basis: auto;
+  flex-grow: 1;
+  flex-shrink: 1;
+  text-align: inherit;
+}
+
+@media screen and (max-width: $tablet - 1px) {
+  .media-content {
+    overflow-x: auto;
+  }
+}
