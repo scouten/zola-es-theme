@@ -414,7 +414,9 @@
   function parkLayers() {
     if (!PARKS.length) return [];
     return [
+      { id: 'es-park-glow', type: 'line', source: 'parks', layout: { 'line-join': 'round' }, paint: { 'line-color': '#000000', 'line-opacity': .55, 'line-width': 7, 'line-blur': 5 } },
       { id: 'es-park-fill', type: 'fill', source: 'parks', paint: { 'fill-color': tok('park-fill') } },
+      { id: 'es-park-outline', type: 'line', source: 'parks', layout: { 'line-join': 'round' }, paint: { 'line-color': tok('park-line'), 'line-width': 1.5, 'line-dasharray': [1, 2] } },
     ];
   }
   function ourSources() {
