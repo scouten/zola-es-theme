@@ -49,6 +49,7 @@ A day is a sequence of **legs**, each written as one `<trk>` in chronological or
 - `<type>` is the mode token (§1.2). Optional; when absent the leg is shown without a mode icon.
 - A leg may contain several `<trkseg>` elements (a brief signal dropout inside one drive). Segments within a track are drawn as one leg; the gap between them is not a stop.
 - Consecutive legs abut: the boundary point is the last point of one leg and the first point of the next. Consumers de-duplicate it.
+- Consecutive legs need not abut. When a leg starts more than 100 m from where the one before it ended (the logger was off, or the traveller was carried between), the page's track map draws no line across the gap and counts no distance for it. The section and listing maps do not yet handle gaps and still draw a line across them.
 - Files that predate this convention (one unnamed, untyped track) remain valid. See §3.4 for how they degrade.
 
 ### 1.2 Mode vocabulary
