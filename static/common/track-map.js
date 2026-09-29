@@ -91,6 +91,9 @@
 
   // ------------------------------------------------------------ state
   let SEGMENTS = [], pts = [], cum = [], segOf = [], total = 0;
+  // Indices of points that begin a leg after a real gap in the log: no line runs into them, and the gap adds no distance.
+  let breaks = new Set();
+  const GAP_M = 100;
   let eleAt = [];  // each track point's logged altitude in metres, or null where it's missing or nonsense (see flatten)
   let distM = 0;  // the day's distance as published (dist_m), which the page's front matter also shows
   let tripDays = 1;  // calendar days the log covers (the page's `days`, else the JSON's): more than one is a trip, not a day
@@ -132,12 +135,13 @@
   }
 
   function flatten() {
-    pts = []; cum = []; segOf = []; eleAt = [];
+    pts = []; cum = []; segOf = []; eleAt = []; breaks = new Set();
     SEGMENTS.forEach((s, si) => {
       s.start = pts.length;
       s.coords.forEach((c, k) => {
         if (pts.length === 0) { pts.push(c); cum.push(0); segOf.push(si); eleAt.push(s.eles[k]); return; }
-        const d = hav(pts[pts.length - 1], c);
+        let d = hav(pts[pts.length - 1], c);
+        if (k === 0 && d > GAP_M) { breaks.add(pts.length); d = 0; }
         if (d < 0.5 && pts.length !== s.start) return;
         pts.push(c); cum.push(cum[cum.length - 1] + d); segOf.push(si); eleAt.push(s.eles[k]);
       });
@@ -314,8 +318,31 @@
   // During a flight video the dot sits between track points, and the lines split exactly there rather than at the
   // point before it, so the traveled line keeps up with the video.
   const splitDot = v => v && v.kind === 'clip' && viewIdx(v) < pts.length - 1 ? v.dot : null;
-  const doneData = v => { const d = splitDot(v), c = pts.slice(0, viewIdx(v) + 1); return lineOrEmpty(d ? c.concat([d]) : c); };
-  const aheadData = v => { const d = splitDot(v), i = viewIdx(v); return lineOrEmpty(d ? [d].concat(pts.slice(i + 1)) : pts.slice(i)); };
+  // A leg's points from index `from` to `to`, joined to the leg before it unless the log has a gap there.
+  const legRun = (s, from, to) => {
+    const { start, end } = SEGMENTS[s];
+    const a = Math.max(from, start), b = Math.min(to, end);
+    if (b < a) return [];
+    const run = pts.slice(a, b + 1);
+    return a === start && s > 0 && !breaks.has(start) ? [pts[start - 1]].concat(run) : run;
+  };
+  const featuresOf = (lists, props) => ({ type: 'FeatureCollection', features: lists.filter(c => c.coords.length > 1).map(c => ({ type: 'Feature', properties: props ? props(c.seg) : {}, geometry: { type: 'LineString', coordinates: c.coords } })) });
+  const trackData = () => featuresOf(SEGMENTS.map((_, seg) => ({ seg, coords: legRun(seg, 0, pts.length) })));
+  // The traveled line, one feature per leg so a gap in the log is not bridged; legs before the current one are `dim`.
+  const doneData = v => {
+    const d = splitDot(v), at = viewIdx(v);
+    return featuresOf(SEGMENTS.map((sg, seg) => {
+      const coords = legRun(seg, 0, at);
+      return { seg, coords: d && at >= sg.start && at < sg.end ? coords.concat([d]) : coords };
+    }), seg => ({ dim: v ? seg < v.capSeg : false }));
+  };
+  const aheadData = v => {
+    const d = splitDot(v), at = viewIdx(v);
+    return featuresOf(SEGMENTS.map((sg, seg) => {
+      const coords = legRun(seg, at, pts.length);
+      return { seg, coords: d && at >= sg.start && at < sg.end ? [d].concat(coords.slice(1)) : coords };
+    }));
+  };
   // the current leg(s), split at the reader's position: `done` is drawn bright, the rest dim
   const currentLegData = v => {
     if (!v) return { type: 'FeatureCollection', features: [] };
@@ -372,16 +399,6 @@
     const c = p.clip, a = pointAt(c.f[0] * total, c.leg), b = pointAt(c.f[c.f.length - 1] * total, c.leg);
     return [a.dot, ...pts.slice(a.idx + 1, b.idx + 1), b.dot];
   };
-  function doneGradient(v) {
-    const accent = tok('accent'), dim = tok('accent-dim'), e = 0.0004;
-    const flat = c => ['interpolate', ['linear'], ['line-progress'], 0, c, 1, c];
-    if (!v) return flat(accent);
-    const doneLen = splitDot(v) ? v.m : cum[viewIdx(v)], legStart = cum[SEGMENTS[v.capSeg].start];
-    const f = doneLen > 0 ? Math.min(Math.max(legStart / doneLen, 0), 1) : 0;
-    if (f <= e) return flat(accent);
-    if (f >= 1 - e) return flat(dim);
-    return ['interpolate', ['linear'], ['line-progress'], 0, dim, f - e / 2, dim, f + e / 2, accent, 1, accent];
-  }
   const photoColorExpr = (curIdx, capSeg) => {
     const cur = tok('current');
     const seg = capSeg == null ? 0 : capSeg;
@@ -403,8 +420,8 @@
   function ourSources() {
     const cur = view;
     return {
-      track: { type: 'geojson', data: lineOrEmpty(pts) },
-      done: { type: 'geojson', lineMetrics: true, data: doneData(cur) },
+      track: { type: 'geojson', data: trackData() },
+      done: { type: 'geojson', data: doneData(cur) },
       ahead: { type: 'geojson', data: aheadData(cur) },
       current: { type: 'geojson', data: currentLegData(cur) },
       photos: { type: 'geojson', data: { type: 'FeatureCollection', features: photos.map((p, i) => ({ type: 'Feature', properties: { i, seg: p.seg, id: p.id }, geometry: { type: 'Point', coordinates: [p.lon, p.lat] } })) } },
@@ -423,7 +440,7 @@
       // the halo is opaque: a translucent one compounds with itself wherever the route doubles back, leaving bright fuzzy patches
       { id: 'es-current-halo', type: 'line', source: 'current', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': tok('current-halo'), 'line-width': big ? 16 : 12, 'line-blur': 1.5 } },
       { id: 'es-track-ahead', type: 'line', source: 'ahead', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': tok('ahead'), 'line-width': big ? 3.5 : 3 } },
-      { id: 'es-track-done', type: 'line', source: 'done', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-width': big ? 3.5 : 3, 'line-gradient': doneGradient(view) } },
+      { id: 'es-track-done', type: 'line', source: 'done', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-width': big ? 3.5 : 3, 'line-color': ['case', ['get', 'dim'], tok('accent-dim'), tok('accent')] } },
     ];
     layers.push({ id: 'es-current-line', type: 'line', source: 'current', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': ['case', ['get', 'done'], cur, tok('current-dim')], 'line-width': big ? 3.5 : 3 } });
 
@@ -691,7 +708,6 @@
       lastGrad = gradKey;
       map.getSource('done').setData(doneData(view));
       map.getSource('ahead').setData(aheadData(view));
-      map.setPaintProperty('es-track-done', 'line-gradient', doneGradient(view));
     }
     const dotKey = view.kind === 'start' ? 'day' : view.photoIdx + ':' + view.capSeg;
     if (CFG.dots && map.getLayer('es-photos') && (force || dotKey !== lastPhotoIdx)) {
