@@ -339,8 +339,8 @@
   const aheadData = v => {
     const d = splitDot(v), at = viewIdx(v);
     return featuresOf(SEGMENTS.map((sg, seg) => {
-      const coords = legRun(seg, at, pts.length);
-      return { seg, coords: d && at >= sg.start && at < sg.end ? [d].concat(coords.slice(1)) : coords };
+      if (d && at >= sg.start && at < sg.end) return { seg, coords: [d].concat(pts.slice(at + 1, sg.end + 1)) };
+      return { seg, coords: legRun(seg, at, pts.length) };
     }));
   };
   // the current leg(s), split at the reader's position: `done` is drawn bright, the rest dim
