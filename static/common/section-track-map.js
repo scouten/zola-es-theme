@@ -246,13 +246,13 @@
     const sum = hasMap ? modeSummary(c.legs) : null;
     let second, third;
     if (c) {
-      const days = c.days ? (c.days === 1 ? '1 day' : `${c.days} days`) : '';
+      const days = c.days ? (c.days === 1 ? '1 travel story' : `${c.days} travel stories`) : '';
       const dist = c.distance || (c.distM && allLoaded(c) ? fmtBoth(c.distM) : '');
       second = hasMap ? c.route || days : DAY_STATUS[c.state];
       third = hasMap ? [sum ? sum.ways : '', dist].filter(Boolean).join(' · ') : '';
     } else {
       const total = cards.reduce((s, d) => s + d.distM, 0);
-      second = cards.length === 1 ? '1 day' : `${cards.length} days`;
+      second = cards.length === 1 ? '1 travel story' : `${cards.length} travel stories`;
       third = total && cards.every(d => d.state === 'ok') ? fmtBoth(total) : '';
     }
     const md = sum ? MODES[sum.mode] : null;
