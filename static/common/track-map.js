@@ -98,6 +98,7 @@
   let distM = 0;  // the day's distance as published (dist_m), which the page's front matter also shows
   let tripDays = 1;  // calendar days the log covers (the page's `days`, else the JSON's): more than one is a trip, not a day
   let PARKS = [];  // the parks the page highlights (the JSON's `parks`), tinted under the track
+  let NEARBY = [];  // other places the site lists (`nearby_places`), faint on the map until the pointer finds one
   let REGION = null;  // the site's region (`region_outline`), set apart from its surroundings, or null
   let map = null, mapReady = false, baseStyle = null;
   let placement = 'corner', placedOnce = false, slotVisible = false, expanded = false, collapsed = false;
@@ -419,6 +420,27 @@
       { id: 'es-park-outline', type: 'line', source: 'parks', layout: { 'line-join': 'round' }, paint: { 'line-color': tok('park-line'), 'line-width': 1.5, 'line-dasharray': [1, 2] } },
     ];
   }
+  // The site's other places as points, `k` being the index in NEARBY.
+  const nearbyData = () => ({ type: 'FeatureCollection', features: NEARBY.map((p, k) => ({ type: 'Feature', properties: { k }, geometry: { type: 'Point', coordinates: [p.lon, p.lat] } })) });
+
+  // The other places sit under the track and photos and over the basemap's labels, small and faint so they never
+  // compete with the day's own marks; the one under the pointer lights up. A phone's corner map is too small a
+  // picture for them.
+  function nearbyLayers() {
+    if (!NEARBY.length || (placement === 'corner' && isPhone())) return [];
+    const big = placement !== 'corner';
+    const hover = ['boolean', ['feature-state', 'hover'], false];
+    return [
+      { id: 'es-nearby', type: 'circle', source: 'nearby', paint: {
+        'circle-radius': ['case', hover, big ? 6 : 5, big ? 3.5 : 2.5],
+        'circle-color': ['case', hover, tok('accent'), tok('current')],
+        'circle-opacity': ['case', hover, 1, .7],
+        'circle-stroke-color': tok('casing'),
+        'circle-stroke-width': ['case', hover, 1.5, .6],
+        'circle-stroke-opacity': ['case', hover, 1, .7] } },
+      { id: 'es-nearby-hit', type: 'circle', source: 'nearby', paint: { 'circle-radius': 9, 'circle-opacity': 0 } },
+    ];
+  }
   function ourSources() {
     const cur = view;
     return {
@@ -431,6 +453,7 @@
       selected: { type: 'geojson', data: selectedData() },
       clip: { type: 'geojson', data: clipData() },
       parks: { type: 'geojson', data: parksData() },
+      nearby: { type: 'geojson', promoteId: 'k', data: nearbyData() },
     };
   }
   function ourLayers() {
@@ -478,7 +501,7 @@
     const labels = style.layers.findIndex(l => l.type === 'symbol');
     style.layers.splice(labels < 0 ? style.layers.length : labels, 0, ...parkLayers());
     window.esTrack.addRegion(style, REGION, tok);
-    style.layers.push(...ourLayers());
+    style.layers.push(...nearbyLayers(), ...ourLayers());
     widget.classList.toggle('basemap-muted', detail !== 'standard');
     return style;
   }
@@ -1084,10 +1107,87 @@
       e.originalEvent.stopPropagation();
       goTo(clusterAt(e.features[0].properties.i)[0]);
     });
+    // The other places: pointing at one lights it up and names it; clicking opens its page. On a touch screen the
+    // first tap names it, and tapping the name opens the page. A photo under the pointer wins.
+    const canHover = matchMedia('(hover: hover)').matches;
+    let nearbyAt = null;
+    const nearbyTip = document.createElement('a');
+    nearbyTip.className = 'es-track-nearby-tip';
+    nearbyTip.hidden = true;
+    widget.querySelector('.es-track-map').appendChild(nearbyTip);
+    const underPhoto = pt => map.getLayer('es-photos-hit') && map.queryRenderedFeatures(pt, { layers: ['es-photos-hit'] }).length > 0;
+    function hideNearby() {
+      if (nearbyAt != null && map.getSource('nearby')) map.setFeatureState({ source: 'nearby', id: nearbyAt }, { hover: false });
+      nearbyAt = null;
+      nearbyTip.hidden = true;
+    }
+    function placeNearbyTip() {
+      if (nearbyAt == null) return;
+      const p = NEARBY[nearbyAt], pt = map.project([p.lon, p.lat]), box = map.getContainer().getBoundingClientRect();
+      const w = nearbyTip.offsetWidth, h = nearbyTip.offsetHeight, edge = 4;
+      const x = Math.max(edge, Math.min(box.width - edge - w, pt.x - w / 2));
+      const above = pt.y - 14 - h >= edge;
+      nearbyTip.style.left = x + 'px';
+      nearbyTip.style.top = (above ? pt.y - 14 - h : Math.min(box.height - edge - h, pt.y + 14)) + 'px';
+    }
+    function showNearby(k) {
+      if (k === nearbyAt) return;
+      hideNearby();
+      const p = NEARBY[k];
+      if (!p) return;
+      nearbyAt = k;
+      map.setFeatureState({ source: 'nearby', id: k }, { hover: true });
+      nearbyTip.replaceChildren();
+      if (p.cover) {
+        const img = document.createElement('img');
+        img.alt = '';
+        img.addEventListener('load', placeNearbyTip);
+        img.addEventListener('error', () => { img.remove(); placeNearbyTip(); });
+        img.src = p.cover;
+        nearbyTip.append(img);
+      }
+      const name = document.createElement('span');
+      name.className = 'es-track-nearby-name';
+      name.textContent = p.name;
+      nearbyTip.append(name);
+      if (p.note) {
+        const note = document.createElement('span');
+        note.className = 'es-track-nearby-note';
+        note.textContent = p.note;
+        nearbyTip.append(note);
+      }
+      if (p.url) nearbyTip.href = p.url; else nearbyTip.removeAttribute('href');
+      nearbyTip.hidden = false;
+      placeNearbyTip();
+    }
+    map.on('mousemove', 'es-nearby-hit', e => {
+      if (placement === 'corner' || !canHover || !e.features.length) return;
+      if (underPhoto(e.point)) { hideNearby(); return; }
+      const k = e.features[0].properties.k;
+      showNearby(k);
+      if (!hoverGroup) map.getCanvas().style.cursor = NEARBY[k].url ? 'pointer' : '';
+    });
+    map.on('mouseleave', 'es-nearby-hit', () => {
+      if (!canHover) return;
+      hideNearby();
+      map.getCanvas().style.cursor = '';
+    });
+    map.on('click', 'es-nearby-hit', e => {
+      if (placement === 'corner' || !e.features.length || underPhoto(e.point)) return;
+      e.originalEvent.stopPropagation();
+      const k = e.features[0].properties.k;
+      if (canHover) { if (NEARBY[k].url) location.href = NEARBY[k].url; }
+      else showNearby(k);
+    });
+    map.on('click', e => { if (!canHover && nearbyAt != null && !map.queryRenderedFeatures(e.point, { layers: ['es-nearby-hit'] }).length) hideNearby(); });
+    map.on('move', placeNearbyTip);
+    map.on('style.load', hideNearby);
+
     // clicking the track itself: the leg under the pointer, framed as its leg step
     map.on('click', 'es-track-hit', e => {
       if (placement === 'corner') return;
       if (map.queryRenderedFeatures(e.point, { layers: ['es-photos-hit'] }).length) return;  // the photo handler has it
+      if (map.getLayer('es-nearby-hit') && map.queryRenderedFeatures(e.point, { layers: ['es-nearby-hit'] }).length) return;  // so does the nearby place's
       e.originalEvent.stopPropagation();
       let bi = 0, bd = Infinity;
       for (let i = 0; i < pts.length; i++) { const q = project(pts[i]); const d = (q.x - e.point.x) ** 2 + (q.y - e.point.y) ** 2; if (d < bd) { bd = d; bi = i; } }
@@ -1229,6 +1329,25 @@
   document.getElementById('es-track-zoom-out').addEventListener('click', e => { e.stopPropagation(); if (mapReady) map.zoomOut({ duration: RM ? 0 : 300 }); });
   document.getElementById('es-track-fit').addEventListener('click', e => { e.stopPropagation(); fitAll(placement === 'expanded' ? (isPhone() ? 30 : 70) : 40); });
 
+  // The site's other places, [{ name, lat, lon, url?, note?, cover? }], without this page's own. A list that can't be
+  // loaded just leaves them off the map.
+  async function loadNearby() {
+    if (!CFG.nearbyUrl) return [];
+    try {
+      const r = await fetch(CFG.nearbyUrl, { credentials: 'omit' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+
+      // The list may be a page Zola serves (`zola serve` appends its live-reload script), so read up to its closing bracket.
+      const text = await r.text();
+      const list = JSON.parse(text.slice(0, text.lastIndexOf(']') + 1));
+
+      return (Array.isArray(list) ? list : []).filter(p => p && p.name && isFinite(p.lat) && isFinite(p.lon) && !(p.url && p.url === CFG.nearbyExclude));
+    } catch (err) {
+      console.warn('track-map: nearby places unavailable', err);
+      return [];
+    }
+  }
+
   // ------------------------------------------------------------ boot
   async function start(track) {
     if (!track || !Array.isArray(track.legs) || !track.legs.length) throw new Error('empty track');
@@ -1255,7 +1374,7 @@
     setCollapsed(collapsed, false);
 
     view = computeView(currentItem()); applyView(true);
-    [, REGION] = await Promise.all([loadBaseStyle(), window.esTrack.loadRegion(CFG.regionOutline)]);
+    [, REGION, NEARBY] = await Promise.all([loadBaseStyle(), window.esTrack.loadRegion(CFG.regionOutline), loadNearby()]);
     if (!window.maplibregl) { showNotice('The map library could not be loaded.'); return; }
     initMap();
     new IntersectionObserver(es => { slotVisible = es[0].isIntersecting; place(); }, { threshold: 0 }).observe(slot);

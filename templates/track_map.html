@@ -43,6 +43,8 @@ function addParkMarker() { return null; }
   "hillshade": {{ tm.hillshade | default(value=true) | json_encode() }},
   "regionOutline": {{ tm.region_outline | default(value="") | json_encode() | safe }},
   "hideRouteNumbers": {{ tm.hide_route_numbers | default(value=false) | json_encode() }},
+  "nearbyUrl": {{ tm.nearby_places | default(value="") | json_encode() | safe }},
+  "nearbyExclude": {{ page.permalink | json_encode() | safe }},
   "hideStateNames": {{ tm.hide_state_names | default(value=false) | json_encode() }},
   "glyphs": {{ tm.glyphs | default(value="") | json_encode() | safe }},
   "labelFont": {% if tm.label_font %}{{ tm.label_font | json_encode() | safe }}{% else %}[]{% endif %},

@@ -152,6 +152,18 @@ $track-widget-map-height: 270px !default;
   .es-track-thumb-loc:empty { display: none; }
   .more { display: block; margin-top: 2px; color: var(--es-track-accent); font-weight: 600; }
 }
+// The name of another place on the map (`nearby_places`), over its dot while the pointer is on it. A name and a line of
+// note, under the place's cover photo when it has one.
+.es-track-nearby-tip {
+  position: absolute; z-index: 3; max-width: 14rem; padding: .25rem .5rem; pointer-events: none;
+  background: var(--es-track-panel-solid); border: 1px solid var(--es-track-edge-strong); border-radius: 6px; box-shadow: var(--es-track-shadow);
+  font-size: .75rem; line-height: 1.3; color: var(--es-track-text); text-decoration: none; white-space: nowrap;
+  &[hidden] { display: none; }
+  img { display: block; width: 200px; max-width: 100%; height: auto; margin-bottom: .25rem; border-radius: 3px; }
+  .es-track-nearby-name { display: block; font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+  .es-track-nearby-note { display: block; font-size: .7rem; color: var(--es-track-muted); }
+}
+@media (hover: none) { .es-track-nearby-tip[href] { pointer-events: auto; } }
 // badge at the position dot when it has no photo (leg start, end of the track): repeats the caption
 .es-track-badge {
   position: absolute; z-index: 3; pointer-events: none; display: flex; align-items: center; gap: .45rem;
