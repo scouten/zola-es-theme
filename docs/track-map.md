@@ -20,12 +20,17 @@ corner = "left"          # or "right"
 start_span_km = 0        # when set, the corner map opens on the day's region, at least this many km across, until the reader scrolls
 region_outline = ""      # URL of GeoJSON polygons (e.g. a state) that the maps set apart: its surroundings dim, its border traced
 hide_route_numbers = false  # drop the highways' route numbers from the basemap
+nearby_places = ""       # URL of a JSON list of the site's other places, drawn faintly on the maps, see Nearby places
 hide_state_names = false    # drop the state and province names from the basemap
 glyphs = ""              # optional glyph URL template for map labels, see Fonts
 label_font = []          # optional font stack for map labels, e.g. ["Expo Sans Pro Regular"]
 ```
 
 Sites without this table (146parks.blog, ericscouten.dev) see no change at all.
+
+## Nearby places
+
+With `nearby_places` set to the URL of a JSON list, `[{ "name": "...", "lat": 0, "lon": 0, "url": "...", "note": "...", "cover": "..." }]` (`url`, `note` and `cover`, a photo URL shown in the label, optional), the maps draw those places as small, faint dots under the track, in the corner and expanded. They are drawn in the current-leg green, translucent, so they stay quiet beside the day's own marks until the pointer finds one (expanded only): it lights up and is named, and a click opens its `url`. On touch screens a tap names it and a tap on the name opens it. The place whose `url` is the page's own permalink is left out, and a phone's corner map doesn't draw them.
 
 ## Migrating a page
 
