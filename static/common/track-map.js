@@ -425,20 +425,26 @@
 
   // The other places sit under the track and photos and over the basemap's labels, small and faint so they never
   // compete with the day's own marks; the one under the pointer lights up. A phone's corner map is too small a
-  // picture for them.
+  // picture for them, so they're hidden there (and shown again if the window widens).
+  const nearbyShown = () => !(placement === 'corner' && isPhone());
+  const nearbyVisibility = () => nearbyShown() ? 'visible' : 'none';
+  function updateNearbyVisibility() {
+    if (!mapReady) return;
+    ['es-nearby', 'es-nearby-hit'].forEach(id => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', nearbyVisibility()); });
+  }
   function nearbyLayers() {
-    if (!NEARBY.length || (placement === 'corner' && isPhone())) return [];
+    if (!NEARBY.length) return [];
     const big = placement !== 'corner';
     const hover = ['boolean', ['feature-state', 'hover'], false];
     return [
-      { id: 'es-nearby', type: 'circle', source: 'nearby', paint: {
+      { id: 'es-nearby', type: 'circle', source: 'nearby', layout: { visibility: nearbyVisibility() }, paint: {
         'circle-radius': ['case', hover, big ? 6 : 5, big ? 3.5 : 2.5],
         'circle-color': ['case', hover, tok('accent'), tok('current')],
         'circle-opacity': ['case', hover, 1, .7],
         'circle-stroke-color': tok('casing'),
         'circle-stroke-width': ['case', hover, 1.5, .6],
         'circle-stroke-opacity': ['case', hover, 1, .7] } },
-      { id: 'es-nearby-hit', type: 'circle', source: 'nearby', paint: { 'circle-radius': 9, 'circle-opacity': 0 } },
+      { id: 'es-nearby-hit', type: 'circle', source: 'nearby', layout: { visibility: nearbyVisibility() }, paint: { 'circle-radius': 9, 'circle-opacity': 0 } },
     ];
   }
   function ourSources() {
@@ -1123,7 +1129,7 @@
     }
     function placeNearbyTip() {
       if (nearbyAt == null) return;
-      const p = NEARBY[nearbyAt], pt = map.project([p.lon, p.lat]), box = map.getContainer().getBoundingClientRect();
+      const p = NEARBY[nearbyAt], pt = project([p.lon, p.lat]), box = map.getContainer().getBoundingClientRect();
       const w = nearbyTip.offsetWidth, h = nearbyTip.offsetHeight, edge = 4;
       const x = Math.max(edge, Math.min(box.width - edge - w, pt.x - w / 2));
       const above = pt.y - 14 - h >= edge;
@@ -1334,14 +1340,14 @@
   async function loadNearby() {
     if (!CFG.nearbyUrl) return [];
     try {
-      const r = await fetch(CFG.nearbyUrl, { credentials: 'omit' });
+      const r = await fetch(CFG.nearbyUrl, { credentials: 'omit', signal: AbortSignal.timeout(5000) });
       if (!r.ok) throw new Error('HTTP ' + r.status);
 
       // The list may be a page Zola serves (`zola serve` appends its live-reload script), so read up to its closing bracket.
       const text = await r.text();
       const list = JSON.parse(text.slice(0, text.lastIndexOf(']') + 1));
 
-      return (Array.isArray(list) ? list : []).filter(p => p && p.name && isFinite(p.lat) && isFinite(p.lon) && !(p.url && p.url === CFG.nearbyExclude));
+      return (Array.isArray(list) ? list : []).filter(p => p && p.name && Number.isFinite(p.lat) && Number.isFinite(p.lon) && p.lat >= -90 && p.lat <= 90 && !(p.url && p.url === CFG.nearbyExclude));
     } catch (err) {
       console.warn('track-map: nearby places unavailable', err);
       return [];
@@ -1379,7 +1385,7 @@
     initMap();
     new IntersectionObserver(es => { slotVisible = es[0].isIntersecting; place(); }, { threshold: 0 }).observe(slot);
     addEventListener('scroll', onScroll, { passive: true });
-    addEventListener('resize', () => { onScroll(); positionProgressLabels(); if (mapReady) { map.resize(); lastCamKey = null; applyCamera(true); } });
+    addEventListener('resize', () => { onScroll(); positionProgressLabels(); if (mapReady) { updateNearbyVisibility(); map.resize(); lastCamKey = null; applyCamera(true); } });
     photos.forEach(p => { const img = p.el.querySelector('img'); if (img && !img.complete) img.addEventListener('load', onScroll, { once: true }); });
     onScroll();
   }

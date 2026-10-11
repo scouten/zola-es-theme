@@ -161,7 +161,7 @@ $track-widget-map-height: 270px !default;
   &[hidden] { display: none; }
   img { display: block; width: 200px; max-width: 100%; height: auto; margin-bottom: .25rem; border-radius: 3px; }
   .es-track-nearby-name { display: block; font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
-  .es-track-nearby-note { display: block; font-size: .7rem; color: var(--es-track-muted); }
+  .es-track-nearby-note { display: block; font-size: .7rem; color: var(--es-track-muted); overflow: hidden; text-overflow: ellipsis; }
 }
 @media (hover: none) { .es-track-nearby-tip[href] { pointer-events: auto; } }
 // badge at the position dot when it has no photo (leg start, end of the track): repeats the caption
