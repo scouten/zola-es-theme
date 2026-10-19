@@ -80,7 +80,8 @@
   }
 
   // Each leg's mode and distance, for the day's summary: the leg's `dist_m`, else measured along its points.
-  // Travel after a day's story (`aside`) isn't part of the day, and the section maps leave it out.
+  // Travel after a day's story (`aside`) isn't part of the day: it's left out of the day's distance, summary, and
+  // framing, and drawn apart, dashed.
   const storyLegs = track => (track.legs || []).filter(l => !l.aside);
   const legsOf = track => storyLegs(track).map(l => {
     const pts = l.pts || [];
@@ -91,6 +92,16 @@
 
   // The track's points as one line, each longitude within 180° of the one before, so a track that crosses the
   // antimeridian runs on past ±180° instead of doubling back around the world.
+  // Travel after a day's story (`aside`), a line per leg, each longitude within 180° of the one before, starting from
+  // where the story ended.
+  function asideLines(track, from) {
+    let prev = from;
+    return (track.legs || []).filter(l => l.aside).map(l => (l.pts || []).map(p => {
+      const lon = prev == null ? p[0] : nearLon(p[0], prev);
+      prev = lon;
+      return [lon, p[1]];
+    })).filter(c => c.length > 1);
+  }
   function trackCoords(track) {
     const out = [];
     let prev = null;
@@ -118,6 +129,7 @@
         const coords = trackCoords(track);
         if (coords.length < 2) throw new Error('track has no line');
         t.coords = coords;
+        t.aside = asideLines(track, coords[coords.length - 1][0]);
         t.legs = legsOf(track);
         t.distM = typeof track.dist_m === 'number' ? track.dist_m : 0;
         t.state = 'ok';
@@ -151,7 +163,7 @@
       tracks.forEach(t => {
         if (prev != null) {
           const shift = nearLon(t.coords[0][0], prev) - t.coords[0][0];
-          if (shift) t.coords.forEach(p => { p[0] += shift; });
+          if (shift) [t.coords, ...(t.aside || [])].forEach(line => line.forEach(p => { p[0] += shift; }));
         }
         prev = t.coords[t.coords.length - 1][0];
       });
@@ -170,6 +182,14 @@
     features: cards.flatMap((c, i) => LISTING && i !== focus ? [] : c.tracks.filter(t => t.state === 'ok')
       .map(t => ({ type: 'Feature', properties: { i }, geometry: { type: 'LineString', coordinates: t.coords } }))),
   });
+
+  // The same days' travel after their stories, which is drawn dashed.
+  const asideData = () => ({
+    type: 'FeatureCollection',
+    features: cards.flatMap((c, i) => LISTING && i !== focus ? [] : c.tracks.filter(t => t.state === 'ok')
+      .flatMap(t => (t.aside || []).map(coordinates => ({ type: 'Feature', properties: { i }, geometry: { type: 'LineString', coordinates } })))),
+  });
+  const setTripData = () => { map.getSource('trip').setData(tripData()); map.getSource('trip-aside').setData(asideData()); };
 
   // As on the page's map: the day in view is current (green, with a soft glow beneath), the most recent day before
   // it with a track is traveled (amber), the days before that are finished (a darker amber), and the days after it
@@ -191,11 +211,15 @@
     'es-trip-done': () => LISTING ? NONE : focus === -1 ? ['>=', ['get', 'i'], 0] : ['==', ['get', 'i'], prevDay()],
     'es-trip-current': () => ['==', ['get', 'i'], at()],
   };
+  // Travel after a day's story is dashed in its day's colour, with no casing or halo of its own.
+  const ASIDE = { 'es-aside-ahead': 'es-trip-ahead', 'es-aside-finished': 'es-trip-finished', 'es-aside-done': 'es-trip-done', 'es-aside-current': 'es-trip-current' };
+  Object.keys(ASIDE).forEach(id => { FILTERS[id] = () => FILTERS[ASIDE[id]](); });
 
   function buildStyle() {
     const style = window.esTrack.basemapStyle(baseStyle, { cfg: CFG, tok, detail: CFG.detail || 'minimal' });
     window.esTrack.addRegion(style, region, tok);
     style.sources.trip = { type: 'geojson', data: tripData() };
+    style.sources['trip-aside'] = { type: 'geojson', data: asideData() };
     const line = { 'line-cap': 'round', 'line-join': 'round' };
     const day = (id, paint) => ({ id, type: 'line', source: 'trip', filter: FILTERS[id](), layout: line, paint });
     style.layers.push(
@@ -205,6 +229,13 @@
       day('es-trip-current-halo', { 'line-color': tok('current-halo'), 'line-width': 12, 'line-blur': 1.5 }),
       day('es-trip-done', { 'line-color': tok('accent'), 'line-width': 3 }),
       day('es-trip-current', { 'line-color': tok('current'), 'line-width': 3 }),
+    );
+    const dashed = (id, color) => ({ id, type: 'line', source: 'trip-aside', filter: FILTERS[id](), layout: { 'line-cap': 'butt', 'line-join': 'round' }, paint: { 'line-color': color, 'line-width': 3, 'line-dasharray': [2, 2] } });
+    style.layers.push(
+      dashed('es-aside-ahead', tok('ahead-dim')),
+      dashed('es-aside-finished', tok('accent-dim')),
+      dashed('es-aside-done', tok('accent')),
+      dashed('es-aside-current', tok('current')),
     );
     widget.classList.add('basemap-muted');
     return style;
@@ -291,7 +322,7 @@
   // A day's track has arrived or failed: redraw the trip, and reframe if the view depends on that day.
   function dayLoaded(c) {
     if (c.state === 'ok') joinDays();
-    if (mapReady && (!LISTING || c === cards[focus])) map.getSource('trip').setData(tripData());
+    if (mapReady && (!LISTING || c === cards[focus])) setTripData();
     caption();
     applyFilters();
     updateNotice();
@@ -331,7 +362,7 @@
   function setFocus(i, instant) {
     if (i === focus) return;
     focus = i;
-    if (LISTING && mapReady) map.getSource('trip').setData(tripData());
+    if (LISTING && mapReady) setTripData();
     updateIdle();
     updateNotice();
     caption();
@@ -429,7 +460,7 @@
     // Tracks may have arrived, and the reader scrolled on, while the map loaded.
     map.on('load', () => {
       mapReady = true;
-      map.getSource('trip').setData(tripData());
+      setTripData();
       applyFilters();
       frame(true);
     });

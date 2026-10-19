@@ -97,6 +97,8 @@
   let eleAt = [];  // each track point's logged altitude in metres, or null where it's missing or nonsense (see flatten)
   // A track of stops only, for a page with photos but no track log: no route, no distance, nothing to measure progress by.
   let stationary = false;
+  // How many of `pts` belong to the day's own legs, and the index of the day's last leg: whatever follows is `aside`.
+  let mainN = 0, lastMain = 0;
   let distM = 0;  // the day's distance as published (dist_m), which the page's front matter also shows
   let tripDays = 1;  // calendar days the log covers (the page's `days`, else the JSON's): more than one is a trip, not a day
   let PARKS = [];  // the parks the page highlights (the JSON's `parks`), tinted under the track
@@ -152,6 +154,9 @@
       s.end = pts.length - 1;
     });
     total = cum[cum.length - 1] || 0;
+    const firstAside = SEGMENTS.findIndex(s => s.aside);
+    mainN = firstAside < 0 ? pts.length : SEGMENTS[firstAside].start;
+    lastMain = firstAside < 0 ? SEGMENTS.length - 1 : Math.max(0, firstAside - 1);
 
     // As nf does for flight videos: nothing here flies below sea level, so a dip in the logged altitude below -5 m
     // that reaches -10 m is nonsense, and the whole dip is dropped.
@@ -214,7 +219,7 @@
     return best;
   }
   // The view before the first photo, and on the docked map: the whole day, with the dot at its start.
-  const dayStartView = region => ({ kind: 'start', region: !!region, photoIdx: -1, segs: [0, SEGMENTS.length - 1], capSeg: 0, dot: pts[0], frac: 0, m: 0, transit: true });
+  const dayStartView = region => ({ kind: 'start', region: !!region, photoIdx: -1, segs: [0, lastMain], capSeg: 0, dot: pts[0], frac: 0, m: 0, transit: true });
 
   // At the top of the page, before the reader scrolls, when the site sets a region to open on.
   const atRegion = () => CFG.startSpanKm > 0 && scrollY < REGION_SCROLL_PX;
@@ -246,7 +251,8 @@
     let prev = null, next = null;
     for (let k = i - 1; k >= 0; k--) if (items[k].photo) { prev = items[k].photo; break; }
     for (let k = i + 1; k < items.length; k++) if (items[k].photo) { next = items[k].photo; break; }
-    const last = SEGMENTS.length - 1;
+    // Travel after the day's story comes into view only when the reader steps to it.
+    const last = lastMain;
     // Before the first photo: the whole day, with the dot at its start.
     if (!prev) return dayStartView();
     const pi = photos.indexOf(prev);
@@ -540,7 +546,8 @@
   }
   // The whole day and any park the page highlights, widened about its centre to at least DAY_MIN_SPAN_M across.
   function dayBounds() {
-    const b = boundsOf([pts, ...parkOutlines()]), c = b.getCenter();
+    // The day's own legs: travel after its story comes into view when the reader steps to it.
+    const b = boundsOf([pts.slice(0, mainN), ...parkOutlines()]), c = b.getCenter();
     aroundBounds([c.lng, c.lat], DAY_MIN_SPAN_M / 2).forEach(corner => b.extend(corner));
     return b;
   }

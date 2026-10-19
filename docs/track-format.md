@@ -262,7 +262,7 @@ Optional. Travel that belongs with a page but not in its story: the flight home 
 - They never count toward `days`, and the map never joins them to the leg before them, however close.
 - `bbox` takes them in, so the whole-day view shows where the travel went.
 
-The page's map draws them dashed, and their caption says "Afterwards". The section, year, and home maps draw only the day's own legs for now.
+The page's map draws them dashed, and their caption says "Afterwards". The section, year, and home maps draw them dashed too, in their day's colour, without framing them.
 
 ---
 

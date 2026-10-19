@@ -78,7 +78,7 @@ To find the reference:
 
 ## Travel after the story
 
-A page can carry a second log for travel that belongs with it but not in its story, such as the flight home the next day. Run `nf update-blog-for-track-map <gpx> --aside <next-day-gpx> --page <folder>`. The page's map draws those legs dashed, after the day's own, and their caption reads "Afterwards" under the leg's usual lines. The reader meets them after the last photo and in the step-through, as "Leg 2/2". The day's distance, progress bar, and `distance` front matter stay the day's own. See `docs/track-format.md` §2.8. The section, year, and home maps leave aside legs out for now.
+A page can carry a second log for travel that belongs with it but not in its story, such as the flight home the next day. Run `nf update-blog-for-track-map <gpx> --aside <next-day-gpx> --page <folder>`. The page's map draws those legs dashed, after the day's own, and their caption reads "Afterwards" under the leg's usual lines. The map opens on the day's own legs and frames only them, in every view, until the reader clicks or steps onto an aside leg ("Leg 2/2"), which then comes into view; the whole-day button returns to the day. The day's distance, progress bar, and `distance` front matter stay the day's own. See `docs/track-format.md` §2.8. The section, year, and home maps draw aside legs dashed in their day's colour, but never frame them.
 
 ## Pages with photos and no track log
 
