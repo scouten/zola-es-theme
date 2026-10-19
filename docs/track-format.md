@@ -260,7 +260,7 @@ Optional. Travel that belongs with a page but not in its story: the flight home 
 - Aside legs come after every other leg. No photo anchors point at them, so a page's photos never move to them.
 - They take no share of `dist_m`, so the day's total, and the page's `distance`, stay the day's own. Each aside leg keeps its own `dist_m` for its caption.
 - They never count toward `days`, and the map never joins them to the leg before them, however close.
-- `bbox` takes them in, so the whole-day view shows where the travel went.
+- `bbox` takes them in, but the page map's whole-day view frames only the day's own legs and highlighted parks.
 
 The page's map draws them dotted, and their caption says "Afterwards". The section, year, and home maps draw them dotted too, in their day's colour, without framing them.
 

@@ -127,7 +127,8 @@
       })
       .then(track => {
         const coords = trackCoords(track);
-        if (coords.length < 2) throw new Error('track has no line');
+        // A day of one place still has its point, and an aside line if it has one.
+        if (!coords.length) throw new Error('track has no line');
         t.coords = coords;
         t.aside = asideLines(track, coords[coords.length - 1][0]);
         t.legs = legsOf(track);
@@ -179,7 +180,7 @@
   // In a listing, only the card in view is drawn, so the map is given that card's tracks alone.
   const tripData = () => ({
     type: 'FeatureCollection',
-    features: cards.flatMap((c, i) => LISTING && i !== focus ? [] : c.tracks.filter(t => t.state === 'ok')
+    features: cards.flatMap((c, i) => LISTING && i !== focus ? [] : c.tracks.filter(t => t.state === 'ok' && t.coords.length > 1)
       .map(t => ({ type: 'Feature', properties: { i }, geometry: { type: 'LineString', coordinates: t.coords } }))),
   });
 

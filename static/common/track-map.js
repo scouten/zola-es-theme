@@ -90,7 +90,7 @@
   const showNotice = msg => { notice.textContent = msg || ''; notice.hidden = !msg; };
 
   // ------------------------------------------------------------ state
-  let SEGMENTS = [], pts = [], cum = [], segOf = [], total = 0;
+  let SEGMENTS = [], pts = [], cum = [], cumAll = [], segOf = [], total = 0;
   // Indices of points that begin a leg after a real gap in the log: no line runs into them, and the gap adds no distance.
   let breaks = new Set();
   const GAP_M = 100;
@@ -140,16 +140,16 @@
   }
 
   function flatten() {
-    pts = []; cum = []; segOf = []; eleAt = []; breaks = new Set();
+    pts = []; cum = []; cumAll = []; segOf = []; eleAt = []; breaks = new Set();
     SEGMENTS.forEach((s, si) => {
       s.start = pts.length;
       s.coords.forEach((c, k) => {
-        if (pts.length === 0) { pts.push(c); cum.push(0); segOf.push(si); eleAt.push(s.eles[k]); return; }
+        if (pts.length === 0) { pts.push(c); cum.push(0); cumAll.push(0); segOf.push(si); eleAt.push(s.eles[k]); return; }
         let d = hav(pts[pts.length - 1], c);
         // Travel after the day's story (`aside`) is no part of the day's distance, and is never joined to it.
         if (k === 0 && (d > GAP_M || s.aside)) { breaks.add(pts.length); d = 0; }
         if (d < 0.5 && pts.length !== s.start) return;
-        pts.push(c); cum.push(cum[cum.length - 1] + (s.aside ? 0 : d)); segOf.push(si); eleAt.push(s.eles[k]);
+        pts.push(c); cum.push(cum[cum.length - 1] + (s.aside ? 0 : d)); cumAll.push(cumAll[cumAll.length - 1] + d); segOf.push(si); eleAt.push(s.eles[k]);
       });
       s.end = pts.length - 1;
     });
@@ -190,7 +190,8 @@
       }
       const here = [p.lon, p.lat];
       let best = -1, bd = Infinity;
-      for (let i = last; i < pts.length; i++) { const d = hav(here, pts[i]); if (d < bd) { bd = d; best = i; } }
+      // Only along the day's own legs: a photo of the day's story is never of the travel after it.
+      for (let i = last; i < mainN; i++) { const d = hav(here, pts[i]); if (d < bd) { bd = d; best = i; } }
       let ub = -1, ubd = Infinity;
       for (let i = 0; i < last; i++) { const d = hav(here, pts[i]); if (d < ubd) { ubd = d; ub = i; } }
       if (ub >= 0 && ubd < bd / 3 && bd > 500) { best = ub; bd = ubd; }
@@ -381,8 +382,11 @@
   const bearingAt = i => {
     i = Math.max(0, Math.min(i, pts.length - 1));
     if (i >= pts.length - 1) return null;
+    // No arrow at the end of the day's story, which doesn't go on into travel after it.
+    if (i === mainN - 1 && mainN < pts.length) return null;
     let j = i + 1;
-    while (j < pts.length - 1 && cum[j] - cum[i] < 50) j++;
+    // `cum` stands still through aside legs, so the way on is measured with `cumAll`.
+    while (j < pts.length - 1 && cumAll[j] - cumAll[i] < 50) j++;
     const a = pts[i], b = pts[j];
     const dx = (b[0] - a[0]) * Math.cos(a[1] * Math.PI / 180), dy = b[1] - a[1];
     return (dx === 0 && dy === 0) ? null : Math.atan2(dx, dy) * 180 / Math.PI;
