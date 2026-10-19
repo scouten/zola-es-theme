@@ -258,7 +258,7 @@ The map tints each park a subtle greyed sand, with no outline, beneath the basem
 Optional. Travel that belongs with a page but not in its story: the flight home the next day, with nothing to photograph from a middle seat. `nf update-blog-for-track-map <gpx> --aside <gpx>` converts a second sanitized GPX and appends its legs, each marked `"aside": true`.
 
 - Aside legs come after every other leg. No photo anchors point at them, so a page's photos never move to them.
-- They take no share of `dist_m`, so the day's total, and the page's `distance`, stay the day's own. Each aside leg keeps its own `dist_m` for its caption.
+- They take no share of `dist_m`, so the day's total, and the page's `distance`, stay the day's own. The trip total on the section, year, and home maps does count them. Each aside leg keeps its own `dist_m` for its caption.
 - They never count toward `days`, and the map never joins them to the leg before them, however close.
 - `bbox` takes them in, but the page map's whole-day view frames only the day's own legs and highlighted parks.
 

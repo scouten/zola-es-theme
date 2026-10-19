@@ -50,6 +50,7 @@
         coords: null,
         legs: [],
         distM: 0,
+        totalM: 0,
       })),
       title: el.dataset.title || '',
       permalink: el.dataset.permalink || '',
@@ -60,6 +61,7 @@
       requested: false,
       legs: [],
       distM: 0,
+      totalM: 0,
     };
   });
 
@@ -133,6 +135,8 @@
         t.aside = asideLines(track, coords[coords.length - 1][0]);
         t.legs = legsOf(track);
         t.distM = typeof track.dist_m === 'number' ? track.dist_m : 0;
+        // What the trip travelled counts the travel after the day's story too, which the day's own distance doesn't.
+        t.totalM = t.distM + (track.legs || []).filter(l => l.aside).reduce((m, l) => m + (l.dist_m || 0), 0);
         t.state = 'ok';
       })
       .catch(err => {
@@ -144,6 +148,7 @@
         c.state = ok.length ? 'ok' : c.tracks.some(k => k.state !== 'failed') ? 'loading' : 'failed';
         c.legs = ok.flatMap(k => k.legs);
         c.distM = ok.reduce((m, k) => m + k.distM, 0);
+        c.totalM = ok.reduce((m, k) => m + k.totalM, 0);
         dayLoaded(c);
       });
   }
@@ -281,11 +286,12 @@
     let second, third;
     if (c) {
       const days = c.days ? (c.days === 1 ? '1 travel story' : `${c.days} travel stories`) : '';
-      const dist = c.distance || (c.distM && allLoaded(c) ? fmtBoth(c.distM) : '');
+      // A day gives its own distance; a trip's card in a listing gives all it travelled.
+      const dist = c.distance || (c.distM && allLoaded(c) ? fmtBoth(LISTING ? c.totalM : c.distM) : '');
       second = hasMap ? c.route || days : DAY_STATUS[c.state];
       third = hasMap ? [sum ? sum.ways : '', dist].filter(Boolean).join(' · ') : '';
     } else {
-      const total = cards.reduce((s, d) => s + d.distM, 0);
+      const total = cards.reduce((s, d) => s + d.totalM, 0);
       second = cards.length === 1 ? '1 travel story' : `${cards.length} travel stories`;
       third = total && cards.every(d => d.state === 'ok') ? fmtBoth(total) : '';
     }
