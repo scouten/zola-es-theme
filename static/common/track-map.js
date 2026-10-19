@@ -90,13 +90,15 @@
   const showNotice = msg => { notice.textContent = msg || ''; notice.hidden = !msg; };
 
   // ------------------------------------------------------------ state
-  let SEGMENTS = [], pts = [], cum = [], segOf = [], total = 0;
+  let SEGMENTS = [], pts = [], cum = [], cumAll = [], segOf = [], total = 0;
   // Indices of points that begin a leg after a real gap in the log: no line runs into them, and the gap adds no distance.
   let breaks = new Set();
   const GAP_M = 100;
   let eleAt = [];  // each track point's logged altitude in metres, or null where it's missing or nonsense (see flatten)
   // A track of stops only, for a page with photos but no track log: no route, no distance, nothing to measure progress by.
   let stationary = false;
+  // How many of `pts` belong to the day's own legs, and the index of the day's last leg: whatever follows is `aside`.
+  let mainN = 0, lastMain = 0;
   let distM = 0;  // the day's distance as published (dist_m), which the page's front matter also shows
   let tripDays = 1;  // calendar days the log covers (the page's `days`, else the JSON's): more than one is a trip, not a day
   let PARKS = [];  // the parks the page highlights (the JSON's `parks`), tinted under the track
@@ -138,19 +140,23 @@
   }
 
   function flatten() {
-    pts = []; cum = []; segOf = []; eleAt = []; breaks = new Set();
+    pts = []; cum = []; cumAll = []; segOf = []; eleAt = []; breaks = new Set();
     SEGMENTS.forEach((s, si) => {
       s.start = pts.length;
       s.coords.forEach((c, k) => {
-        if (pts.length === 0) { pts.push(c); cum.push(0); segOf.push(si); eleAt.push(s.eles[k]); return; }
+        if (pts.length === 0) { pts.push(c); cum.push(0); cumAll.push(0); segOf.push(si); eleAt.push(s.eles[k]); return; }
         let d = hav(pts[pts.length - 1], c);
-        if (k === 0 && d > GAP_M) { breaks.add(pts.length); d = 0; }
+        // Travel after the day's story (`aside`) is no part of the day's distance, and is never joined to it.
+        if (k === 0 && (d > GAP_M || s.aside)) { breaks.add(pts.length); d = 0; }
         if (d < 0.5 && pts.length !== s.start) return;
-        pts.push(c); cum.push(cum[cum.length - 1] + d); segOf.push(si); eleAt.push(s.eles[k]);
+        pts.push(c); cum.push(cum[cum.length - 1] + (s.aside ? 0 : d)); cumAll.push(cumAll[cumAll.length - 1] + d); segOf.push(si); eleAt.push(s.eles[k]);
       });
       s.end = pts.length - 1;
     });
     total = cum[cum.length - 1] || 0;
+    const firstAside = SEGMENTS.findIndex(s => s.aside);
+    mainN = firstAside < 0 ? pts.length : SEGMENTS[firstAside].start;
+    lastMain = firstAside < 0 ? SEGMENTS.length - 1 : Math.max(0, firstAside - 1);
 
     // As nf does for flight videos: nothing here flies below sea level, so a dip in the logged altitude below -5 m
     // that reaches -10 m is nonsense, and the whole dip is dropped.
@@ -184,7 +190,8 @@
       }
       const here = [p.lon, p.lat];
       let best = -1, bd = Infinity;
-      for (let i = last; i < pts.length; i++) { const d = hav(here, pts[i]); if (d < bd) { bd = d; best = i; } }
+      // Only along the day's own legs: a photo of the day's story is never of the travel after it.
+      for (let i = last; i < mainN; i++) { const d = hav(here, pts[i]); if (d < bd) { bd = d; best = i; } }
       let ub = -1, ubd = Infinity;
       for (let i = 0; i < last; i++) { const d = hav(here, pts[i]); if (d < ubd) { ubd = d; ub = i; } }
       if (ub >= 0 && ubd < bd / 3 && bd > 500) { best = ub; bd = ubd; }
@@ -213,7 +220,7 @@
     return best;
   }
   // The view before the first photo, and on the docked map: the whole day, with the dot at its start.
-  const dayStartView = region => ({ kind: 'start', region: !!region, photoIdx: -1, segs: [0, SEGMENTS.length - 1], capSeg: 0, dot: pts[0], frac: 0, m: 0, transit: true });
+  const dayStartView = region => ({ kind: 'start', region: !!region, photoIdx: -1, segs: [0, lastMain], capSeg: 0, dot: pts[0], frac: 0, m: 0, transit: true });
 
   // At the top of the page, before the reader scrolls, when the site sets a region to open on.
   const atRegion = () => CFG.startSpanKm > 0 && scrollY < REGION_SCROLL_PX;
@@ -222,7 +229,7 @@
   // 5,653 mi"), and the mode to show its icon (see `modeSummary` in track-common.js).
   function daySummary() {
     if (stationary) return { head: CFG.route || (SEGMENTS.length === 1 ? 'One place' : `${SEGMENTS.length} places`), mode: 'stop' };
-    const sum = modeSummary(SEGMENTS.map(s => ({ mode: s.mode, m: segDist(s) })));
+    const sum = modeSummary(SEGMENTS.filter(s => !s.aside).map(s => ({ mode: s.mode, m: segDist(s) })));
     if (!sum) return { head: fmtBoth(distM), mode: SEGMENTS[0].mode };
     return { head: `${sum.ways} · ${fmtBoth(distM)}`, mode: sum.mode };
   }
@@ -245,7 +252,8 @@
     let prev = null, next = null;
     for (let k = i - 1; k >= 0; k--) if (items[k].photo) { prev = items[k].photo; break; }
     for (let k = i + 1; k < items.length; k++) if (items[k].photo) { next = items[k].photo; break; }
-    const last = SEGMENTS.length - 1;
+    // Travel after the day's story comes into view only when the reader steps to it.
+    const last = lastMain;
     // Before the first photo: the whole day, with the dot at its start.
     if (!prev) return dayStartView();
     const pi = photos.indexOf(prev);
@@ -332,11 +340,14 @@
     return a === start && s > 0 && !stationary && !breaks.has(start) ? [pts[start - 1]].concat(run) : run;
   };
   const featuresOf = (lists, props) => ({ type: 'FeatureCollection', features: lists.filter(c => c.coords.length > 1).map(c => ({ type: 'Feature', properties: props ? props(c.seg) : {}, geometry: { type: 'LineString', coordinates: c.coords } })) });
-  const trackData = () => featuresOf(SEGMENTS.map((_, seg) => ({ seg, coords: legRun(seg, 0, pts.length) })));
+  const trackData = () => featuresOf(SEGMENTS.map((sg, seg) => ({ seg, coords: sg.aside ? [] : legRun(seg, 0, pts.length) })));
+  // Travel after the day's story: its own line, dashed, apart from the traveled and ahead colours.
+  const asideData = () => featuresOf(SEGMENTS.map((sg, seg) => ({ seg, coords: sg.aside ? legRun(seg, 0, pts.length) : [] })));
   // The traveled line, one feature per leg so a gap in the log is not bridged; legs before the current one are `dim`.
   const doneData = v => {
     const d = splitDot(v), at = viewIdx(v);
     return featuresOf(SEGMENTS.map((sg, seg) => {
+      if (sg.aside) return { seg, coords: [] };
       const coords = legRun(seg, 0, at);
       return { seg, coords: d && at >= sg.start && at < sg.end ? coords.concat([d]) : coords };
     }), seg => ({ dim: v ? seg < v.capSeg : false }));
@@ -344,6 +355,7 @@
   const aheadData = v => {
     const d = splitDot(v), at = viewIdx(v);
     return featuresOf(SEGMENTS.map((sg, seg) => {
+      if (sg.aside) return { seg, coords: [] };
       if (d && at >= sg.start && at < sg.end) return { seg, coords: [d].concat(pts.slice(at + 1, sg.end + 1)) };
       return { seg, coords: legRun(seg, at, pts.length) };
     }));
@@ -353,12 +365,13 @@
     if (!v) return { type: 'FeatureCollection', features: [] };
     const at = viewIdx(v), d = splitDot(v);
     const doneF = [], aheadF = [];
-    const add = (list, coords, done) => { if (coords.length > 1) list.push({ type: 'Feature', properties: { done }, geometry: { type: 'LineString', coordinates: coords } }); };
+    const add = (list, coords, done, aside) => { if (coords.length > 1) list.push({ type: 'Feature', properties: { done, aside }, geometry: { type: 'LineString', coordinates: coords } }); };
     for (let s = v.segs[0]; s <= v.segs[1]; s++) {
       const { start, end } = SEGMENTS[s];
       const mid = d && at >= start && at < end;
-      add(doneF, pts.slice(start, Math.min(at, end) + 1).concat(mid ? [d] : []), true);
-      add(aheadF, mid ? [d].concat(pts.slice(at + 1, end + 1)) : pts.slice(Math.max(at, start), end + 1), false);
+      const aside = !!SEGMENTS[s].aside;
+      add(doneF, pts.slice(start, Math.min(at, end) + 1).concat(mid ? [d] : []), true, aside);
+      add(aheadF, mid ? [d].concat(pts.slice(at + 1, end + 1)) : pts.slice(Math.max(at, start), end + 1), false, aside);
     }
     // features draw in order, so the travelled part goes last and stays on top where the route doubles back
     return { type: 'FeatureCollection', features: aheadF.concat(doneF) };
@@ -369,8 +382,11 @@
   const bearingAt = i => {
     i = Math.max(0, Math.min(i, pts.length - 1));
     if (i >= pts.length - 1) return null;
+    // No arrow at the end of the day's story, which doesn't go on into travel after it.
+    if (i === mainN - 1 && mainN < pts.length) return null;
     let j = i + 1;
-    while (j < pts.length - 1 && cum[j] - cum[i] < 50) j++;
+    // `cum` stands still through aside legs, so the way on is measured with `cumAll`.
+    while (j < pts.length - 1 && cumAll[j] - cumAll[i] < 50) j++;
     const a = pts[i], b = pts[j];
     const dx = (b[0] - a[0]) * Math.cos(a[1] * Math.PI / 180), dy = b[1] - a[1];
     return (dx === 0 && dy === 0) ? null : Math.atan2(dx, dy) * 180 / Math.PI;
@@ -455,6 +471,7 @@
     const cur = view;
     return {
       track: { type: 'geojson', data: trackData() },
+      aside: { type: 'geojson', data: asideData() },
       done: { type: 'geojson', data: doneData(cur) },
       ahead: { type: 'geojson', data: aheadData(cur) },
       current: { type: 'geojson', data: currentLegData(cur) },
@@ -477,7 +494,10 @@
       { id: 'es-track-ahead', type: 'line', source: 'ahead', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': tok('ahead'), 'line-width': big ? 3.5 : 3 } },
       { id: 'es-track-done', type: 'line', source: 'done', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-width': big ? 3.5 : 3, 'line-color': ['case', ['get', 'dim'], tok('accent-dim'), tok('accent')] } },
     ];
-    layers.push({ id: 'es-current-line', type: 'line', source: 'current', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': ['case', ['get', 'done'], cur, tok('current-dim')], 'line-width': big ? 3.5 : 3 } });
+    layers.push({ id: 'es-current-line', type: 'line', source: 'current', filter: ['!', ['get', 'aside']], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': ['case', ['get', 'done'], cur, tok('current-dim')], 'line-width': big ? 3.5 : 3 } });
+    // Travel after the day's story is dashed, under the current-leg halo and the same in colour whether or not it is current.
+    layers.splice(1, 0, { id: 'es-aside-line', type: 'line', source: 'aside', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': tok('ahead'), 'line-width': big ? 3 : 2.5, 'line-dasharray': [0.01, 2] } });
+    layers.push({ id: 'es-current-aside', type: 'line', source: 'current', filter: ['get', 'aside'], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': cur, 'line-width': big ? 3.5 : 3, 'line-dasharray': [0.01, 2] } });
 
     // The stretch a flight video covers, over the track and under the dots.
     layers.push({ id: 'es-clip-line', type: 'line', source: 'clip', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': tok('dot'), 'line-width': 4 } });
@@ -485,7 +505,7 @@
       layers.push({ id: 'es-photos', type: 'circle', source: 'photos', paint: { 'circle-radius': big ? 5 : 3, 'circle-color': photoColorFor(view), 'circle-stroke-color': tok('ground-deep'), 'circle-stroke-width': 1 } });
       layers.push({ id: 'es-photos-hit', type: 'circle', source: 'photos', paint: { 'circle-radius': big ? 12 : 6, 'circle-opacity': 0 } });
     }
-    if (big) layers.push({ id: 'es-track-hit', type: 'line', source: 'track', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-width': 18, 'line-opacity': 0 } });
+    if (big) ['track', 'aside'].forEach(src => layers.push({ id: `es-${src}-hit`, type: 'line', source: src, layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-width': 18, 'line-opacity': 0 } }));
     layers.push({ id: 'es-selected', type: 'circle', source: 'selected', paint: { 'circle-radius': 11, 'circle-color': cur, 'circle-opacity': 0, 'circle-stroke-color': ['case', ['==', ['get', 'primary'], 1], cur, tok('current-dim')], 'circle-stroke-width': 3 } });
     layers.push({ id: 'es-dot-halo', type: 'circle', source: 'dot', paint: { 'circle-radius': big ? 14 : 11, 'circle-color': cur, 'circle-opacity': .3, 'circle-blur': .4 } });
     // the same outer ring the selected photo gets, so the position dot reads as highlighted the same way
@@ -530,7 +550,8 @@
   }
   // The whole day and any park the page highlights, widened about its centre to at least DAY_MIN_SPAN_M across.
   function dayBounds() {
-    const b = boundsOf([pts, ...parkOutlines()]), c = b.getCenter();
+    // The day's own legs: travel after its story comes into view when the reader steps to it.
+    const b = boundsOf([pts.slice(0, mainN), ...parkOutlines()]), c = b.getCenter();
     aroundBounds([c.lng, c.lat], DAY_MIN_SPAN_M / 2).forEach(corner => b.extend(corner));
     return b;
   }
@@ -686,6 +707,13 @@
     text.replaceChildren();
     const modeEl = document.createElement('span'); modeEl.className = 'mode'; modeEl.textContent = head; text.appendChild(modeEl);
     if (sub) { const labelEl = document.createElement('span'); labelEl.className = 'label'; labelEl.textContent = sub; text.appendChild(labelEl); }
+
+    // Travel after the day's story says so.
+    if (!summary && seg.aside) {
+      const asideEl = document.createElement('span'); asideEl.className = 'label aside';
+      asideEl.textContent = 'Afterwards';
+      text.appendChild(asideEl);
+    }
 
     // On a flight leg, a line for the altitude where the photo was taken, where the log's altitude is believed and
     // at least 50 m above the leg's ground level, so not at the gate or on the water (a flight video's caption shows
@@ -1194,18 +1222,20 @@
     map.on('style.load', hideNearby);
 
     // clicking the track itself: the leg under the pointer, framed as its leg step
-    map.on('click', 'es-track-hit', e => {
-      if (placement === 'corner') return;
-      if (map.queryRenderedFeatures(e.point, { layers: ['es-photos-hit'] }).length) return;  // the photo handler has it
-      if (map.getLayer('es-nearby-hit') && map.queryRenderedFeatures(e.point, { layers: ['es-nearby-hit'] }).length) return;  // so does the nearby place's
-      e.originalEvent.stopPropagation();
-      let bi = 0, bd = Infinity;
-      for (let i = 0; i < pts.length; i++) { const q = project(pts[i]); const d = (q.x - e.point.x) ** 2 + (q.y - e.point.y) ** 2; if (d < bd) { bd = d; bi = i; } }
-      const k = STEPS.findIndex(st => st.kind === 'leg' && st.leg === segOf[bi]);
-      if (k >= 0) browseTo(k);
+    ['es-track-hit', 'es-aside-hit'].forEach(hit => {
+      map.on('click', hit, e => {
+        if (placement === 'corner') return;
+        if (map.queryRenderedFeatures(e.point, { layers: ['es-photos-hit'] }).length) return;  // the photo handler has it
+        if (map.getLayer('es-nearby-hit') && map.queryRenderedFeatures(e.point, { layers: ['es-nearby-hit'] }).length) return;  // so does the nearby place's
+        e.originalEvent.stopPropagation();
+        let bi = 0, bd = Infinity;
+        for (let i = 0; i < pts.length; i++) { const q = project(pts[i]); const d = (q.x - e.point.x) ** 2 + (q.y - e.point.y) ** 2; if (d < bd) { bd = d; bi = i; } }
+        const k = STEPS.findIndex(st => st.kind === 'leg' && st.leg === segOf[bi]);
+        if (k >= 0) browseTo(k);
+      });
+      map.on('mouseenter', hit, () => { if (placement !== 'corner') map.getCanvas().style.cursor = 'pointer'; });
+      map.on('mouseleave', hit, () => { map.getCanvas().style.cursor = ''; });  // a photo dot under the pointer sets it back
     });
-    map.on('mouseenter', 'es-track-hit', () => { if (placement !== 'corner') map.getCanvas().style.cursor = 'pointer'; });
-    map.on('mouseleave', 'es-track-hit', () => { map.getCanvas().style.cursor = ''; });  // a photo dot under the pointer sets it back
     thumbImg.addEventListener('error', () => { thumbImg.style.display = 'none'; });
     thumbImg.addEventListener('load', () => { if (hoverGroup && !thumb.hidden) placeCard(photos[hoverGroup[0]]); });  // the card's height changes once the image arrives
   }
