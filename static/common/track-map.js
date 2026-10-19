@@ -327,7 +327,8 @@
     const a = Math.max(from, start), b = Math.min(to, end);
     if (b < a) return [];
     const run = pts.slice(a, b + 1);
-    return a === start && s > 0 && !breaks.has(start) ? [pts[start - 1]].concat(run) : run;
+    // Places with no route between them are never joined, however close they are.
+    return a === start && s > 0 && !stationary && !breaks.has(start) ? [pts[start - 1]].concat(run) : run;
   };
   const featuresOf = (lists, props) => ({ type: 'FeatureCollection', features: lists.filter(c => c.coords.length > 1).map(c => ({ type: 'Feature', properties: props ? props(c.seg) : {}, geometry: { type: 'LineString', coordinates: c.coords } })) });
   const trackData = () => featuresOf(SEGMENTS.map((_, seg) => ({ seg, coords: legRun(seg, 0, pts.length) })));
