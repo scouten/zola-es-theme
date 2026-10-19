@@ -80,7 +80,9 @@
   }
 
   // Each leg's mode and distance, for the day's summary: the leg's `dist_m`, else measured along its points.
-  const legsOf = track => (track.legs || []).map(l => {
+  // Travel after a day's story (`aside`) isn't part of the day, and the section maps leave it out.
+  const storyLegs = track => (track.legs || []).filter(l => !l.aside);
+  const legsOf = track => storyLegs(track).map(l => {
     const pts = l.pts || [];
     let m = typeof l.dist_m === 'number' ? l.dist_m : 0;
     if (typeof l.dist_m !== 'number') for (let k = 1; k < pts.length; k++) m += hav(pts[k - 1], pts[k]);
@@ -92,7 +94,7 @@
   function trackCoords(track) {
     const out = [];
     let prev = null;
-    (track.legs || []).forEach(l => (l.pts || []).forEach(p => {
+    storyLegs(track).forEach(l => (l.pts || []).forEach(p => {
       const lon = prev == null ? p[0] : nearLon(p[0], prev);
       out.push([lon, p[1]]);
       prev = lon;

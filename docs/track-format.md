@@ -173,6 +173,7 @@ Two version numbers, deliberately separate:
 | `mode` | string? | Token from §1.2, or absent when the GPX had no `<type>`. |
 | `label` | string? | From `<name>`. |
 | `origin` | string? | From §1.4. Absent means `recorded`. |
+| `aside` | bool? | `true` on travel after the day's story, from a second log (§2.8). Absent otherwise. |
 | `dist_m` | int | Metres along the (unsimplified) leg. 0 for stops. |
 | `gain_m`, `loss_m` | int? | On `hike` and `walk` legs: metres climbed and descended, counting only changes of at least 5 m from the last altitude counted, since GPS altitude wobbles by a few metres. The caption shows them on a line of their own, the leg's main direction always and the other only from 10 m: "↑ 120 m / 390 ft", or "↑ 120 m / 390 ft · ↓ 15 m / 50 ft". |
 | `dur_s` | int? | **Only on `fly`, `prop`, `helicopter`, `boat`, and `ferry` legs.** Seconds. Omitted everywhere else. |
@@ -251,6 +252,17 @@ Optional. The boundaries of the parks a page highlights, chosen by hand in its f
 | `polys` | array | GeoJSON MultiPolygon coordinates: each polygon an outline followed by its holes, each ring closed, as `[lon, lat]`. |
 
 The map tints each park a subtle greyed sand, with no outline, beneath the basemap's labels and the track. Zooming to the whole day takes in the parks as well as the track.
+
+### 2.8 Aside legs
+
+Optional. Travel that belongs with a page but not in its story: the flight home the next day, with nothing to photograph from a middle seat. `nf update-blog-for-track-map <gpx> --aside <gpx>` converts a second sanitized GPX and appends its legs, each marked `"aside": true`.
+
+- Aside legs come after every other leg. No photo anchors point at them, so a page's photos never move to them.
+- They take no share of `dist_m`, so the day's total, and the page's `distance`, stay the day's own. Each aside leg keeps its own `dist_m` for its caption.
+- They never count toward `days`, and the map never joins them to the leg before them, however close.
+- `bbox` takes them in, so the whole-day view shows where the travel went.
+
+The page's map draws them dashed, and their caption says "Afterwards". The section, year, and home maps draw only the day's own legs for now.
 
 ---
 
