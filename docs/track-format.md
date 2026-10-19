@@ -292,7 +292,7 @@ Rules:
 |---|---|
 | `track_key = "track/v2/…json"` (or `track_url`) | New corner map (this design). |
 | `track_log_key = "kml/v1/…kml"` and no `track_key` | Existing Google map, exactly as today. |
-| `markers` only, no track of either kind | Existing Google map with markers, as today (65 pages). Later: optionally the new map with photo dots and no route. |
+| `markers` only, no track of either kind | Existing Google map with markers, as today (65 pages), or the new map with no route: see *Pages with photos and no track log* in `docs/track-map.md`. |
 | `lat` / `lon` only | Existing Google map, as today (used by other sites on the theme). |
 
 Concretely:

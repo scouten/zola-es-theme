@@ -95,6 +95,8 @@
   let breaks = new Set();
   const GAP_M = 100;
   let eleAt = [];  // each track point's logged altitude in metres, or null where it's missing or nonsense (see flatten)
+  // A track of stops only, for a page with photos but no track log: no route, no distance, nothing to measure progress by.
+  let stationary = false;
   let distM = 0;  // the day's distance as published (dist_m), which the page's front matter also shows
   let tripDays = 1;  // calendar days the log covers (the page's `days`, else the JSON's): more than one is a trip, not a day
   let PARKS = [];  // the parks the page highlights (the JSON's `parks`), tinted under the track
@@ -218,6 +220,7 @@
   // The whole day in a line: its main ways of travel and its total ("Flying, driving, and more · 9,097 km /
   // 5,653 mi"), and the mode to show its icon (see `modeSummary` in track-common.js).
   function daySummary() {
+    if (stationary) return { head: CFG.route || (SEGMENTS.length === 1 ? 'One place' : `${SEGMENTS.length} places`), mode: 'stop' };
     const sum = modeSummary(SEGMENTS.map(s => ({ mode: s.mode, m: segDist(s) })));
     if (!sum) return { head: fmtBoth(distM), mode: SEGMENTS[0].mode };
     return { head: `${sum.ways} · ${fmtBoth(distM)}`, mode: sum.mode };
@@ -642,7 +645,7 @@
     }
     else head = `${md ? md.name + ' · ' : ''}${fmtBoth(segDist(seg))}`;
     let sub = seg.mode === 'stop' ? '' : (seg.label || '');
-    if (summary) sub = CFG.route || '';
+    if (summary) sub = stationary ? '' : CFG.route || '';
     else if (view.kind === 'clip' && view.alt != null && view.phase !== 'taxi') sub = `Altitude ${fmtAlt(view.alt)}`;
     else if (showDur) {
       const m = sub.match(/^(.*?)\s*(→|->|⟶|–)\s*(.*)$/);
@@ -680,7 +683,7 @@
     badgeText.replaceChildren(...Array.from(text.children).map(n => n.cloneNode(true)));
     // A third line when the dot sits at the very start or end of the day, or of a multi-day trip.
     const span = tripDays > 1 ? 'trip' : 'day';
-    const dotIdx = viewIdx(view), note = dotIdx <= 0 ? `Start of ${span}` : dotIdx >= pts.length - 1 ? `End of ${span}` : '';
+    const dotIdx = viewIdx(view), note = stationary ? '' : dotIdx <= 0 ? `Start of ${span}` : dotIdx >= pts.length - 1 ? `End of ${span}` : '';
     if (note) { const n = document.createElement('span'); n.className = 'note'; n.textContent = note; badgeText.appendChild(n); }
     document.getElementById('es-track-fill').style.width = (view.frac * 100).toFixed(2) + '%';
     // current leg's span on the bar: green up to the reader's position, darker green beyond
@@ -1129,7 +1132,7 @@
     if (k < 0) return 'Whole day';
     const s = STEPS[k];
     if (!s) return '';
-    if (s.kind === 'leg') return `Leg ${s.leg + 1}/${SEGMENTS.length}`;
+    if (s.kind === 'leg') return `${stationary ? 'Place' : 'Leg'} ${s.leg + 1}/${SEGMENTS.length}`;
     if (s.kind === 'end') return 'End';
     return `Photo ${s.group[0] + 1}/${photos.length}`;
   }
@@ -1238,6 +1241,8 @@
     flatten();
     if (!pts.length) throw new Error('track has no points');
     distM = typeof track.dist_m === 'number' ? track.dist_m : total;
+    stationary = distM === 0 && SEGMENTS.every(s => s.mode === 'stop');
+    widget.classList.toggle('is-stationary', stationary);
     tripDays = CFG.days > 0 ? CFG.days : typeof track.days === 'number' ? track.days : 1;
     PARKS = (Array.isArray(track.parks) ? track.parks : []).filter(p => Array.isArray(p.polys) && p.polys.length).map(unwrapPark);
     anchorPhotos(track.photos);

@@ -71,6 +71,12 @@ To find the reference:
 1. Run `nf update-blog-for-track-map` (or add `-n` for a dry run; `nf blog` asks the same when creating a post). At "Look for parks to highlight?", type part of the park's name, such as `Inverdoorn` or `Russian`. That searches OpenStreetMap's place names within the track's area, which is quick even for a long track. Or answer `y` to search along the whole track, which can be slow. It lists the parks found, each with the value to paste, and marks the ones already listed with `*`.
 2. If the park isn't listed, open [openstreetmap.org](https://www.openstreetmap.org), right-click inside the park, and choose **Query features**. Under **Enclosing features**, pick the park (a nature reserve, park, or protected area) and copy the `relation/…` or `way/…` from its page's URL. A pasted URL works too.
 
+## Pages with photos and no track log
+
+A page with a `markers.js` but no log can still use the corner map. `nf update-blog-for-track-map --photos-only --page <folder>` reads the page's photo markers, groups consecutive photos that share a caption and lie within 250 m into places, and publishes a track JSON of `stop` legs, one per place, with `dist_m` 0 and each photo anchored to its place. A caption's trailing state or country (", New Jersey") is dropped from the place's name. It sets `track_key` and leaves `distance` alone. The track is named `<date>+<folder name>`, since there is no log to name it for.
+
+The map then shows the places and the photo dots, and steps through the photos, but draws no route. Because the track has only stops and no distance, the widget (class `is-stationary`) drops the progress bar, calls the whole-page view "4 places" (or the page's `route`), and labels steps "Place 2/4".
+
 ## Trip section pages
 
 A site can list the pages of a deep section (a trip, on ericscouten.travel) oldest first, instead of the newest-first order that `section_reverse_default` gives the rest of the site:
