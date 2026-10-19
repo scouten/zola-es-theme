@@ -492,8 +492,8 @@
     ];
     layers.push({ id: 'es-current-line', type: 'line', source: 'current', filter: ['!', ['get', 'aside']], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': ['case', ['get', 'done'], cur, tok('current-dim')], 'line-width': big ? 3.5 : 3 } });
     // Travel after the day's story is dashed, under the current-leg halo and the same in colour whether or not it is current.
-    layers.splice(1, 0, { id: 'es-aside-line', type: 'line', source: 'aside', layout: { 'line-cap': 'butt', 'line-join': 'round' }, paint: { 'line-color': tok('ahead'), 'line-width': big ? 3 : 2.5, 'line-dasharray': [1, 1.5] } });
-    layers.push({ id: 'es-current-aside', type: 'line', source: 'current', filter: ['get', 'aside'], layout: { 'line-cap': 'butt', 'line-join': 'round' }, paint: { 'line-color': cur, 'line-width': big ? 3.5 : 3, 'line-dasharray': [1, 1.5] } });
+    layers.splice(1, 0, { id: 'es-aside-line', type: 'line', source: 'aside', layout: { 'line-cap': 'butt', 'line-join': 'round' }, paint: { 'line-color': tok('ahead'), 'line-width': big ? 3 : 2.5, 'line-dasharray': [0.5, 1.5] } });
+    layers.push({ id: 'es-current-aside', type: 'line', source: 'current', filter: ['get', 'aside'], layout: { 'line-cap': 'butt', 'line-join': 'round' }, paint: { 'line-color': cur, 'line-width': big ? 3.5 : 3, 'line-dasharray': [0.5, 1.5] } });
 
     // The stretch a flight video covers, over the track and under the dots.
     layers.push({ id: 'es-clip-line', type: 'line', source: 'clip', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': tok('dot'), 'line-width': 4 } });

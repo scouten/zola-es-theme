@@ -230,7 +230,7 @@
       day('es-trip-done', { 'line-color': tok('accent'), 'line-width': 3 }),
       day('es-trip-current', { 'line-color': tok('current'), 'line-width': 3 }),
     );
-    const dashed = (id, color) => ({ id, type: 'line', source: 'trip-aside', filter: FILTERS[id](), layout: { 'line-cap': 'butt', 'line-join': 'round' }, paint: { 'line-color': color, 'line-width': 3, 'line-dasharray': [1, 1.5] } });
+    const dashed = (id, color) => ({ id, type: 'line', source: 'trip-aside', filter: FILTERS[id](), layout: { 'line-cap': 'butt', 'line-join': 'round' }, paint: { 'line-color': color, 'line-width': 3, 'line-dasharray': [0.5, 1.5] } });
     style.layers.push(
       dashed('es-aside-ahead', tok('ahead-dim')),
       dashed('es-aside-finished', tok('accent-dim')),
