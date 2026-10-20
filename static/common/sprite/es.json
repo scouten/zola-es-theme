@@ -1,0 +1,16 @@
+{
+  "dot-light": {
+    "width": 8,
+    "height": 8,
+    "x": 0,
+    "y": 0,
+    "pixelRatio": 1
+  },
+  "dot-dark": {
+    "width": 8,
+    "height": 8,
+    "x": 10,
+    "y": 0,
+    "pixelRatio": 1
+  }
+}
