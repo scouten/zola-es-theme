@@ -217,7 +217,8 @@
     'es-trip-done': () => LISTING ? NONE : focus === -1 ? ['>=', ['get', 'i'], 0] : ['==', ['get', 'i'], prevDay()],
     'es-trip-current': () => ['==', ['get', 'i'], at()],
   };
-  // Travel after a day's story is dashed in its day's colour, with no casing or halo of its own.
+  // Travel after a day's story is dotted in a dimmed shade of its day's colour, at a quicker pace than the day's
+  // own line, with no casing or halo of its own, so it never competes with the day.
   const ASIDE = { 'es-aside-ahead': 'es-trip-ahead', 'es-aside-finished': 'es-trip-finished', 'es-aside-done': 'es-trip-done', 'es-aside-current': 'es-trip-current' };
   Object.keys(ASIDE).forEach(id => { FILTERS[id] = () => FILTERS[ASIDE[id]](); });
 
@@ -227,6 +228,15 @@
     style.sources.trip = { type: 'geojson', data: tripData() };
     style.sources['trip-aside'] = { type: 'geojson', data: asideData() };
     const line = { 'line-cap': 'round', 'line-join': 'round' };
+
+    // The asides go on first, so the days' lines are drawn over them where they share a road.
+    const dashed = (id, color) => ({ id, type: 'line', source: 'trip-aside', filter: FILTERS[id](), layout: line, paint: { 'line-color': color, 'line-width': 2.5, 'line-dasharray': [0.01, 1.6] } });
+    style.layers.push(
+      dashed('es-aside-ahead', tok('ahead-dim')),
+      dashed('es-aside-finished', tok('accent-dim')),
+      dashed('es-aside-done', tok('accent-dim')),
+      dashed('es-aside-current', tok('current-dim')),
+    );
     const day = (id, paint) => ({ id, type: 'line', source: 'trip', filter: FILTERS[id](), layout: line, paint });
     style.layers.push(
       day('es-trip-casing', { 'line-color': tok('casing'), 'line-width': 4.8 }),
@@ -236,13 +246,7 @@
       day('es-trip-done', { 'line-color': tok('accent'), 'line-width': 3 }),
       day('es-trip-current', { 'line-color': tok('current'), 'line-width': 3 }),
     );
-    const dashed = (id, color) => ({ id, type: 'line', source: 'trip-aside', filter: FILTERS[id](), layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': color, 'line-width': 3, 'line-dasharray': [0.01, 2] } });
-    style.layers.push(
-      dashed('es-aside-ahead', tok('ahead-dim')),
-      dashed('es-aside-finished', tok('accent-dim')),
-      dashed('es-aside-done', tok('accent')),
-      dashed('es-aside-current', tok('current')),
-    );
+    window.esTrack.liftPlaceNames(style);
     widget.classList.add('basemap-muted');
     return style;
   }
