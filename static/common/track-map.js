@@ -437,7 +437,7 @@
     return [
       { id: 'es-park-glow', type: 'line', source: 'parks', layout: { 'line-join': 'round' }, paint: { 'line-color': '#000000', 'line-opacity': .55, 'line-width': 7, 'line-blur': 5 } },
       { id: 'es-park-fill', type: 'fill', source: 'parks', paint: { 'fill-color': tok('park-fill') } },
-      { id: 'es-park-outline', type: 'line', source: 'parks', layout: { 'line-join': 'round' }, paint: { 'line-color': tok('park-line'), 'line-width': 1.5, 'line-dasharray': [1, 2] } },
+      { id: 'es-park-outline', type: 'line', source: 'parks', layout: { 'line-join': 'round' }, paint: { 'line-color': tok('park-line') || tok('text-soft'), 'line-width': 1.5, 'line-dasharray': [1, 2] } },
     ];
   }
   // The site's other places as points, `k` being the index in NEARBY.
@@ -496,8 +496,8 @@
     ];
     layers.push({ id: 'es-current-line', type: 'line', source: 'current', filter: ['!', ['get', 'aside']], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': ['case', ['get', 'done'], cur, tok('current-dim')], 'line-width': big ? 3.5 : 3 } });
     // Travel after the day's story is dashed, under the current-leg halo and the same in colour whether or not it is current.
-    layers.splice(1, 0, { id: 'es-aside-line', type: 'line', source: 'aside', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': tok('ahead'), 'line-width': big ? 3 : 2.5, 'line-dasharray': [0.01, 2] } });
-    layers.push({ id: 'es-current-aside', type: 'line', source: 'current', filter: ['get', 'aside'], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': cur, 'line-width': big ? 3.5 : 3, 'line-dasharray': [0.01, 2] } });
+    layers.splice(1, 0, { id: 'es-aside-line', type: 'line', source: 'aside', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': tok('ahead'), 'line-width': big ? 3 : 2.5, 'line-dasharray': [0.01, 1.6] } });
+    layers.push({ id: 'es-current-aside', type: 'line', source: 'current', filter: ['get', 'aside'], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': cur, 'line-width': big ? 3.5 : 3, 'line-dasharray': [0.01, 1.6] } });
 
     // The stretch a flight video covers, over the track and under the dots.
     layers.push({ id: 'es-clip-line', type: 'line', source: 'clip', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': tok('dot'), 'line-width': 4 } });
@@ -532,6 +532,7 @@
     style.layers.splice(labels < 0 ? style.layers.length : labels, 0, ...parkLayers());
     window.esTrack.addRegion(style, REGION, tok);
     style.layers.push(...nearbyLayers(), ...ourLayers());
+    window.esTrack.liftPlaceNames(style);
     widget.classList.toggle('basemap-muted', detail !== 'standard');
     return style;
   }
@@ -1273,12 +1274,37 @@
     if (s.kind === 'end') return 'End';
     return `Photo ${s.group[0] + 1}/${photos.length}`;
   }
+  // The zoom a photo (or the day's end) is shown at when the reader steps to it, by its leg's way of travel: street
+  // level on foot, and further out the faster the travel, since a photo from a train or a car is about the country
+  // it crosses more than the block it was taken on. A step on the same kind of leg as the one before keeps a
+  // closer zoom the reader has chosen; a change of pace goes to the pace's own zoom.
+  const STEP_ZOOM = { bike: 13, horse: 13, kayak: 13, cable: 13, boat: 12, ferry: 12, tram: 12, bus: 11, taxi: 11, train: 11, drive: 11 };
+  let lastStepZoom = null;
+  function stepZoomFor(mode) {
+    const z = STEP_ZOOM[mode] || 14;
+    const keep = lastStepZoom === z;
+    lastStepZoom = z;
+    return keep ? Math.max(map.getZoom(), z) : z;
+  }
+
+  // A photo from the air frames the country in view from the aircraft, by its altitude where the log has it:
+  // 70 km around for each kilometre up (8 km at the least, 600 km at the most), so a photo on the climb out
+  // frames the city and one at cruise the region. Without an altitude, the frame widens on a long flight to a
+  // third of the flight's length instead, and a short hop keeps the aircraft's own view.
+  function flightStepRadius(v) {
+    const alt = eleAt[viewIdx(v)];
+    if (alt != null && alt > 0) return Math.min(Math.max(alt * 70, 8000), 600000);
+    const seg = SEGMENTS[v.capSeg];
+    return Math.max(flightRadius(v), Math.min(segDist(seg) / 3, 600000));
+  }
+
   function browseTo(k) {
     if (!mapReady || !STEPS.length || placement === 'corner') return;
     const card = window.__esTrackCard;
     if (k < 0) {
       // Back past the first step: the whole-day view.
       browseStep = null;
+      lastStepZoom = null;
       card.hideCard();
       view = dayStartView();
       applyView(true);
@@ -1293,12 +1319,13 @@
       const seg = SEGMENTS[s.leg];
       view = { kind: 'browse', photoIdx: -1, idx: seg.start, segs: [s.leg, s.leg], capSeg: s.leg, dot: seg.coords[0], frac: total ? cum[seg.start] / total : 0, m: cum[seg.start], transit: true };
       applyView(true);
+      lastStepZoom = null;
       fit(boundsOf([seg.coords], [seg.coords[0]]), { padding: isPhone() ? 40 : 90, duration: RM ? 0 : 700, maxZoom: 15.5 });
     } else if (s.kind === 'end') {
       const endIdx = pts.length - 1, endPt = pts[endIdx];
       view = { kind: 'browse', photoIdx: -1, idx: endIdx, segs: [s.leg, s.leg], capSeg: s.leg, dot: endPt, frac: 1, m: total, transit: false };
       applyView(true);
-      map.easeTo({ center: endPt, zoom: Math.max(map.getZoom(), 14), duration: RM ? 0 : 600 });
+      map.easeTo({ center: endPt, zoom: stepZoomFor(SEGMENTS[s.leg].mode), duration: RM ? 0 : 600 });
     } else {
       const p = photos[s.group[0]];
       view = { kind: 'browse', photoIdx: s.group[0], segs: [s.leg, s.leg], capSeg: s.leg, dot: [p.lon, p.lat], frac: p.frac, m: p.m, transit: false };
@@ -1309,8 +1336,8 @@
       const clip = s.group.map(i => photos[i]).find(q => q.clip);
       if (clip) fit(boundsOf([clipCoords(clip)], [[p.lon, p.lat]]), { padding: isPhone() ? 40 : 90, duration: RM ? 0 : 700, maxZoom: 15.5 });
       // A photo from the air shows what's in view from the aircraft, as the corner map does.
-      else if (FLIGHT_RADIUS_M[SEGMENTS[s.leg].mode]) fit(aroundBounds([p.lon, p.lat], flightRadius(view)), { padding: 0, duration: RM ? 0 : 700, maxZoom: 14 });
-      else map.easeTo({ center: [p.lon, p.lat], zoom: Math.max(map.getZoom(), 14), duration: RM ? 0 : 600 });
+      else if (FLIGHT_RADIUS_M[SEGMENTS[s.leg].mode]) { lastStepZoom = null; fit(aroundBounds([p.lon, p.lat], flightStepRadius(view)), { padding: 0, duration: RM ? 0 : 700, maxZoom: 14 }); }
+      else map.easeTo({ center: [p.lon, p.lat], zoom: stepZoomFor(SEGMENTS[s.leg].mode), duration: RM ? 0 : 600 });
 
       // The card waits for the camera to settle. Starting the move stopped any move still under way, which fired its
       // 'moveend' at once, so only now is the wait for this one; a move without a duration has already ended.
