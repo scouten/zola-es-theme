@@ -133,25 +133,54 @@
     return true;
   }
 
+  // The theme's own sprite, beside the basemap's: the dot that marks a city's place. Its icons are named `es:` +
+  // their name in static/common/sprite/es.json.
+  const SPRITE = () => new URL('/common/sprite/es', location.href).href;
+
   // A fresh style from `base` (the result of `load`, or null) at `detail` ("terrain", "minimal" or "standard"),
   // ready for the caller to add its own sources and layers.
   function buildStyle(base, { cfg, tok, detail }) {
     let style;
     if (base) {
       style = JSON.parse(JSON.stringify(base));
-      style.layers = style.layers.filter(l => keepLayer(l, detail));
 
-      // A site can drop the highways' route numbers ("5", "99") at every detail.
-      if (cfg.hideRouteNumbers) style.layers = style.layers.filter(l => l.id !== 'highway_name_motorway');
+      // No route numbers ("5", "99") at any detail: they distract from the track.
+      style.layers = style.layers.filter(l => keepLayer(l, detail) && l.id !== 'highway_name_motorway');
 
       // A site can drop the state names too, when the region outline already says where the map is.
       if (cfg.hideStateNames) style.layers = style.layers.filter(l => l.id !== 'place_state');
+
+      // State names thin out with zoom by the tiles' rank (1 for US states, 2 for Canadian provinces, 3 for
+      // South Africa's, 5 and 6 for most others): the top rank alone below zoom 5, a rank more each zoom to 8,
+      // then all. A region of many small countries isn't papered with province names when seen whole.
+      style.layers.forEach(l => {
+        if (l.id !== 'place_state' || !l.filter || !JSON.stringify(l.filter).includes('["get"')) return;
+        const upTo = r => ['all', l.filter, ['<=', ['coalesce', ['get', 'rank'], 99], r]];
+        l.filter = ['step', ['zoom'], upTo(1), 5, upTo(2), 6, upTo(3), 7, upTo(4), 8, l.filter];
+      });
       const water = tok('water'), coast = tok('coast'), road = tok('road'), roadMajor = tok('road-major');
       // Roads as single simple lines: drop the casing layers the stock style draws under them,
       // and paint what's left one grey, with major roads a little wider.
       const isRoad = l => l.type === 'line' && /highway|road|transportation|motorway|trunk|primary|secondary|tertiary|minor|street|path/.test(l.id)
         && !/casing|label|name|shield|oneway|rail|transit|ferry|aeroway|waterway|boundary/.test(l.id);
-      const isMajor = l => /motorway|trunk|primary|major/.test(l.id);
+      const isMajor = l => /motorway|trunk/.test(l.id);
+
+      // Trunk roads share a layer with primary and lesser roads in the stock style ("highway_major_…"), so
+      // such a layer is split in two, and the trunk half drawn as a major road. Only the expression form of
+      // filter is recognised; a layer in another form is left whole, as a lesser road.
+      function splitTrunk(l) {
+        const f = l.filter;
+        if (!Array.isArray(f) || f[0] !== 'all') return [l];
+        const i = f.findIndex(c => Array.isArray(c) && c[0] === 'match' && Array.isArray(c[2]) && c[2].length > 1 && c[2].includes('trunk'));
+        if (i < 0) return [l];
+        const withClasses = (id, classes) => {
+          const c = JSON.parse(JSON.stringify(l));
+          c.id = id;
+          c.filter[i] = ['match', f[i][1], classes, true, false];
+          return c;
+        };
+        return [withClasses(l.id, f[i][2].filter(c => c !== 'trunk')), withClasses(l.id + '_trunk', ['trunk'])];
+      }
       // Scale a width in place. Zoom-driven widths are ["interpolate", …, ["zoom"], stop, value, …] or
       // ["step", ["zoom"], value, stop, value, …]; ["zoom"] may only sit at the top level of such an
       // expression, so the values inside are scaled rather than wrapping the whole thing.
@@ -164,13 +193,39 @@
         return w;
       }
       style.layers = style.layers.filter(l => !(l.type === 'line' && /casing/.test(l.id)));
+      style.layers = style.layers.flatMap(l => isRoad(l) ? splitTrunk(l) : [l]);
+
+      // The ground, where the theme defines one (dark mode): the background and the fills that stand in for
+      // plain land (ice, residential areas, piers) take it, and parks and woods a greener shade of it.
+      const land = tok('land'), landPark = tok('land-park') || land;
+      if (land) style.layers.forEach(l => {
+        if (l.type === 'background') l.paint = Object.assign({}, l.paint, { 'background-color': land });
+        if (l.type !== 'fill') return;
+        if (/park|wood|grass|scrub/.test(l.id)) l.paint = Object.assign({}, l.paint, { 'fill-color': landPark });
+        else if (/residential|ice_shelf|glacier|pier|aeroway/.test(l.id)) l.paint = Object.assign({}, l.paint, { 'fill-color': land });
+      });
+
       // Keep land borders but not the maritime ones (territorial-waters limits drawn offshore).
       // The stock filters may be legacy or expression syntax, so add the clause in the matching form.
+      // Where the theme gives a border colour (dark mode), state borders are drawn as fine dotted lines in it,
+      // and country borders as solid ones a little dimmer, in place of the stock style's blurred dashes, which
+      // all but vanish on the lighter ground. Both fade as the map zooms out, so a continent isn't a tangle of
+      // lines among the names.
+      const border = tok('border');
       style.layers.forEach(l => {
         if (!/boundary/.test(l.id) || l.type !== 'line') return;
         const legacy = !l.filter || !JSON.stringify(l.filter).includes('["get"');
         const clause = legacy ? ['!=', 'maritime', 1] : ['!=', ['get', 'maritime'], 1];
         l.filter = l.filter ? ['all', l.filter, clause] : clause;
+        if (!border) return;
+        const country = /country/.test(l.id);
+        l.layout = Object.assign({}, l.layout, { 'line-cap': 'round', 'line-join': 'round' });
+        l.paint = {
+          'line-color': border,
+          'line-opacity': ['interpolate', ['linear'], ['zoom'], 3, .25, 5, country ? .4 : .5, 7, country ? .6 : .8],
+          'line-width': ['interpolate', ['linear'], ['zoom'], 3, country ? 1 : 1.1, 10, country ? 1.6 : 1.8, 16, country ? 2.2 : 2.5],
+        };
+        if (!country) l.paint['line-dasharray'] = [0.01, 2.2];
       });
       style.layers.forEach(l => {
         if (isRoad(l)) {
@@ -185,13 +240,34 @@
       });
       if (cfg.glyphs) style.glyphs = cfg.glyphs;
       // place names: optional font, names as written (the basemap uppercases towns and regions), and a brighter
-      // colour where the theme defines one (dark mode; in light mode the basemap's own is the better contrast)
-      const labelColor = tok('label');
+      // colour where the theme defines one (dark mode; in light mode the basemap's own is the better contrast).
+      // Places and points of interest take the label colour; water names and the rest (roads, in the expanded
+      // view) their own softer ones, falling back to it. Where the theme names a dot (`place-dot`, an icon in
+      // its sprite), cities, towns and villages get one at their place, their name to its right and scaled up
+      // by `place-text-scale`, in place of the stock style's dot (which its sprite lacks) and centred names.
+      // State and country names are then set in spaced capitals, in `label-region` where the theme has one.
+      const labelColor = tok('label'), labelSoft = tok('label-soft') || labelColor, labelWater = tok('label-water') || labelColor, labelHalo = tok('label-halo');
+      const labelRegion = tok('label-region') || labelColor;
+      const placeDot = tok('place-dot'), placeScale = parseFloat(tok('place-text-scale')) || 1;
+      if (placeDot && typeof style.sprite === 'string') style.sprite = [{ id: 'default', url: style.sprite }, { id: 'es', url: SPRITE() }];
       style.layers.forEach(l => {
         if (l.type !== 'symbol' || !l.layout || !l.layout['text-field']) return;
         l.layout = Object.assign({}, l.layout, { 'text-transform': 'none' });
         if (cfg.labelFont && cfg.labelFont.length) l.layout['text-font'] = cfg.labelFont;
-        if (labelColor) l.paint = Object.assign({}, l.paint, { 'text-color': labelColor });
+        if (placeDot && /^place_(city|town|village)/.test(l.id)) {
+          Object.assign(l.layout, { 'icon-image': placeDot, 'icon-size': 1, 'text-anchor': 'left', 'text-justify': 'left', 'text-offset': [.55, .05] });
+          if (l.layout['text-size'] != null) l.layout['text-size'] = widen(l.layout['text-size'], placeScale);
+          l.paint = Object.assign({}, l.paint, { 'icon-opacity': 1 });
+        }
+        if (!labelColor) return;
+        const region = /^place_(state|country)/.test(l.id);
+        if (region) {
+          Object.assign(l.layout, { 'text-transform': 'uppercase', 'text-letter-spacing': .22 });
+          if (l.layout['text-size'] != null) l.layout['text-size'] = widen(l.layout['text-size'], placeScale);
+        }
+        const color = /water/.test(l.id) ? labelWater : region ? labelRegion : /^(place|poi)/.test(l.id) ? labelColor : labelSoft;
+        l.paint = Object.assign({}, l.paint, { 'text-color': color });
+        if (labelHalo) Object.assign(l.paint, { 'text-halo-color': labelHalo, 'text-halo-width': 1.4, 'text-halo-blur': .6 });
       });
     } else {
       style = { version: 8, sources: {}, layers: [{ id: 'bg', type: 'background', paint: { 'background-color': tok('map-bg') } }] };
@@ -201,10 +277,25 @@
       // below the water fill (the tiles carry bathymetry) and below roads and labels
       let at = style.layers.findIndex(l => l.type === 'fill' && /^water/.test(l.id) && !/name/.test(l.id));
       if (at < 0) at = style.layers.findIndex(l => l.type === 'symbol');
-      const hs = { id: 'es-hillshade', type: 'hillshade', source: 'dem', paint: { 'hillshade-exaggeration': cfg.isDark ? .45 : .3, 'hillshade-shadow-color': '#000000', 'hillshade-highlight-color': tok('hillshade-highlight'), 'hillshade-accent-color': '#000000' } };
+      const exaggeration = parseFloat(tok('hillshade-exaggeration'));
+      const hs = { id: 'es-hillshade', type: 'hillshade', source: 'dem', paint: { 'hillshade-exaggeration': isNaN(exaggeration) ? (cfg.isDark ? .45 : .3) : exaggeration, 'hillshade-shadow-color': '#000000', 'hillshade-highlight-color': tok('hillshade-highlight'), 'hillshade-accent-color': '#000000' } };
       style.layers.splice(at < 0 ? style.layers.length : at, 0, hs);
     }
     return style;
+  }
+
+  // ------------------------------------------------------------ place names over the track
+  // The maps draw their layers above the basemap, names included, so a track runs over the name of a city on its
+  // way. This lifts the basemap's place names above the track's lines, to just below the maps' point marks (the
+  // photo dots, the position dot: layers named es-photos…, es-selected…, es-dot…), or to the top.
+  function liftPlaceNames(style) {
+    const names = style.layers.filter(l => l.type === 'symbol' && /^place_/.test(l.id));
+    if (!names.length) return;
+    const rest = style.layers.filter(l => !names.includes(l));
+    let at = rest.findIndex(l => /^es-(photos|selected|dot)/.test(l.id));
+    if (at < 0) at = rest.length;
+    rest.splice(at, 0, ...names);
+    style.layers = rest;
   }
 
   // ------------------------------------------------------------ region
@@ -273,7 +364,7 @@
 
   window.esTrack = {
     MODES, ICONS, iconSvg, tierOf, imperialTierOf, fmtMetricAs, fmtImperialAs, fmtBoth, modeSummary, isPhone,
-    loadBasemap: load, basemapStyle: buildStyle, loadRegion, addRegion,
+    loadBasemap: load, basemapStyle: buildStyle, liftPlaceNames, loadRegion, addRegion,
   };
 
   // The icon preview page reads the icons from here.
