@@ -870,8 +870,8 @@
       text.appendChild(altEl);
     }
 
-    // On foot, a line for the leg's climb and descent (the JSON's `gain_m` and `loss_m`): the main direction, and
-    // the other only when it is at least 10 m.
+    // On foot or on a cable car, a line for the leg's climb and descent (the JSON's `gain_m` and `loss_m`): the
+    // main direction, and the other only when it is at least 10 m.
     if (!summary && view.kind !== 'clip' && seg.gain_m != null && seg.loss_m != null && (seg.gain_m || seg.loss_m)) {
       const up = seg.gain_m >= seg.loss_m;
       const parts = [];
