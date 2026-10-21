@@ -60,8 +60,10 @@
             useDevicePixelRatio: true,
             // Start with a reasonable bandwidth estimate (4 Mbps) to avoid lowest quality.
             initialBandwidth: 4194304,
-            // Use VHS instead of native HLS (Safari) so these settings apply.
-            overrideNative: true
+            // Use VHS instead of native HLS (desktop Safari) so these settings apply.
+            // iOS and iPadOS Safari can't drive VHS's media source, so leave native HLS
+            // in charge there.
+            overrideNative: !window.videojs.browser.IS_IOS
           },
           nativeAudioTracks: false,
           nativeVideoTracks: false
