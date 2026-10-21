@@ -1271,7 +1271,11 @@
     if (k < 0) return 'Whole day';
     const s = STEPS[k];
     if (!s) return '';
-    if (s.kind === 'leg') return `${stationary && !SEGMENTS[s.leg].aside ? 'Place' : 'Leg'} ${s.leg + 1}/${SEGMENTS.length}`;
+    if (s.kind === 'leg') {
+      // On a stationary day the places are counted among themselves; a leg that follows them is one of all the legs.
+      const isPlace = stationary && !SEGMENTS[s.leg].aside;
+      return `${isPlace ? 'Place' : 'Leg'} ${s.leg + 1}/${isPlace ? lastMain + 1 : SEGMENTS.length}`;
+    }
     if (s.kind === 'end') return 'End';
     return `Photo ${s.group[0] + 1}/${photos.length}`;
   }
