@@ -85,6 +85,8 @@ A page with a `markers.js` but no log can still use the corner map. `nf update-b
 
 The map then shows the places and the photo dots, and steps through the photos, but draws no route. Because the track has only stops and no distance, the widget (class `is-stationary`) drops the progress bar, calls the whole-page view "4 places" (or the page's `route`), and labels steps "Place 2/4".
 
+Such a page can still carry travel after its story: `--photos-only --aside <next-day-gpx>` appends the aside legs to the track of places. The day stays stationary, with its places counted and labelled as above, and the aside's legs are drawn dotted and labelled "Leg 3/3".
+
 ## Trip section pages
 
 A site can list the pages of a deep section (a trip, on ericscouten.travel) oldest first, instead of the newest-first order that `section_reverse_default` gives the rest of the site:
