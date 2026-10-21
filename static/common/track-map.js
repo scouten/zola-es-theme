@@ -344,6 +344,12 @@
   const trackData = () => featuresOf(SEGMENTS.map((sg, seg) => ({ seg, coords: sg.aside ? [] : legRun(seg, 0, pts.length) })));
   // Travel after the day's story: its own line, dashed, apart from the traveled and ahead colours.
   const asideData = () => featuresOf(SEGMENTS.map((sg, seg) => ({ seg, coords: sg.aside ? legRun(seg, 0, pts.length) : [] })));
+  // Where a leg starts more than GAP_M from the end of the one before it (the logger was off, or the traveller was
+  // carried between), a faint dotted line across the gap, so the two still read as one journey when the reader zooms
+  // in close. Never on a day of places, which have no route between them.
+  const gapData = () => featuresOf(stationary ? [] : [...breaks]
+    .filter(b => b > 0 && b < pts.length && hav(pts[b - 1], pts[b]) > GAP_M)
+    .map(b => ({ seg: segOf[b], coords: [pts[b - 1], pts[b]] })));
   // The traveled line, one feature per leg so a gap in the log is not bridged; legs before the current one are `dim`.
   const doneData = v => {
     const d = splitDot(v), at = viewIdx(v);
@@ -606,6 +612,7 @@
     return {
       track: { type: 'geojson', data: trackData() },
       aside: { type: 'geojson', data: asideData() },
+      gaps: { type: 'geojson', data: gapData() },
       done: { type: 'geojson', data: doneData(cur) },
       ahead: { type: 'geojson', data: aheadData(cur) },
       current: { type: 'geojson', data: currentLegData(cur) },
@@ -623,6 +630,8 @@
     // The current leg is drawn in its own colour on top of the traveled/ahead lines, in every view.
     const cur = tok('current');
     const layers = [
+      // the gap between legs, under everything else of the track: dim, dotted, and a little thinner than the line
+      { id: 'es-gap-line', type: 'line', source: 'gaps', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': tok('ahead'), 'line-opacity': .7, 'line-width': big ? 2.5 : 2, 'line-dasharray': [0.01, 2] } },
       { id: 'es-track-casing', type: 'line', source: 'track', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': tok('casing'), 'line-width': big ? 6 : 4.8 } },
       // the halo is opaque: a translucent one compounds with itself wherever the route doubles back, leaving bright fuzzy patches
       { id: 'es-current-halo', type: 'line', source: 'current', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': tok('current-halo'), 'line-width': big ? 16 : 12, 'line-blur': 1.5 } },
