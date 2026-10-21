@@ -441,6 +441,139 @@
       { id: 'es-park-outline', type: 'line', source: 'parks', layout: { 'line-join': 'round' }, paint: { 'line-color': tok('park-line') || tok('text-soft'), 'line-width': 1.5, 'line-dasharray': [1, 2] } },
     ];
   }
+  // ------------------------------------------------------------ park names
+  // A highlighted park's name is set inside it, at the centre of the widest clear circle in its largest polygon
+  // that keeps away from the track and the photos, so the name never sits on anything the day has to show. The
+  // circle also says how far out the map may zoom before the name no longer fits, below which it goes away.
+  const NAME_GRID = 40;       // candidate points across the polygon's longer side, before refining
+  const NAME_TRACK_NEAR = .8; // the track counts as this much nearer than it is, so the name leans away from it
+  const NAME_LINE_CHARS = 18; // a name wraps to lines of at most this many characters
+  const NAME_GLYPH_EM = .52;  // a glyph's width, as a share of the text size (Noto Sans, letter-spaced)
+  const NAME_LINE_EM = 1.15;  // a line's height, as a share of the text size
+  const NAME_ROOM = 1.05;     // the clear circle must reach this far beyond the text's half-extent
+  const NAME_FADE = .6;       // the name fades in over this many zoom levels above the one it first fits at
+
+  // The square of the distance from `p` to the segment `a`–`b`, all in local metres.
+  function segDist2(p, a, b) {
+    const dx = b[0] - a[0], dy = b[1] - a[1], l2 = dx * dx + dy * dy;
+    let t = l2 ? ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l2 : 0;
+    t = t < 0 ? 0 : t > 1 ? 1 : t;
+    const x = a[0] + t * dx - p[0], y = a[1] + t * dy - p[1];
+    return x * x + y * y;
+  }
+
+  // Where `park`'s name goes: `at` ([lon, lat]) and the radius `r` (metres) of the clear circle about it, or
+  // null when the park has no room for a name at all.
+  function parkLabel(park) {
+    const all = park.polys.flat(2);
+    const lat0 = all.reduce((s, c) => s + c[1], 0) / all.length, lon0 = all[0][0];
+    const kx = 111320 * Math.cos(lat0 * Math.PI / 180), ky = 110574;
+    const toXY = c => [(c[0] - lon0) * kx, (c[1] - lat0) * ky];
+    const area = ring => Math.abs(ring.reduce((s, c, i) => i ? s + (ring[i - 1][0] * c[1] - c[0] * ring[i - 1][1]) : s, 0)) / 2;
+
+    // The largest polygon, by its outer ring's area, as rings of local metres.
+    const rings = park.polys.map(poly => poly.map(ring => ring.map(toXY))).sort((a, b) => area(b[0]) - area(a[0]))[0];
+    if (!rings || rings[0].length < 4) return null;
+    const xs = rings[0].map(c => c[0]), ys = rings[0].map(c => c[1]);
+    const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+    const w = x1 - x0, h = y1 - y0;
+    if (!(w > 0 && h > 0)) return null;
+
+    // The track's segments and the photos near the polygon, in local metres. A long log is thinned to a few
+    // thousand points, whose chords stand in for the track at that scale.
+    const mx = w / 4, my = h / 4;
+    const near = c => c[0] >= x0 - mx && c[0] <= x1 + mx && c[1] >= y0 - my && c[1] <= y1 + my;
+    const xy = pts.map(toXY);
+    const idx = [];
+    xy.forEach((c, i) => { if (near(c) || (i + 1 < xy.length && near(xy[i + 1])) || (i > 0 && near(xy[i - 1]))) idx.push(i); });
+    const stride = Math.max(1, Math.ceil(idx.length / 3000));
+    const kept = idx.filter((_, j) => j % stride === 0);
+    const obstacles = [];
+    for (let j = 1; j < kept.length; j++) {
+      let broken = false;
+      for (let i = kept[j - 1] + 1; i <= kept[j]; i++) if (breaks.has(i)) { broken = true; break; }
+      if (!broken) obstacles.push([xy[kept[j - 1]], xy[kept[j]]]);
+    }
+    kept.forEach(i => obstacles.push([xy[i], xy[i]]));
+    photos.forEach(p => { const c = toXY([p.lon, p.lat]); if (near(c)) obstacles.push([c, c]); });
+
+    const inside = p => inRing(rings[0], p) && !rings.slice(1).some(hole => inRing(hole, p));
+    const nearest = (p, segs) => Math.sqrt(segs.reduce((m, s) => Math.min(m, segDist2(p, s[0], s[1])), Infinity));
+    const edges = rings.flatMap(ring => ring.slice(1).map((c, i) => [ring[i], c]));
+    const clearance = p => Math.min(nearest(p, edges), nearest(p, obstacles));
+    const score = p => Math.min(nearest(p, edges), nearest(p, obstacles) * NAME_TRACK_NEAR);
+
+    // The best of a grid of candidates, then of finer grids about it.
+    let best = null, bestScore = -Infinity;
+    const consider = p => { if (!inside(p)) return; const s = score(p); if (s > bestScore) { bestScore = s; best = p; } };
+    let cell = Math.max(w, h) / NAME_GRID;
+    for (let x = x0 + cell / 2; x < x1; x += cell) for (let y = y0 + cell / 2; y < y1; y += cell) consider([x, y]);
+    if (!best) return null;
+    for (let round = 0; round < 4; round++) {
+      cell /= 2;
+      const [bx, by] = best;
+      for (let i = -2; i <= 2; i++) for (let j = -2; j <= 2; j++) if (i || j) consider([bx + i * cell, by + j * cell]);
+    }
+    return { at: [lon0 + best[0] / kx, lat0 + best[1] / ky], r: clearance(best) };
+  }
+
+  // The name on as few lines of at most NAME_LINE_CHARS characters as it takes, broken between words and
+  // balanced, so "Fort Casey State Park" sets as "Fort Casey" over "State Park", not a long line over "Park".
+  function wrapName(name) {
+    const words = name.trim().split(/\s+/), chars = words.join(' ').length;
+    const greedy = limit => {
+      const lines = [];
+      words.forEach(word => {
+        const last = lines.length - 1;
+        if (last >= 0 && lines[last].length + 1 + word.length <= limit) lines[last] += ' ' + word;
+        else lines.push(word);
+      });
+      return lines;
+    };
+    const n = Math.max(1, Math.ceil(chars / NAME_LINE_CHARS));
+    let lines = greedy(NAME_LINE_CHARS);
+    for (let limit = Math.ceil(chars / n); limit < NAME_LINE_CHARS; limit++) {
+      const tight = greedy(limit);
+      if (tight.length <= lines.length) { lines = tight; break; }
+    }
+    return lines.join('\n');
+  }
+
+  // The zoom from which `text` at `size` pixels fits the clear circle of `label`: the text's half-extent in
+  // pixels (half its longest line, or half its height, whichever is more), with room to spare, against the
+  // circle's radius in metres. MapLibre's zoom 0 shows the world 512 pixels across.
+  function nameZoom(label, text, size) {
+    const lines = text.split('\n');
+    const hw = Math.max(...lines.map(l => l.length)) * NAME_GLYPH_EM * size / 2;
+    const hh = lines.length * NAME_LINE_EM * size / 2;
+    const need = Math.max(hw, hh) * NAME_ROOM;
+    return Math.log2(need * 78271.517 * Math.cos(label.at[1] * Math.PI / 180) / label.r);
+  }
+
+  const parkNamesData = () => ({ type: 'FeatureCollection', features: PARKS.flatMap((p, k) => p.label ? [{ type: 'Feature', properties: { k, name: wrapName(p.name) }, geometry: { type: 'Point', coordinates: p.label.at } }] : []) });
+
+  // A layer per park, each fading in from the zoom its name first fits at, so the name never shows over the
+  // track or the outline. The names are set like the basemap's place names, a size larger and in `park-label`
+  // where the theme gives one (dark mode: near white, to read over the park's lighter ground), and go in under them:
+  // liftPlaceNames raises both above the track, so a town's name wins where the two would collide. Without a
+  // glyph source (no basemap) there is no text to draw.
+  function parkNameLayers(style) {
+    if (!style.glyphs) return [];
+    const big = placement !== 'corner', size = big ? 14 : 12;
+    const font = CFG.labelFont && CFG.labelFont.length ? CFG.labelFont : ['Noto Sans Regular'];
+    const color = tok('park-label') || tok('label') || tok('text-soft');
+    return PARKS.flatMap((p, k) => {
+      if (!p.label) return [];
+      const z = nameZoom(p.label, wrapName(p.name), size);
+      return [{
+        id: `es-park-name-${k}`, type: 'symbol', source: 'park-names', filter: ['==', ['get', 'k'], k],
+        minzoom: Math.max(0, Math.min(24, z)),
+        layout: { 'text-field': ['get', 'name'], 'text-font': font, 'text-size': size, 'text-max-width': 30, 'text-line-height': NAME_LINE_EM, 'text-letter-spacing': .04, 'text-anchor': 'center', 'text-padding': 4 },
+        paint: { 'text-color': color, 'text-opacity': ['interpolate', ['linear'], ['zoom'], z, 0, z + NAME_FADE, 1], 'text-halo-color': tok('label-halo') || tok('casing'), 'text-halo-width': 1.5, 'text-halo-blur': .6 },
+      }];
+    });
+  }
+
   // The site's other places as points, `k` being the index in NEARBY.
   const nearbyData = () => ({ type: 'FeatureCollection', features: NEARBY.map((p, k) => ({ type: 'Feature', properties: { k }, geometry: { type: 'Point', coordinates: [p.lon, p.lat] } })) });
 
@@ -481,6 +614,7 @@
       selected: { type: 'geojson', data: selectedData() },
       clip: { type: 'geojson', data: clipData() },
       parks: { type: 'geojson', data: parksData() },
+      'park-names': { type: 'geojson', data: parkNamesData() },
       nearby: { type: 'geojson', promoteId: 'k', data: nearbyData() },
     };
   }
@@ -530,7 +664,7 @@
     const style = window.esTrack.basemapStyle(baseStyle, { cfg: CFG, tok, detail });
     Object.assign(style.sources, ourSources());
     const labels = style.layers.findIndex(l => l.type === 'symbol');
-    style.layers.splice(labels < 0 ? style.layers.length : labels, 0, ...parkLayers());
+    style.layers.splice(labels < 0 ? style.layers.length : labels, 0, ...parkLayers(), ...parkNameLayers(style));
     window.esTrack.addRegion(style, REGION, tok);
     style.layers.push(...nearbyLayers(), ...ourLayers());
     window.esTrack.liftPlaceNames(style);
@@ -1435,6 +1569,7 @@
     PARKS = (Array.isArray(track.parks) ? track.parks : []).filter(p => Array.isArray(p.polys) && p.polys.length).map(unwrapPark);
     anchorPhotos(track.photos);
     photos.forEach(p => { p.lon = nearLon(p.lon, pts[p.idx][0]); });
+    PARKS.forEach(p => { p.label = p.name ? parkLabel(p) : null; });
     attachClips(track.clips);
     buildSteps();
 

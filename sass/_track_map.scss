@@ -47,6 +47,7 @@ $track-widget-map-height: 270px !default;
   --es-track-current-dim: #237a42;
   --es-track-current-halo: #254634;  // opaque: the current green at 22% over the dark ground
   --es-track-label: #f4bb80;         // basemap place names, the tan of the site's accents (dark only; light mode keeps the basemap's own)
+  --es-track-park-label: #f7f3ec;    // a highlighted park's name, near white, so it reads over the park's lighter ground
   --es-track-label-halo: rgba(0, 0, 0, .9); // the dark edge that lifts the names off the terrain
   --es-track-place-dot: es:dot-light; // the dot at a city's place, from the theme's sprite (static/common/sprite)
   --es-track-place-text-scale: 1.2;  // city, town and village names, scaled up from the basemap's

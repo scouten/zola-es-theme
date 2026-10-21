@@ -286,10 +286,11 @@
 
   // ------------------------------------------------------------ place names over the track
   // The maps draw their layers above the basemap, names included, so a track runs over the name of a city on its
-  // way. This lifts the basemap's place names above the track's lines, to just below the maps' point marks (the
-  // photo dots, the position dot: layers named es-photos…, es-selected…, es-dot…), or to the top.
+  // way. This lifts the basemap's place names, and the names of any parks a page highlights (layers named
+  // es-park-name…), above the track's lines, to just below the maps' point marks (the photo dots, the position
+  // dot: layers named es-photos…, es-selected…, es-dot…), or to the top.
   function liftPlaceNames(style) {
-    const names = style.layers.filter(l => l.type === 'symbol' && /^place_/.test(l.id));
+    const names = style.layers.filter(l => l.type === 'symbol' && /^(place_|es-park-name)/.test(l.id));
     if (!names.length) return;
     const rest = style.layers.filter(l => !names.includes(l));
     let at = rest.findIndex(l => /^es-(photos|selected|dot)/.test(l.id));
