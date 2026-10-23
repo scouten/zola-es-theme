@@ -18,6 +18,8 @@ $track-widget-map-height: 270px !default;
   --es-track-ahead-dim: #a3a29b;    // the trip section map's days ahead, receding behind the current day
   --es-track-park-fill: rgba(128, 114, 92, .1);  // a highlighted park: a greyed sand tint, clear of the amber traveled track and the green leg
   --es-track-park-line: rgba(96, 86, 70, .65);   // its dotted outline
+  --es-track-park-mark: #6b5a3e;                 // the mark at a park the page visited: a dark warm brown, as the old map's
+  --es-track-park-mark-label: #2a2218;           // its name beside the mark, darker than the basemap's names
   --es-track-casing: #f7f6f2;
   --es-track-dot: #ffffff;
   --es-track-water: #c9d9ea;
@@ -61,6 +63,8 @@ $track-widget-map-height: 270px !default;
   --es-track-ahead-dim: #6c6d77;
   --es-track-park-fill: rgba(196, 176, 144, .3);   // a highlighted park: a warm sand tint, strong enough to read over the hillshade
   --es-track-park-line: rgba(226, 214, 196, .7);
+  --es-track-park-mark: #e8d7b8;                 // the mark at a park the page visited: a light sand, over the dark ground
+  --es-track-park-mark-label: #ffffff;           // its name beside the mark, brighter than the basemap's names
   --es-track-casing: #121216;
   --es-track-water: #13214c;
   --es-track-coast: #081028;
@@ -174,10 +178,12 @@ $track-widget-map-height: 270px !default;
   font-size: .75rem; line-height: 1.3; color: var(--es-track-text); text-decoration: none; white-space: nowrap;
   &[hidden] { display: none; }
   img { display: block; width: 200px; max-width: 100%; height: auto; margin-bottom: .25rem; border-radius: 3px; }
-  .es-track-nearby-name { display: block; font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
-  .es-track-nearby-note { display: block; font-size: .7rem; color: var(--es-track-muted); overflow: hidden; text-overflow: ellipsis; }
+  // the place's name leads the card, a size up and bold, as the park's name does on the map
+  .es-track-nearby-name { display: block; font-size: 1.05rem; font-weight: 700; line-height: 1.2; margin-top: .1rem; color: var(--es-track-text); overflow: hidden; text-overflow: ellipsis; }
+  .es-track-nearby-note { display: block; margin-top: .1rem; font-size: .75rem; color: var(--es-track-muted); overflow: hidden; text-overflow: ellipsis; }
 }
 @media (hover: none) { .es-track-nearby-tip[href] { pointer-events: auto; } }
+.es-track-nearby-tip.is-held[href] { pointer-events: auto; }  // the tip a park step holds up can be clicked
 // badge at the position dot when it has no photo (leg start, end of the track): repeats the caption
 .es-track-badge {
   position: absolute; z-index: 3; pointer-events: none; display: flex; align-items: center; gap: .45rem;
