@@ -999,11 +999,13 @@
 
   // On a phone, the full-screen map's step controls ride just under the badge or the photo card, where the reader is
   // already looking, rather than in the status bar. While neither is up (the camera moving between steps), they stay
-  // where they were rather than jumping to the bar and back. Everywhere else, they're in the bar.
+  // where they were rather than jumping to the bar and back. A park step puts up neither (its tip is a link, which
+  // can't hold the buttons), so there they go back to the bar. Everywhere else, they're in the bar.
   const stepEl = widget.querySelector('.es-track-step'), stepHome = stepEl.parentNode, stepBefore = stepEl.nextElementSibling;
   function placeStep() {
     const riding = placement === 'expanded' && isPhone();
-    const host = !riding ? stepHome : !thumb.hidden ? thumb : !badge.hidden ? badge : stepEl.parentNode;
+    const onPark = browseStep != null && STEPS[browseStep] && STEPS[browseStep].kind === 'park';
+    const host = !riding || onPark ? stepHome : !thumb.hidden ? thumb : !badge.hidden ? badge : stepEl.parentNode;
     if (stepEl.parentNode === host) return;
     if (host === stepHome) stepHome.insertBefore(stepEl, stepBefore);
     else host.appendChild(stepEl);
@@ -1096,6 +1098,8 @@
     modal.hidden = target !== 'expanded';
     document.body.style.overflow = target === 'expanded' ? 'hidden' : '';
     thumb.hidden = true;
+    // A held park tip goes too: the view change may apply its style as a diff, without the 'style.load' that clears it.
+    if (window.__esTrackCard) window.__esTrackCard.hidePlace();
     placeStep();
     requestAnimationFrame(positionProgressLabels);
     if (!mapReady) return;
