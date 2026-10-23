@@ -145,15 +145,30 @@
     return Object.assign({}, park, { polys: park.polys.map(poly => poly.map(ring => ring.map(c => [nearLon(c[0], ref), c[1]]))) });
   }
 
+  // A place is a stop among the day's legs: where the day paused, or where its photos were taken while the log was
+  // off (nf makes one of those, as it does for a day with no log). It has no route: no line runs into it or out
+  // of it, and the legs either side of it join each other, or have their gap drawn, as if it weren't there.
+  const isPlace = s => s.mode === 'stop';
+
+  // The index in `pts` of the end of the route before leg `si`: the end of the nearest earlier leg that is not a
+  // place, or -1 before any.
+  const routeEndBefore = si => { for (let s = si - 1; s >= 0; s--) if (!isPlace(SEGMENTS[s])) return SEGMENTS[s].end; return -1; };
+
   function flatten() {
     pts = []; cum = []; cumAll = []; segOf = []; eleAt = []; breaks = new Set();
     SEGMENTS.forEach((s, si) => {
       s.start = pts.length;
+      const from = routeEndBefore(si);
       s.coords.forEach((c, k) => {
         if (pts.length === 0) { pts.push(c); cum.push(0); cumAll.push(0); segOf.push(si); eleAt.push(s.eles[k]); return; }
         let d = hav(pts[pts.length - 1], c);
-        // Travel after the day's story (`aside`) is no part of the day's distance, and is never joined to it.
-        if (k === 0 && (d > GAP_M || s.aside)) { breaks.add(pts.length); d = 0; }
+
+        // A leg joins the route before it unless the log has a gap there. Travel after the day's story (`aside`) is
+        // no part of the day's distance, and is never joined to it; nor is a place, see above.
+        if (k === 0) {
+          d = from < 0 ? 0 : hav(pts[from], c);
+          if (from < 0 || d > GAP_M || s.aside || isPlace(s)) { breaks.add(pts.length); d = 0; }
+        }
         if (d < 0.5 && pts.length !== s.start) return;
         pts.push(c); cum.push(cum[cum.length - 1] + (s.aside ? 0 : d)); cumAll.push(cumAll[cumAll.length - 1] + d); segOf.push(si); eleAt.push(s.eles[k]);
       });
@@ -355,25 +370,30 @@
   // During a flight video the dot sits between track points, and the lines split exactly there rather than at the
   // point before it, so the traveled line keeps up with the video.
   const splitDot = v => v && v.kind === 'clip' && viewIdx(v) < pts.length - 1 ? v.dot : null;
-  // A leg's points from index `from` to `to`, joined to the leg before it unless the log has a gap there.
+  // A leg's points from index `from` to `to`, joined to the route before it unless the log has a gap there.
   const legRun = (s, from, to) => {
     const { start, end } = SEGMENTS[s];
     const a = Math.max(from, start), b = Math.min(to, end);
     if (b < a) return [];
     const run = pts.slice(a, b + 1);
-    // Places with no route between them are never joined, however close they are.
-    return a === start && s > 0 && !stationary && !breaks.has(start) ? [pts[start - 1]].concat(run) : run;
+
+    // Places are never joined, however close they are: not to each other on a day of places, nor to the legs
+    // either side of them on a day with a route.
+    const prev = routeEndBefore(s);
+    return a === start && prev >= 0 && !stationary && !breaks.has(start) && !isPlace(SEGMENTS[s]) ? [pts[prev]].concat(run) : run;
   };
   const featuresOf = (lists, props) => ({ type: 'FeatureCollection', features: lists.filter(c => c.coords.length > 1).map(c => ({ type: 'Feature', properties: props ? props(c.seg) : {}, geometry: { type: 'LineString', coordinates: c.coords } })) });
   const trackData = () => featuresOf(SEGMENTS.map((sg, seg) => ({ seg, coords: sg.aside ? [] : legRun(seg, 0, pts.length) })));
   // Travel after the day's story: its own line, dashed, apart from the traveled and ahead colours.
   const asideData = () => featuresOf(SEGMENTS.map((sg, seg) => ({ seg, coords: sg.aside ? legRun(seg, 0, pts.length) : [] })));
-  // Where a leg starts more than GAP_M from the end of the one before it (the logger was off, or the traveller was
+  // Where a leg starts more than GAP_M from the end of the route before it (the logger was off, or the traveller was
   // carried between), a faint dotted line across the gap, so the two still read as one journey when the reader zooms
-  // in close. Never on a day of places, which have no route between them.
+  // in close. Never to or from a place, which has no route: not on a day of places, and not across one on a day
+  // with a route, whose gap runs between the legs either side of it.
   const gapData = () => featuresOf(stationary ? [] : [...breaks]
-    .filter(b => b > 0 && b < pts.length && hav(pts[b - 1], pts[b]) > GAP_M)
-    .map(b => ({ seg: segOf[b], coords: [pts[b - 1], pts[b]] })));
+    .map(b => ({ b, from: routeEndBefore(segOf[b]) }))
+    .filter(({ b, from }) => from >= 0 && b < pts.length && !isPlace(SEGMENTS[segOf[b]]) && hav(pts[from], pts[b]) > GAP_M)
+    .map(({ b, from }) => ({ seg: segOf[b], coords: [pts[from], pts[b]] })));
   // The traveled line, one feature per leg so a gap in the log is not bridged; legs before the current one are `dim`.
   const doneData = v => {
     const d = splitDot(v), at = viewIdx(v);
@@ -1520,9 +1540,10 @@
     const s = STEPS[k];
     if (!s) return '';
     if (s.kind === 'leg') {
-      // On a stationary day the places are counted among themselves; a leg that follows them is one of all the legs.
-      const isPlace = stationary && !SEGMENTS[s.leg].aside;
-      return `${isPlace ? 'Place' : 'Leg'} ${s.leg + 1}/${isPlace ? lastMain + 1 : SEGMENTS.length}`;
+      // A place is counted among the places and a leg among the legs, whichever the day has more of: "Place 2/3" on
+      // a day of places, "Leg 1/2" for the travel after it or for a day with a route and a place or two along it.
+      const seg = SEGMENTS[s.leg], place = isPlace(seg), alike = SEGMENTS.filter(x => isPlace(x) === place);
+      return `${place ? 'Place' : 'Leg'} ${alike.indexOf(seg) + 1}/${alike.length}`;
     }
     if (s.kind === 'end') return 'End';
     if (s.kind === 'park') return `Park ${s.park + 1}/${parkPlaces.length}`;
