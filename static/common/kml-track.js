@@ -5,8 +5,13 @@
  * LineString in it is drawn as a polyline in the KML's own line colour and width. The viewport is left alone, as
  * the layer's `preserveViewport` left it: the page's `bounds` set it. A track that can't be fetched or read is
  * reported in the console and the map goes on without it; the photo markers are placed before this is called.
+ *
+ * `fallback`, when given, is the same path on the page's own origin, tried when the CDN refuses the cross-origin
+ * fetch outright: a deploy preview's origin is not in the CDN's CORS rule, so the preview proxies the path through
+ * its own origin instead (the `/kml/*` rewrite in the site's netlify.toml; see docs/track-map.md), as the track map
+ * does for its JSON. Production never needs it.
  */
-function addKmlTrack(map, url) {
+function addKmlTrack(map, url, fallback) {
   const DEFAULT = { color: '#0000ff', opacity: 1, width: 6 };
 
   // A KML colour is aabbggrr in hex; a width is in pixels.
@@ -21,8 +26,14 @@ function addKmlTrack(map, url) {
     };
   }
 
-  fetch(url, { credentials: 'omit' })
-    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+  const load = u => fetch(u, { credentials: 'omit' }).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status + ' from ' + u); return r.text(); });
+  load(url)
+    .catch(err => {
+      // A refused cross-origin fetch fails outright (a TypeError), unlike a missing file (an HTTP error).
+      if (!fallback || !(err instanceof TypeError)) throw err;
+      console.info('map: direct fetch of the track log refused, retrying same-origin at ' + fallback);
+      return load(fallback);
+    })
     .then(text => {
       const doc = new DOMParser().parseFromString(text, 'application/xml');
       if (doc.querySelector('parsererror')) throw new Error('not valid KML');

@@ -150,10 +150,11 @@
 
     {%- if page.extra.track or page.extra.track_log_key -%}
     // The track log, drawn by common/kml-track.js now that the API has no KmlLayer, after the markers so that a
-    // track that can't be drawn never costs the page its photos.
+    // track that can't be drawn never costs the page its photos. A CDN track also gets the same path on this
+    // origin to fall back to, for deploy previews.
     addKmlTrack(map,
       {%- if page.extra.track_log_key -%}
-      'https://img.ericscouten.com/{{ page.extra.track_log_key | safe }}'
+      'https://img.ericscouten.com/{{ page.extra.track_log_key | safe }}', '/{{ page.extra.track_log_key | safe }}'
       {%- elif config.extra.kml_folder -%}
       '{{config.base_url | safe }}/kml/{{ page.extra.track }}'
       {%- else -%}
