@@ -8,6 +8,9 @@
 {%- endif -%}
 <script src="{{ page.extra.markers }}"></script>
 {%- endif -%}
+{%- if page.extra.track or page.extra.track_log_key -%}
+<script src="/common/kml-track.js"></script>
+{%- endif -%}
 <script>
   let map;
 
@@ -128,23 +131,6 @@
     map.fitBounds(bounds);
     {%- endif -%}
 
-    {%- if page.extra.track or page.extra.track_log_key -%}
-    var kmlLayer = new google.maps.KmlLayer({
-      {%- if page.extra.track_log_key -%}
-      url: 'https://img.ericscouten.com/{{ page.extra.track_log_key | safe }}',
-      {%- elif config.extra.kml_folder -%}
-      url: '{{config.base_url | safe }}/kml/{{ page.extra.track }}',
-      {%- else -%}
-      url: '{{config.base_url | safe }}{{ current_path | safe }}{{ page.extra.track }}',
-      {%- endif -%}
-      preserveViewport: true,
-      map: map
-    });
-    google.maps.event.addListener(kmlLayer, 'status_changed', function(evt) {
-      console.log("KML layer status: " + kmlLayer.getStatus());
-    });
-    {%- endif -%}
-
     {%- if page.extra.markers -%}
     markers = addGpxMarkers(map);
     {%- if config.extra.map_clustering -%}
@@ -160,6 +146,21 @@
       map: map,
       preserveViewport: false,
     });
+    {%- endif -%}
+
+    {%- if page.extra.track or page.extra.track_log_key -%}
+    // The track log, drawn by common/kml-track.js now that the API has no KmlLayer, after the markers so that a
+    // track that can't be drawn never costs the page its photos. A CDN track also gets the same path on this
+    // origin to fall back to, for deploy previews.
+    addKmlTrack(map,
+      {%- if page.extra.track_log_key -%}
+      'https://img.ericscouten.com/{{ page.extra.track_log_key | safe }}', '/{{ page.extra.track_log_key | safe }}'
+      {%- elif config.extra.kml_folder -%}
+      '{{config.base_url | safe }}/kml/{{ page.extra.track }}'
+      {%- else -%}
+      '{{config.base_url | safe }}{{ current_path | safe }}{{ page.extra.track }}'
+      {%- endif -%}
+    );
     {%- endif -%}
   }
 </script>
