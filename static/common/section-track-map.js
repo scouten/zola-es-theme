@@ -107,7 +107,10 @@
   function trackCoords(track) {
     const out = [];
     let prev = null;
-    storyLegs(track).forEach(l => (l.pts || []).forEach(p => {
+    // A place (a stop) is no part of a day's route, so a day with one draws its line past it; a day of places only
+    // has nothing else to draw, and its places are joined.
+    const legs = storyLegs(track), routed = legs.some(l => l.mode !== 'stop');
+    legs.filter(l => !(routed && l.mode === 'stop')).forEach(l => (l.pts || []).forEach(p => {
       const lon = prev == null ? p[0] : nearLon(p[0], prev);
       out.push([lon, p[1]]);
       prev = lon;
