@@ -54,8 +54,12 @@
 
   // ------------------------------------------------------------ page content
   const markers = (typeof window.addGpxMarkers === 'function') ? (window.addGpxMarkers(null) || []).filter(Boolean) : [];
+
+  // The parks the page visited (its `addParkMarker` entries, which the shim turns into places): marked on the map
+  // and named on hover, with a link to the park's own page, as the old map's markers were.
+  const parkPlaces = markers.filter(m => m.kind === 'park' && m.name && Number.isFinite(m.lat) && Number.isFinite(m.lon));
   const photos = [];
-  markers.forEach(m => {
+  markers.filter(m => m.kind !== 'park').forEach(m => {
     let el = document.getElementById(m.id);
     if (!el) return;
     el = el.closest('.es_image, .es_video') || el;
@@ -104,12 +108,13 @@
   let tripDays = 1;  // calendar days the log covers (the page's `days`, else the JSON's): more than one is a trip, not a day
   let PARKS = [];  // the parks the page highlights (the JSON's `parks`), tinted under the track
   let NEARBY = [];  // other places the site lists (`nearby_places`), faint on the map until the pointer finds one
+  let PLACES = [];  // every place the map names when the pointer finds it: the page's parks, then NEARBY
   let REGION = null;  // the site's region (`region_outline`), set apart from its surroundings, or null
   let map = null, mapReady = false, baseStyle = null;
   let placement = 'corner', placedOnce = false, slotVisible = false, expanded = false, collapsed = false;
   let view = null, lastCamKey = null, lastGrad = '', lastPhotoIdx = '';
   let browseStep = null;  // index into STEPS while stepping with the arrows, or null to follow the article
-  let STEPS = [];         // the day as a sequence: each leg, then the photos taken on it
+  let STEPS = [];         // the day as a sequence: each leg, then the photos taken and the parks visited on it
 
   // ------------------------------------------------------------ track
   // `lon` moved by whole turns to lie within 180° of `ref`.
@@ -199,6 +204,25 @@
       if (best < 0) best = 0;
       p.idx = best; p.seg = segOf[best]; p.frac = total ? cum[best] / total : 0; p.m = cum[best];
       last = best;
+    });
+  }
+  // Each park the page visited is anchored on the day's own legs, so it takes its place among the day's steps and
+  // has a distance along the track for the progress bar. A park the day drove to ends one leg and starts the next,
+  // so its nearest track point could be on either; it goes at the end of the leg that reached it, between that leg
+  // and the one that left, when a leg ends within PARK_ARRIVAL_M of it (its coordinates are rough). A park passed
+  // without a leg ending there takes the nearest point.
+  const PARK_ARRIVAL_M = 1000;
+  function anchorParks() {
+    parkPlaces.forEach(p => {
+      p.lon = nearLon(p.lon, pts[0][0]);
+      const here = [p.lon, p.lat];
+      let best = -1, bd = Infinity;
+      for (let li = 0; li <= lastMain; li++) { const e = SEGMENTS[li].end, d = hav(here, pts[e]); if (d < bd) { bd = d; best = e; } }
+      if (bd > PARK_ARRIVAL_M) {
+        best = 0; bd = Infinity;
+        for (let i = 0; i < mainN; i++) { const d = hav(here, pts[i]); if (d < bd) { bd = d; best = i; } }
+      }
+      p.idx = best; p.seg = segOf[best]; p.frac = total ? cum[best] / total : 0; p.m = cum[best];
     });
   }
   const segCoords = (a, b) => { const out = []; for (let s = a; s <= b; s++) out.push(SEGMENTS[s].coords); return out; };
@@ -580,32 +604,60 @@
     });
   }
 
-  // The site's other places as points, `k` being the index in NEARBY.
-  const nearbyData = () => ({ type: 'FeatureCollection', features: NEARBY.map((p, k) => ({ type: 'Feature', properties: { k }, geometry: { type: 'Point', coordinates: [p.lon, p.lat] } })) });
+  // The places as points, `k` being the index in PLACES: the page's parks, then the site's other places.
+  const placesData = () => ({ type: 'FeatureCollection', features: PLACES.map((p, k) => ({ type: 'Feature', properties: { k, kind: p.kind === 'park' ? 'park' : 'nearby', name: p.name }, geometry: { type: 'Point', coordinates: [p.lon, p.lat] } })) });
+  const isPark = ['==', ['get', 'kind'], 'park'];
 
   // The other places sit under the track and photos and over the basemap's labels, small and faint so they never
   // compete with the day's own marks; the one under the pointer lights up. A phone's corner map is too small a
-  // picture for them, so they're hidden there (and shown again if the window widens).
+  // picture for them, so they're hidden there (and shown again if the window widens). The hit layer, which the
+  // page's parks share, stays: the corner map takes no pointer anyway.
   const nearbyShown = () => !(placement === 'corner' && isPhone());
   const nearbyVisibility = () => nearbyShown() ? 'visible' : 'none';
   function updateNearbyVisibility() {
     if (!mapReady) return;
-    ['es-nearby', 'es-nearby-hit'].forEach(id => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', nearbyVisibility()); });
+    if (map.getLayer('es-nearby')) map.setLayoutProperty('es-nearby', 'visibility', nearbyVisibility());
   }
   function nearbyLayers() {
-    if (!NEARBY.length) return [];
+    if (!PLACES.length) return [];
     const big = placement !== 'corner';
     const hover = ['boolean', ['feature-state', 'hover'], false];
     return [
-      { id: 'es-nearby', type: 'circle', source: 'nearby', layout: { visibility: nearbyVisibility() }, paint: {
+      { id: 'es-nearby', type: 'circle', source: 'places', filter: ['!', isPark], layout: { visibility: nearbyVisibility() }, paint: {
         'circle-radius': ['case', hover, big ? 6 : 5, big ? 3.5 : 2.5],
         'circle-color': ['case', hover, tok('accent'), tok('current')],
         'circle-opacity': ['case', hover, 1, .7],
         'circle-stroke-color': tok('casing'),
         'circle-stroke-width': ['case', hover, 1.5, .6],
         'circle-stroke-opacity': ['case', hover, 1, .7] } },
-      { id: 'es-nearby-hit', type: 'circle', source: 'nearby', layout: { visibility: nearbyVisibility() }, paint: { 'circle-radius': 9, 'circle-opacity': 0 } },
+      { id: 'es-nearby-hit', type: 'circle', source: 'places', paint: { 'circle-radius': 9, 'circle-opacity': 0 } },
     ];
+  }
+
+  // The parks the page visited are marked over the track and under its photos, in the park colour with the track's
+  // casing about them, a little larger than a photo dot, so they read as the day's own and stay in every view. In
+  // the docked and expanded views each is named beside its mark, where the basemap's names leave room (a town's
+  // name wins a collision, as it does over a highlighted park's). The one under the pointer lights up like the
+  // other places, and its tip links to the park's page.
+  function parkMarkLayers(style) {
+    if (!PLACES.some(p => p.kind === 'park')) return [];
+    const big = placement !== 'corner';
+    const hover = ['boolean', ['feature-state', 'hover'], false];
+    const layers = [{ id: 'es-park-marks', type: 'circle', source: 'places', filter: isPark, paint: {
+      'circle-radius': ['case', hover, big ? 8 : 6, big ? 6.5 : 5],
+      'circle-color': ['case', hover, tok('accent'), tok('park-mark') || tok('park-line') || tok('text-soft')],
+      'circle-stroke-color': tok('casing'),
+      'circle-stroke-width': big ? 2 : 1.5 } }];
+    if (big && style.glyphs) {
+      // Set bold, well above a town's name (12 px once scaled), and in `park-mark-label` (dark mode: white), so the
+      // parks the day visited read first among the names on the map. A site's own label font is used as given.
+      const font = CFG.labelFont && CFG.labelFont.length ? CFG.labelFont : ['Noto Sans Bold'];
+      layers.push({ id: 'es-park-mark-names', type: 'symbol', source: 'places', filter: isPark,
+        layout: { 'text-field': ['get', 'name'], 'text-font': font, 'text-size': 15, 'text-letter-spacing': .03, 'text-max-width': 10,
+          'text-variable-anchor': ['left', 'right', 'top', 'bottom'], 'text-radial-offset': .95, 'text-justify': 'auto' },
+        paint: { 'text-color': tok('park-mark-label') || tok('park-label') || tok('text'), 'text-halo-color': tok('label-halo') || tok('casing'), 'text-halo-width': 1.8, 'text-halo-blur': .6 } });
+    }
+    return layers;
   }
   function ourSources() {
     const cur = view;
@@ -622,10 +674,10 @@
       clip: { type: 'geojson', data: clipData() },
       parks: { type: 'geojson', data: parksData() },
       'park-names': { type: 'geojson', data: parkNamesData() },
-      nearby: { type: 'geojson', promoteId: 'k', data: nearbyData() },
+      places: { type: 'geojson', promoteId: 'k', data: placesData() },
     };
   }
-  function ourLayers() {
+  function ourLayers(style) {
     const big = placement !== 'corner';
     // The current leg is drawn in its own colour on top of the traveled/ahead lines, in every view.
     const cur = tok('current');
@@ -645,6 +697,7 @@
 
     // The stretch a flight video covers, over the track and under the dots.
     layers.push({ id: 'es-clip-line', type: 'line', source: 'clip', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': tok('dot'), 'line-width': 4 } });
+    layers.push(...parkMarkLayers(style));
     if (CFG.dots) {
       layers.push({ id: 'es-photos', type: 'circle', source: 'photos', paint: { 'circle-radius': big ? 5 : 3, 'circle-color': photoColorFor(view), 'circle-stroke-color': tok('ground-deep'), 'circle-stroke-width': 1 } });
       layers.push({ id: 'es-photos-hit', type: 'circle', source: 'photos', paint: { 'circle-radius': big ? 12 : 6, 'circle-opacity': 0 } });
@@ -675,7 +728,7 @@
     const labels = style.layers.findIndex(l => l.type === 'symbol');
     style.layers.splice(labels < 0 ? style.layers.length : labels, 0, ...parkLayers(), ...parkNameLayers(style));
     window.esTrack.addRegion(style, REGION, tok);
-    style.layers.push(...nearbyLayers(), ...ourLayers());
+    style.layers.push(...nearbyLayers(), ...ourLayers(style));
     window.esTrack.liftPlaceNames(style);
     widget.classList.toggle('basemap-muted', detail !== 'standard');
     return style;
@@ -929,9 +982,11 @@
   // repeating the caption, so the dot is not a mystery. Hidden whenever the photo card is up.
   let badgeOff = null;
   function updateBadge() {
-    // shown whenever the big map has a dot and no photo card: a photo step is about to show its card, so skip it
-    const onPhotoStep = browseStep != null && STEPS[browseStep] && STEPS[browseStep].kind === 'photos';
-    const want = mapReady && placement !== 'corner' && !collapsed && view && thumb.hidden && !onPhotoStep && window.__esTrackCard;
+    // shown whenever the big map has a dot and no photo card: a photo step is about to show its card, and a park
+    // step its tip, so skip those
+    const s = browseStep != null ? STEPS[browseStep] : null;
+    const onCardStep = !!s && (s.kind === 'photos' || s.kind === 'park');
+    const want = mapReady && placement !== 'corner' && !collapsed && view && thumb.hidden && !onCardStep && window.__esTrackCard;
     badge.hidden = !want;
     placeStep();
     if (!want) { badgeOff = null; badgeTail.toggleAttribute('hidden', true); return; }
@@ -944,11 +999,13 @@
 
   // On a phone, the full-screen map's step controls ride just under the badge or the photo card, where the reader is
   // already looking, rather than in the status bar. While neither is up (the camera moving between steps), they stay
-  // where they were rather than jumping to the bar and back. Everywhere else, they're in the bar.
+  // where they were rather than jumping to the bar and back. A park step puts up neither (its tip is a link, which
+  // can't hold the buttons), so there they go back to the bar. Everywhere else, they're in the bar.
   const stepEl = widget.querySelector('.es-track-step'), stepHome = stepEl.parentNode, stepBefore = stepEl.nextElementSibling;
   function placeStep() {
     const riding = placement === 'expanded' && isPhone();
-    const host = !riding ? stepHome : !thumb.hidden ? thumb : !badge.hidden ? badge : stepEl.parentNode;
+    const onPark = browseStep != null && STEPS[browseStep] && STEPS[browseStep].kind === 'park';
+    const host = !riding || onPark ? stepHome : !thumb.hidden ? thumb : !badge.hidden ? badge : stepEl.parentNode;
     if (stepEl.parentNode === host) return;
     if (host === stepHome) stepHome.insertBefore(stepEl, stepBefore);
     else host.appendChild(stepEl);
@@ -1041,6 +1098,8 @@
     modal.hidden = target !== 'expanded';
     document.body.style.overflow = target === 'expanded' ? 'hidden' : '';
     thumb.hidden = true;
+    // A held park tip goes too: the view change may apply its style as a diff, without the 'style.load' that clears it.
+    if (window.__esTrackCard) window.__esTrackCard.hidePlace();
     placeStep();
     requestAnimationFrame(positionProgressLabels);
     if (!mapReady) return;
@@ -1226,12 +1285,15 @@
       const tx = opts.travel ? opts.travel.x : 0;
       const bias = opts.sides ? [20, 20, tx > 0 ? 12 : 0, tx < 0 ? 12 : 0] : [0, 0, 0, 0];  // above, below, right, left
 
-      // Hiding the dot outweighs covering a control, which outweighs a poor funnel, and each outweighs anything the
+      // Hiding the dot outweighs covering a control, which outweighs hiding the position dot (when the overlay belongs
+      // to something else, such as a park beside it), which outweighs a poor funnel, and each outweighs anything the
       // track and photo dots under the spot can add up to.
-      const HIDES_DOT = 1e7, COVERS_CONTROL = 1e6, POOR_FUNNEL = 1e5;
+      const HIDES_DOT = 1e7, COVERS_CONTROL = 1e6, HIDES_POSITION = 5e5, POOR_FUNNEL = 1e5;
+      const pos = view && view.dot ? project(view.dot) : null;
       let best = cands[0], bestScore = Infinity;
       cands.forEach(r => {
         let score = (inside(r, pt) ? HIDES_DOT : 0) + bias[r.side];
+        if (pos && inside(r, pos)) score += HIDES_POSITION;
         if (!funnelFits(r)) score += POOR_FUNNEL;
         if (controls.some(c => overControl(r.x, r.y, w, h, c, clear))) score += COVERS_CONTROL;
         for (const q of samples) if (inside(r, q)) score += 1;
@@ -1290,36 +1352,65 @@
       e.originalEvent.stopPropagation();
       goTo(clusterAt(e.features[0].properties.i)[0]);
     });
-    // The other places: pointing at one lights it up and names it; clicking opens its page. On a touch screen the
-    // first tap names it, and tapping the name opens the page. A photo under the pointer wins.
+    // The places (the page's parks and the site's other places): pointing at one lights it up and names it;
+    // clicking opens its page. On a touch screen the first tap names it, and tapping the name opens the page. A
+    // photo under the pointer wins.
     const canHover = matchMedia('(hover: hover)').matches;
     let nearbyAt = null;
     const nearbyTip = document.createElement('a');
     nearbyTip.className = 'es-track-nearby-tip';
     nearbyTip.hidden = true;
-    widget.querySelector('.es-track-map').appendChild(nearbyTip);
+    // The tip gets the same funnel to its place as the card and the badge get to theirs.
+    const tipTail = badgeTail.cloneNode(true);
+    tipTail.id = 'es-track-tip-tail';
+    widget.querySelector('.es-track-map').append(tipTail, nearbyTip);
+    let tipOff = null;
     const underPhoto = pt => map.getLayer('es-photos-hit') && map.queryRenderedFeatures(pt, { layers: ['es-photos-hit'] }).length > 0;
     function hideNearby() {
-      if (nearbyAt != null && map.getSource('nearby')) map.setFeatureState({ source: 'nearby', id: nearbyAt }, { hover: false });
+      if (nearbyAt != null && map.getSource('places')) map.setFeatureState({ source: 'places', id: nearbyAt }, { hover: false });
       nearbyAt = null;
       nearbyTip.hidden = true;
+      nearbyTip.classList.remove('is-held');
+      tipTail.toggleAttribute('hidden', true);
+      tipOff = null;
     }
+    // The park the stepper is on, if any: its tip stays up (and can be clicked) until the next step, as a photo
+    // step's card does, so the pointer leaving another place brings it back rather than clearing the map.
+    const heldPlace = () => browseStep != null && STEPS[browseStep] && STEPS[browseStep].kind === 'park' ? STEPS[browseStep].park : null;
+    function releasePlace() {
+      const h = heldPlace();
+      if (h != null) { showNearby(h); nearbyTip.classList.add('is-held'); } else hideNearby();
+    }
+    // The tip is placed as the photo card is: beside its place, clear of the place, the position dot and the map's
+    // controls, and over as little of the track and the photos as it can be, with a funnel to the place.
+    const tipAt = () => { const p = PLACES[nearbyAt]; return [p.lon, p.lat]; };
     function placeNearbyTip() {
       if (nearbyAt == null) return;
-      const p = NEARBY[nearbyAt], pt = project([p.lon, p.lat]), box = map.getContainer().getBoundingClientRect();
-      const w = nearbyTip.offsetWidth, h = nearbyTip.offsetHeight, edge = 4;
-      const x = Math.max(edge, Math.min(box.width - edge - w, pt.x - w / 2));
-      const above = pt.y - 14 - h >= edge;
-      nearbyTip.style.left = x + 'px';
-      nearbyTip.style.top = (above ? pt.y - 14 - h : Math.min(box.height - edge - h, pt.y + 14)) + 'px';
+      tipOff = placeNear(nearbyTip, tipAt(), { gap: 34 });
+      drawTail(tipTail, nearbyTip, tipAt());
+    }
+    // While the map moves the tip keeps its offset from its place, clamped to the map's edges; once the move settles,
+    // a tip left over its place or a control (or the position dot, on a park step) picks its spot again.
+    function followTip() {
+      if (nearbyTip.hidden || nearbyAt == null || !tipOff) return;
+      const pt = project(tipAt()), box = map.getContainer().getBoundingClientRect(), edge = 4;
+      nearbyTip.style.left = Math.max(edge, Math.min(box.width - edge - nearbyTip.offsetWidth, pt.x + tipOff.dx)) + 'px';
+      nearbyTip.style.top = Math.max(edge, Math.min(box.height - edge - nearbyTip.offsetHeight, pt.y + tipOff.dy)) + 'px';
+      drawTail(tipTail, nearbyTip, tipAt());
+    }
+    function settleTip() {
+      if (nearbyTip.hidden || nearbyAt == null) return;
+      const l = nearbyTip.offsetLeft, t = nearbyTip.offsetTop, w = nearbyTip.offsetWidth, h = nearbyTip.offsetHeight;
+      const over = q => q.x >= l - 6 && q.x <= l + w + 6 && q.y >= t - 6 && q.y <= t + h + 6;
+      if (over(project(tipAt())) || (view && view.dot && over(project(view.dot))) || coversControl(nearbyTip)) placeNearbyTip();
     }
     function showNearby(k) {
       if (k === nearbyAt) return;
       hideNearby();
-      const p = NEARBY[k];
+      const p = PLACES[k];
       if (!p) return;
       nearbyAt = k;
-      map.setFeatureState({ source: 'nearby', id: k }, { hover: true });
+      map.setFeatureState({ source: 'places', id: k }, { hover: true });
       nearbyTip.replaceChildren();
       if (p.cover) {
         const img = document.createElement('img');
@@ -1345,26 +1436,29 @@
     }
     map.on('mousemove', 'es-nearby-hit', e => {
       if (placement === 'corner' || !canHover || !e.features.length) return;
-      if (underPhoto(e.point)) { hideNearby(); return; }
+      if (underPhoto(e.point)) { releasePlace(); return; }
       const k = e.features[0].properties.k;
       showNearby(k);
-      if (!hoverGroup) map.getCanvas().style.cursor = NEARBY[k].url ? 'pointer' : '';
+      nearbyTip.classList.toggle('is-held', k === heldPlace());
+      if (!hoverGroup) map.getCanvas().style.cursor = PLACES[k].url ? 'pointer' : '';
     });
     map.on('mouseleave', 'es-nearby-hit', () => {
       if (!canHover) return;
-      hideNearby();
+      releasePlace();
       map.getCanvas().style.cursor = '';
     });
     map.on('click', 'es-nearby-hit', e => {
       if (placement === 'corner' || !e.features.length || underPhoto(e.point)) return;
       e.originalEvent.stopPropagation();
       const k = e.features[0].properties.k;
-      if (canHover) { if (NEARBY[k].url) location.href = NEARBY[k].url; }
+      if (canHover) { if (PLACES[k].url) location.href = PLACES[k].url; }
       else showNearby(k);
     });
-    map.on('click', e => { if (!canHover && nearbyAt != null && !map.queryRenderedFeatures(e.point, { layers: ['es-nearby-hit'] }).length) hideNearby(); });
-    map.on('move', placeNearbyTip);
+    map.on('click', e => { if (!canHover && nearbyAt != null && !map.queryRenderedFeatures(e.point, { layers: ['es-nearby-hit'] }).length) releasePlace(); });
+    map.on('move', followTip);
+    map.on('moveend', settleTip);
     map.on('style.load', hideNearby);
+    Object.assign(window.__esTrackCard, { showPlace: releasePlace, hidePlace: hideNearby });
 
     // clicking the track itself: the leg under the pointer, framed as its leg step
     ['es-track-hit', 'es-aside-hit'].forEach(hit => {
@@ -1386,19 +1480,30 @@
   }
 
   // ------------------------------------------------------------ stepping through the day
-  // STEPS interleaves legs and photos in order: a leg, then the photos taken on it. Photos
-  // within 25 m of each other in sequence form one step. A final step is the end of the track.
+  // STEPS interleaves legs, photos, and parks in order: a leg, then the photos taken on it, with each park visited
+  // on it in its place along the track among them. Photos within 25 m of each other in sequence form one step. A
+  // final step is the end of the track.
   function buildSteps() {
     STEPS = [];
+    const stepIdx = st => st.kind === 'park' ? parkPlaces[st.park].idx : photos[st.group[0]].idx;
     SEGMENTS.forEach((s, li) => {
       STEPS.push({ kind: 'leg', leg: li });
+      const onLeg = [];
       let group = null;
       photos.forEach((p, pi) => {
         if (p.seg !== li) return;
         if (group && hav([p.lon, p.lat], [photos[group[0]].lon, photos[group[0]].lat]) <= 25) { group.push(pi); return; }
         group = [pi];
-        STEPS.push({ kind: 'photos', leg: li, group });
+        onLeg.push({ kind: 'photos', leg: li, group });
       });
+      // The photos keep their page order; a park goes in before the first of them that lies further along the track,
+      // so a park at the leg's end follows all of the leg's photos.
+      parkPlaces.forEach((p, k) => {
+        if (p.seg !== li) return;
+        const at = onLeg.findIndex(st => stepIdx(st) > p.idx);
+        onLeg.splice(at < 0 ? onLeg.length : at, 0, { kind: 'park', leg: li, park: k });
+      });
+      STEPS.push(...onLeg);
     });
     if (SEGMENTS.length) STEPS.push({ kind: 'end', leg: SEGMENTS.length - 1 });
   }
@@ -1420,6 +1525,7 @@
       return `${isPlace ? 'Place' : 'Leg'} ${s.leg + 1}/${isPlace ? lastMain + 1 : SEGMENTS.length}`;
     }
     if (s.kind === 'end') return 'End';
+    if (s.kind === 'park') return `Park ${s.park + 1}/${parkPlaces.length}`;
     return `Photo ${s.group[0] + 1}/${photos.length}`;
   }
   // The zoom a photo (or the day's end) is shown at when the reader steps to it, by its leg's way of travel: street
@@ -1427,6 +1533,7 @@
   // it crosses more than the block it was taken on. A step on the same kind of leg as the one before keeps a
   // closer zoom the reader has chosen; a change of pace goes to the pace's own zoom.
   const STEP_ZOOM = { bike: 13, horse: 13, kayak: 13, cable: 13, boat: 12, ferry: 12, tram: 12, bus: 11, taxi: 11, train: 11, drive: 11 };
+  const PARK_STEP_ZOOM = 13;  // a park step: closer than the drive that reached it, wide enough for the park's grounds
   let lastStepZoom = null;
   function stepZoomFor(mode) {
     const z = STEP_ZOOM[mode] || 14;
@@ -1454,6 +1561,7 @@
       browseStep = null;
       lastStepZoom = null;
       card.hideCard();
+      card.hidePlace();
       view = dayStartView();
       applyView(true);
       fitAll(placement === 'expanded' ? (isPhone() ? 30 : 70) : 40);
@@ -1463,6 +1571,7 @@
     browseStep = Math.min(STEPS.length - 1, k);
     const s = STEPS[browseStep];
     card.hideCard();
+    card.hidePlace();
     if (s.kind === 'leg') {
       const seg = SEGMENTS[s.leg];
       view = { kind: 'browse', photoIdx: -1, idx: seg.start, segs: [s.leg, s.leg], capSeg: s.leg, dot: seg.coords[0], frac: total ? cum[seg.start] / total : 0, m: cum[seg.start], transit: true };
@@ -1474,6 +1583,18 @@
       view = { kind: 'browse', photoIdx: -1, idx: endIdx, segs: [s.leg, s.leg], capSeg: s.leg, dot: endPt, frac: 1, m: total, transit: false };
       applyView(true);
       map.easeTo({ center: endPt, zoom: stepZoomFor(SEGMENTS[s.leg].mode), duration: RM ? 0 : 600 });
+    } else if (s.kind === 'park') {
+      // A park: the dot on the park's mark (its progress along the track that of the nearest point), the map centred
+      // on the park at a zoom that takes in its grounds, and its tip (cover, number, and link) up once the camera
+      // settles, as a photo's card is.
+      const p = parkPlaces[s.park];
+      view = { kind: 'browse', photoIdx: -1, idx: p.idx, segs: [s.leg, s.leg], capSeg: s.leg, dot: [p.lon, p.lat], frac: p.frac, m: p.m, transit: false };
+      applyView(true);
+      lastStepZoom = null;
+      map.easeTo({ center: [p.lon, p.lat], zoom: PARK_STEP_ZOOM, duration: RM ? 0 : 600 });
+      const show = () => { if (browseStep != null && STEPS[browseStep] === s) card.showPlace(); };
+      if (map.isMoving()) map.once('moveend', show);
+      else show();
     } else {
       const p = photos[s.group[0]];
       view = { kind: 'browse', photoIdx: s.group[0], segs: [s.leg, s.leg], capSeg: s.leg, dot: [p.lon, p.lat], frac: p.frac, m: p.m, transit: false };
@@ -1499,7 +1620,7 @@
 
   // ------------------------------------------------------------ wiring
   // in the big views, clicking the progress band jumps to the nearest step along the track
-  const stepDist = s => s.kind === 'leg' ? cum[SEGMENTS[s.leg].start] : s.kind === 'end' ? total : photos[s.group[0]].m;
+  const stepDist = s => s.kind === 'leg' ? cum[SEGMENTS[s.leg].start] : s.kind === 'end' ? total : s.kind === 'park' ? parkPlaces[s.park].m : photos[s.group[0]].m;
   function jumpToDistance(m) {
     if (placement === 'corner' || !STEPS.length || !total) return;
     let best = 0, bd = Infinity;
@@ -1578,6 +1699,7 @@
     PARKS = (Array.isArray(track.parks) ? track.parks : []).filter(p => Array.isArray(p.polys) && p.polys.length).map(unwrapPark);
     anchorPhotos(track.photos);
     photos.forEach(p => { p.lon = nearLon(p.lon, pts[p.idx][0]); });
+    anchorParks();
     PARKS.forEach(p => { p.label = p.name ? parkLabel(p) : null; });
     attachClips(track.clips);
     buildSteps();
@@ -1593,6 +1715,7 @@
 
     view = computeView(currentItem()); applyView(true);
     [, REGION, NEARBY] = await Promise.all([loadBaseStyle(), window.esTrack.loadRegion(CFG.regionOutline), loadNearby()]);
+    PLACES = parkPlaces.concat(NEARBY);
     if (!window.maplibregl) { showNotice('The map library could not be loaded.'); return; }
     initMap();
     new IntersectionObserver(es => { slotVisible = es[0].isIntersecting; place(); }, { threshold: 0 }).observe(slot);
