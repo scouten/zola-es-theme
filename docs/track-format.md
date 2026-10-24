@@ -15,7 +15,7 @@ The JSON is always regenerable from the GPX plus the photo list. Nothing is hand
 
 Nothing public shows or ships a clock time. The JSON has no start or end instants, no per-point times, and no time zone. It carries two time-derived values:
 
-- A **duration**, only on flight and boat legs (`fly`, `prop`, `helicopter`, `boat`, `ferry`), so a caption can read "Flying · 13,580 km / 8,439 mi" over "ATL → 14h 15min → CPT".
+- A **duration**, only on flight, boat, and train legs (`fly`, `prop`, `helicopter`, `boat`, `ferry`, `train`), so a caption can read "Flying · 13,580 km / 8,439 mi" over "ATL → 14h 15min → CPT".
 - **Flight-video clips** (§2.6), only for videos on `fly`, `prop`, and `helicopter` legs. A clip samples the track once a second of the video, so it reveals the pace of that stretch of the flight, but its times are seconds into the video, never clock times. This is a deliberate exception for flights.
 
 Stops and other legs are described by place, mode, and distance only.
@@ -63,7 +63,7 @@ A day is a sequence of **legs**, each written as one `<trk>` in chronological or
 | `bike` | Bicycle | `bike` |
 | `horse` | On horseback | `horse` |
 | `bus` | Bus or coach | `bus` |
-| `train` | Rail: intercity, metro, funicular railway | `train` |
+| `train` | Rail: intercity, metro, funicular railway (may carry a duration) | `train` |
 | `tram` | Tram or streetcar | `tram` |
 | `cable` | Cable car, gondola, chairlift | `cable` |
 | `boat` | Small boat, sailing, cruise (may carry a duration) | `boat` |
@@ -176,7 +176,7 @@ Two version numbers, deliberately separate:
 | `aside` | bool? | `true` on travel after the day's story, from a second log (§2.8). Absent otherwise. |
 | `dist_m` | int | Metres along the (unsimplified) leg. 0 for stops. |
 | `gain_m`, `loss_m` | int? | On `hike`, `walk`, and `cable` legs: metres climbed and descended, counting only changes of at least 5 m from the last altitude counted, since GPS altitude wobbles by a few metres. The caption shows them on a line of their own, the leg's main direction always and the other only from 10 m: "↑ 120 m / 390 ft", or "↑ 120 m / 390 ft · ↓ 15 m / 50 ft". |
-| `dur_s` | int? | **Only on `fly`, `prop`, `helicopter`, `boat`, and `ferry` legs.** Seconds. Omitted everywhere else. |
+| `dur_s` | int? | **Only on `fly`, `prop`, `helicopter`, `boat`, `ferry`, and `train` legs.** Seconds. Omitted everywhere else. |
 | `ele` | [min, max]? | Metres. Present when elevation was recorded. Omitted on stops. |
 | `pts` | array of [lon, lat, ele?] | Simplified geometry. `lon`, `lat` to 5 decimals (about 1 m). `ele` is whole metres; omitted when unknown. |
 
@@ -205,7 +205,7 @@ When `photos` is absent, or a photo id is missing from it, the theme falls back 
 |---|---|
 | Moving leg with a label | `Driving · 36 km` over `Cape Town → Muizenberg` |
 | Moving leg without a label | `Driving · 36 km` |
-| Flight or boat leg (`fly`, `prop`, `helicopter`, `boat`, `ferry`) | `Flying · 13,580 km / 8,439 mi` over `ATL → 14h 15min → CPT`: the duration sits between the endpoints when the name has an arrow, otherwise after the name |
+| Flight, boat, or train leg (`fly`, `prop`, `helicopter`, `boat`, `ferry`, `train`) | `Flying · 13,580 km / 8,439 mi` over `ATL → 14h 15min → CPT`: the duration sits between the endpoints when the name has an arrow, otherwise after the name |
 | Stop | `Cape Point` with the pin icon |
 | Reconstructed leg (`origin` not `recorded`) | Same text; `origin` is kept in the JSON for tooling but the line is drawn the same way |
 

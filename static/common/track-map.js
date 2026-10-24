@@ -13,7 +13,7 @@
   const { MODES, iconSvg, tierOf, imperialTierOf, fmtMetricAs, fmtImperialAs, fmtBoth, modeSummary, isPhone } = window.esTrack;
 
   // legs whose caption may show a duration (the only time-derived value ever shown)
-  const TIMED = ['fly', 'prop', 'boat', 'ferry', 'helicopter'];
+  const TIMED = ['fly', 'prop', 'boat', 'ferry', 'helicopter', 'train'];
   // On a flight leg the corner map centres on the aircraft and shows roughly what's in view from the window: about
   // ten times the altitude either side (3–80 km), or else three minutes' travel at the video's speed, or else a
   // default radius for the mode.
@@ -902,7 +902,7 @@
     const summary = view.kind === 'start' ? daySummary() : null;
     const iconMd = summary ? MODES[summary.mode] : md;
     document.getElementById('es-track-ico').innerHTML = iconSvg(iconMd ? iconMd.icon : 'route');
-    // No clock times in public. A duration appears only on flights and boat rides, on the
+    // No clock times in public. A duration appears only on flights, boat rides, and train rides, on the
     // second line between the endpoints: "ATL → 14h 15min → CPT".
     const showDur = TIMED.includes(seg.mode) && seg.dur_s;
     let head;

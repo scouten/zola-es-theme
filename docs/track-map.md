@@ -144,7 +144,7 @@ Modes: `drive`, `taxi`, `walk`, `hike`, `bike`, `horse`, `bus`, `train`, `tram`,
 - **Parks visited**: the parks a page's `markers.js` links to on 146parks.blog are marked over the track with a dot in the park colour, a little larger than a photo dot, and named beside it in the docked and expanded views. Pointing at one shows its cover and number, and a click opens its page. Each is also a step when stepping through the day. See *Parks visited* under *Migrating a page*, above.
 - **Phones**: a bottom strip, collapsed to the status line by default.
 
-Durations appear only on `fly`, `prop`, `helicopter`, `boat`, and `ferry` legs, on the caption's second line between the leg's endpoints when its name has an arrow ("ATL → 14h 15min → CPT", units against the numbers, unlike distances). No clock times are shown or shipped.
+Durations appear only on `fly`, `prop`, `helicopter`, `boat`, `ferry`, and `train` legs, on the caption's second line between the leg's endpoints when its name has an arrow ("ATL → 14h 15min → CPT", units against the numbers, unlike distances). No clock times are shown or shipped.
 
 ## Fonts
 
