@@ -95,6 +95,7 @@ $track-widget-map-height: 270px !default;
   background: var(--es-track-panel);
   color: var(--es-track-text);
   font-family: $header-font-family;
+  font-weight: $header-font-weight-normal;
   font-size: .85rem;
   line-height: 1.3;
   overflow: hidden;
@@ -103,6 +104,7 @@ $track-widget-map-height: 270px !default;
 
   button {
     font-family: $header-font-family;
+    font-weight: $header-font-weight-normal;
     cursor: pointer;
   }
   button:focus-visible { outline: 2px solid var(--es-track-accent); outline-offset: 1px; }
@@ -153,7 +155,7 @@ $track-widget-map-height: 270px !default;
 }
 .es-track-widget .es-track-zoom .es-track-btn { position: static; width: 1.6rem; height: 1.6rem; }
 .es-track-widget.is-corner .es-track-fit { display: none; }  // the corner map follows the reader; fitting the whole track is for the big views
-.es-track-widget .es-track-attr-btn { left: .5rem; bottom: .5rem; width: 1.4rem; height: 1.4rem; font-size: .7rem; font-weight: 600; }
+.es-track-widget .es-track-attr-btn { left: .5rem; bottom: .5rem; width: 1.4rem; height: 1.4rem; font-size: .7rem; font-weight: $header-font-weight-bold; }
 .es-track-attr {
   position: absolute; left: .5rem; bottom: 2.2rem; z-index: 2; display: none;
   background: var(--es-track-panel); border: 1px solid var(--es-track-edge); border-radius: 6px; padding: .3rem .5rem;
@@ -168,7 +170,7 @@ $track-widget-map-height: 270px !default;
   .es-track-thumb-loc { width: 160px; padding: 4px 2px 1px; font-size: .7rem; line-height: 1.25; color: var(--es-track-text); white-space: normal; }
   // A photo without a caption: no empty line under it, so the photo has the same margin on every side.
   .es-track-thumb-loc:empty { display: none; }
-  .more { display: block; margin-top: 2px; color: var(--es-track-accent); font-weight: 600; }
+  .more { display: block; margin-top: 2px; color: var(--es-track-accent); font-weight: $header-font-weight-bold; }
 }
 // The name of another place on the map (`nearby_places`), over its dot while the pointer is on it. A name and a line of
 // note, under the place's cover photo when it has one.
@@ -179,7 +181,7 @@ $track-widget-map-height: 270px !default;
   &[hidden] { display: none; }
   img { display: block; width: 200px; max-width: 100%; height: auto; margin-bottom: .25rem; border-radius: 3px; }
   // the place's name leads the card, a size up and bold, as the park's name does on the map
-  .es-track-nearby-name { display: block; font-size: 1.05rem; font-weight: 700; line-height: 1.2; margin-top: .1rem; color: var(--es-track-text); overflow: hidden; text-overflow: ellipsis; }
+  .es-track-nearby-name { display: block; font-size: 1.05rem; font-weight: $header-font-weight-bold; line-height: 1.2; margin-top: .1rem; color: var(--es-track-text); overflow: hidden; text-overflow: ellipsis; }
   .es-track-nearby-note { display: block; margin-top: .1rem; font-size: .75rem; color: var(--es-track-muted); overflow: hidden; text-overflow: ellipsis; }
 }
 @media (hover: none) { .es-track-nearby-tip[href] { pointer-events: auto; } }
@@ -191,7 +193,7 @@ $track-widget-map-height: 270px !default;
   background: var(--es-track-panel-solid); border: 1px solid var(--es-track-edge-strong); box-shadow: var(--es-track-shadow); color: var(--es-track-text);
   .es-track-ico { width: 1.3rem; height: 1.3rem; flex: 0 0 auto; color: var(--es-track-current); svg { width: 100%; height: 100%; display: block; } }
   .es-track-badge-text { display: flex; flex-direction: column; line-height: 1.2; }
-  .mode { font-size: .88rem; font-weight: 600; }
+  .mode { font-size: .88rem; font-weight: $header-font-weight-bold; }
   .label { font-size: .77rem; color: var(--es-track-text-soft); }
   .note { font-size: .72rem; color: var(--es-track-text-soft); margin-top: .12rem; }
 }
@@ -232,16 +234,16 @@ $track-widget-map-height: 270px !default;
     position: absolute; top: 0; font-size: .66rem; line-height: 1; white-space: nowrap; font-variant-numeric: tabular-nums;
     transition: left .5s ease;
   }
-  .cur { color: var(--es-track-current); font-weight: 600; }
+  .cur { color: var(--es-track-current); font-weight: $header-font-weight-bold; }
   .tot { right: 0; color: var(--es-track-muted); }
-  .tot.is-done { color: var(--es-track-current); font-weight: 600; }
+  .tot.is-done { color: var(--es-track-current); font-weight: $header-font-weight-bold; }
 }
 .es-track-caption { display: flex; align-items: center; gap: .55rem; min-height: 2.2rem; }
 // the icon names the current leg, which is drawn in the current-leg colour on the map
 .es-track-ico { flex: 0 0 auto; width: 1.25rem; height: 1.25rem; color: var(--es-track-current); display: inline-flex; svg { width: 100%; height: 100%; } }
 .es-track-text {
   flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; line-height: 1.25;
-  .mode { font-weight: 600; color: var(--es-track-text); }
+  .mode { font-weight: $header-font-weight-bold; color: var(--es-track-text); }
   .label { color: var(--es-track-muted); font-size: .78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 }
 // the trip section map's caption leads with the day's title, cut to its one line
@@ -284,7 +286,7 @@ $track-widget-map-height: 270px !default;
 }
 .es-track-slot-empty {
   position: absolute; inset: 0; display: grid; place-items: center;
-  color: #888; font-family: $header-font-family; font-size: .95rem;
+  color: #888; font-family: $header-font-family; font-weight: $header-font-weight-normal; font-size: .95rem;
 }
 .es-track-widget.is-docked {
   position: absolute; inset: 0;

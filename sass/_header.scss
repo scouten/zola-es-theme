@@ -36,7 +36,7 @@ header {
         transition: opacity 0.5s;
         color: #56575c;
         font-family: $header-font-family;
-        font-weight: normal;
+        font-weight: $header-font-weight-normal;
         font-size: 70%;
 
         a { color: #807f79; }

@@ -18,3 +18,9 @@ $first-paragraph-size: 115% !default;
 $family-primary: OculiText, alegreya, serif !default;
 $header-font-family: expo-sans-pro, sans-serif !default;
 $footer-font-family: expo-sans-pro, sans-serif !default;
+
+// The Adobe Fonts kit serves Expo Sans Pro in these three faces only. Name
+// them so no rule relies on the browser substituting the nearest weight.
+$header-font-weight-light: 200 !default;
+$header-font-weight-normal: 400 !default;
+$header-font-weight-bold: 600 !default;

@@ -18,6 +18,7 @@ html {
 
     #toc {
       font-family: $header-font-family;
+      font-weight: $header-font-weight-normal;
       order: -1;
       -webkit-order: -1;
       line-height: 1.4em;
@@ -32,13 +33,13 @@ html {
     color: #999;
     font-family: $header-font-family;
     font-size: 81% !important;
-    font-weight: normal;
+    font-weight: $header-font-weight-normal;
     margin-top: -1.2em;
     margin-bottom: 2em;
 
     .date {
       color: $accent-text-color;
-      font-weight: bold;
+      font-weight: $header-font-weight-bold;
     }
 
     .es-tag a { color: #999; }
@@ -92,6 +93,7 @@ html {
       margin: 3em auto;
       max-width: $preferred-text-width;
       font-family: $header-font-family;
+      font-weight: $header-font-weight-normal;
       font-size: 80%;
 
       li {
@@ -122,6 +124,7 @@ html {
 
   .card-header {
     font-family: $header-font-family;
+    font-weight: $header-font-weight-normal;
     margin: .5em .5em 0 .5em;
     padding-bottom: .5em;
     border-bottom: 1px solid #aaa;
@@ -130,6 +133,7 @@ html {
     .card-header-title {
       display: block;
       color: black;
+      font-weight: $header-font-weight-bold;
 
       a { color: black; }
 
@@ -146,13 +150,13 @@ html {
 
       .title {
         font-size: 120%;
-        font-weight: 700;
+        font-weight: $header-font-weight-bold;
         margin: .25rem 0;
       }
 
       .date {
         opacity: 80%;
-        font-weight: 400;
+        font-weight: $header-font-weight-normal;
         font-size: 70%;
         line-height: 1.0;
       }
@@ -173,6 +177,7 @@ html {
       margin-top: 1rem;
       margin-bottom: 1rem;
       font-family: $header-font-family;
+      font-weight: $header-font-weight-normal;
       font-size: 80%;
       text-align: right;
     }
@@ -180,6 +185,7 @@ html {
 
   .subsections {
     font-family: $header-font-family;
+    font-weight: $header-font-weight-normal;
     font-size: 75%;
     list-style: none;
     
@@ -258,7 +264,7 @@ html {
 
 .tag {
   font-family: $header-font-family;
-  font-weight: 300;
+  font-weight: $header-font-weight-light;
 
   a:hover { text-decoration: none; }
 }
@@ -290,7 +296,7 @@ html {
   margin-top: 0em;
   text-align: center;
   font-family: $header-font-family;
-  font-weight: 300;
+  font-weight: $header-font-weight-light;
   font-size: 75%;
 }
 
@@ -311,6 +317,7 @@ html {
 
 #next_prev {
   font-family: $header-font-family;
+  font-weight: $header-font-weight-normal;
   color: $header-text-color;
 
   a { color: $header-text-color; }
@@ -347,7 +354,7 @@ html {
 
       a {
         font-family: $header-font-family;
-        font-weight: bold;
+        font-weight: $header-font-weight-bold;
         font-size: 120%;
         color: #6f6f82;
       }
